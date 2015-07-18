@@ -1,0 +1,14 @@
+{
+  "name": "flump-pixi-runtime",
+  "url" : "https://github.com/jackwlee01/flump-pixi-runtime",
+  "license": "MIT",
+  "tags": ["flump", "animation", "flash", "timeline"],
+  "description": "Currently a work in progress.",
+  "version": "0.0.1",
+  "releasenote": "Do not use yet",
+  "contributors": ["Jack Lee"],
+  "dependencies": {
+    "pixijs": "",
+    "msignal": ""
+  }
+}
