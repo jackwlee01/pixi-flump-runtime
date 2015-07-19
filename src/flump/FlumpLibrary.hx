@@ -1,5 +1,6 @@
 package flump;
 
+
 abstract FlumpPoint(Array<Float>){
 
 	public var x(get, never):Float;
@@ -13,6 +14,7 @@ abstract FlumpPoint(Array<Float>){
 		return this[1];
 	}
 }
+
 
 abstract FlumpRect(Array<Float>){
 
@@ -37,7 +39,6 @@ abstract FlumpRect(Array<Float>){
 		return this[3];
 	}
 }
-
 
 typedef FlumpLibrary = {
 	var md5:String;

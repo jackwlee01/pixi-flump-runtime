@@ -48,7 +48,6 @@ class FlumpLibraryLoader{
 		var movieSymbols = new Map<String, FlumpMovieSymbol>();
 		
 		
-		
 		var atlasSpecs = new Array<flump.FlumpLibrary.Atlas>();
 
 		for(textureGroup in lib.textureGroups){

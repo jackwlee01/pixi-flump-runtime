@@ -17,7 +17,6 @@ class FlumpFactory{
 	public var movieSymbols:Map<String, FlumpMovieSymbol>;
 
 
-
 	public function new(library:FlumpLibrary, spriteSymbols:Map<String, FlumpSpriteSymbol>, movieSymbols:Map<String, FlumpMovieSymbol>){
 		this.library = library;
 		this.spriteSymbols = spriteSymbols;
