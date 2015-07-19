@@ -4,7 +4,7 @@
   "license": "MIT",
   "tags": ["flump", "animation", "flash", "timeline"],
   "description": "Currently a work in progress.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "releasenote": "Do not use yet",
   "classPath":"src",
   "contributors": ["Jack Lee"],
