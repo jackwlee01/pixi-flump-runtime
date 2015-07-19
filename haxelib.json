@@ -6,6 +6,7 @@
   "description": "Currently a work in progress.",
   "version": "0.0.1",
   "releasenote": "Do not use yet",
+  "classPath":"src",
   "contributors": ["Jack Lee"],
   "dependencies": {
     "pixijs": "",

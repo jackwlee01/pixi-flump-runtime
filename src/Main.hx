@@ -15,7 +15,6 @@ import pixi.core.renderers.Detector;
 import pixi.core.sprites.Sprite;
 import pixi.plugins.app.Application;
 
-
 import pixi.loaders.ResourceLoader;
 
 
