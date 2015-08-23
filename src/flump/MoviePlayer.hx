@@ -24,11 +24,7 @@ class MoviePlayer{
 		this.symbol = symbol;
 		this.movie = movie;
 		
-		for(layer in symbol.layers){
-			movie.createLayer(layer);
-		}
-
-		//for(layer in symbol.layers) for(keyframe in layer.keyframes) trace(keyframe);		
+		for(layer in symbol.layers) movie.createLayer(layer);
 	}
 
 
@@ -72,8 +68,6 @@ class MoviePlayer{
 		? (time - keyframe.time) / keyframe.duration
 		: (keyframe.time - time) / keyframe.duration;
 
-		//trace(time, keyframe.time, keyframe.)
-
 		var ease:Float = keyframe.ease;
 		if (ease != 0) {
 			var t :Float;
@@ -90,37 +84,6 @@ class MoviePlayer{
 		}
 		return interped;
 	}
-
-	/*
-	public function advanceTime(dt:Float):Void{
-	 	if(isPlaying){
-	 		if(true){
-	 		//if(forcedTime == false){
-		 		cursor += dt;
-		 		if(pendingStop && pendingCycle){
-		 			if(speed > 0 && cursor > symbol.duration) pendingCycle = false;
-		 			else if(speed < 0 && cursor < 0) pendingCycle = false;
-		 		}
-		 		cursor = cursor % symbol.duration;
-		 		if(cursor < 0) cursor += symbol.duration;
-
-		 		if(	(speed > 0 && cursor >= stopPosition) || 
-		 			(speed < 0 && cursor <= stopPosition) ){
-		 				cursor = stopPosition;
-		 				pendingStop = false;
-		 				isPlaying = false;
-		 		}
-		 	}else{
-		 		forcedTime = true;
-		 	}
-	 	}
-
-	 	if(lastRendered != cursor){
-	 		lastRendered = cursor;
-	 		render(dt);
-	 	}
-	}
-	*/
 
 	//////////////////////////////////////////////////////////////
 	//

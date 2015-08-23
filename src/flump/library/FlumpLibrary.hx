@@ -129,7 +129,6 @@ class FlumpLibrary{
 						}else{
 							keyframe.prevNonEmptyKeyframe = keyframe;
 							keyframe.nextNonEmptyKeyframe = keyframe;
-							//keyframe.displayKey = keyframe;
 						}
 					}
 
@@ -147,42 +146,7 @@ class FlumpLibrary{
 							}
 						}
 					}
-				}
-
-					/*
-					if(keyframe.isEmpty == false){
-						keyframe.prevNonEmptyKeyframe = keyframe;
-						keyframe.nextNonEmptyKeyframe = keyframe;
-					}
-					var prev = keyframe.prev;
-					while(prev.isEmpty == false && prev != keyframe){
-						prev = prev.prev;
-					}
-					keyframe.prevNonEmptyKeyframe = prev;
-					trace(keyframe.index, keyframe.prev.index);
-
-					var next = keyframe.next;
-					while(next.isEmpty == false && next != keyframe) next = next.next;
-					keyframe.nextNonEmptyKeyframe = next;
-
-					if(keyframe.isEmpty == false){
-						var key:DisplayObjectKey = keyframe;
-						var checked = keyframe.prevNonEmptyKeyframe;
-
-						while(checked.prevNonEmptyKeyframe != keyframe){
-							trace("Yo");
-							if(checked.symbolId == keyframe.symbolId){
-								key = checked;
-								checked = checked.prevNonEmptyKeyframe;
-							}
-						}
-						
-						keyframe.displayKey = key;
-					}
-
-				}
-					*/
-								
+				}		
 			}
 
 			function getHighestFrameNumber(layer:Layer, accum:UInt){
