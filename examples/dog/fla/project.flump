@@ -1,0 +1,18 @@
+{
+  "exports": [
+    {
+      "format": "JSON",
+      "quality": "best",
+      "maxAtlasSize": 2048,
+      "additionalScaleFactors": [],
+      "textureBorder": 1,
+      "name": "default",
+      "optimize": "Memory",
+      "scale": 1,
+      "scaleFactorsString": "",
+      "description": "'default' (JSON, 100%)"
+    }
+  ],
+  "exportDir": "../dist",
+  "importDir": ""
+}
