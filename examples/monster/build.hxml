@@ -1,5 +1,5 @@
 -cp src
--dce no
+-cp ../../src
 -js dist/bundle.js
 -main Main
 -lib pixijs
