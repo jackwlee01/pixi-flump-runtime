@@ -83,7 +83,6 @@ class Movie extends Container implements FlumpMovie{
 
 
 	public function renderMovieFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):MoviePlayer{
-		//trace("renderMovieFrame: " + symbolId);
 		renderFrame(keyframe, x, y, scaleX, scaleY, skewX, skewY);
 		var movie:Movie = cast movieChildren[keyframe.displayKey];
 		return movie.player;
@@ -91,8 +90,9 @@ class Movie extends Container implements FlumpMovie{
 
 	
 	public function renderEmptyFrame(keyframe:Keyframe):Void{
-		//trace("GOTTA HAVE EMPTY FRAME FUNCTIONALITY!!!");
-		//layers[keyframe.layer.name].removeChildren();
+		var layerContainer = layers[keyframe.layer];
+		if(displaying.exists(keyframe.layer)) layerContainer.removeChild( movieChildren[ displaying[keyframe.layer] ] );
+		displaying.remove(keyframe.layer);
 	}
 	
 

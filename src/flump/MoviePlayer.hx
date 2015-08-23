@@ -64,6 +64,8 @@ class MoviePlayer{
 
 	private function getInterpolation(keyframe:Keyframe, time:Float){
 		if(keyframe.tweened == false) return 0.0;
+		if(keyframe.next.isEmpty == true) return 0.0; // Do I need this?
+		
 		var interped = speed >= 0
 		? (time - keyframe.time) / keyframe.duration
 		: (keyframe.time - time) / keyframe.duration;
@@ -103,14 +105,16 @@ class MoviePlayer{
 
 		for(layer in symbol.layers){
 			var keyframe = getKeyframeForTime(layer, cursor);
-			
-			if(keyframe.isEmpty){
+
+			if(keyframe.isEmpty == true){
 				movie.renderEmptyFrame(keyframe);
-			}else{
+			}else if(keyframe.isEmpty == false){
 				var interped = getInterpolation(keyframe, cursor);
 				var next = speed >= 0
 				? keyframe.next
 				: keyframe.prev;
+
+				if(next.isEmpty) next = keyframe; // NASTY! FIX THIS!!
 
 				if(keyframe.symbol.is(MovieSymbol)){
 					var child = movie.renderMovieFrame(

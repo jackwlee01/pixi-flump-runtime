@@ -274,6 +274,7 @@ flump_MoviePlayer.prototype = {
 	}
 	,getInterpolation: function(keyframe,time) {
 		if(keyframe.tweened == false) return 0.0;
+		if(keyframe.next.isEmpty == true) return 0.0;
 		var interped;
 		if(this.speed >= 0) interped = (time - keyframe.time) / keyframe.duration; else interped = (keyframe.time - time) / keyframe.duration;
 		var ease = keyframe.ease;
@@ -301,10 +302,11 @@ flump_MoviePlayer.prototype = {
 			var layer = _g1[_g];
 			++_g;
 			var keyframe = this.getKeyframeForTime(layer,this.cursor);
-			if(keyframe.isEmpty) this.movie.renderEmptyFrame(keyframe); else {
+			if(keyframe.isEmpty == true) this.movie.renderEmptyFrame(keyframe); else if(keyframe.isEmpty == false) {
 				var interped = this.getInterpolation(keyframe,this.cursor);
 				var next;
 				if(this.speed >= 0) next = keyframe.next; else next = keyframe.prev;
+				if(next.isEmpty) next = keyframe;
 				if(js_Boot.__instanceof(keyframe.symbol,flump_library_MovieSymbol)) {
 					var child = this.movie.renderMovieFrame(keyframe,keyframe.location.x + (next.location.x - keyframe.location.x) * interped,keyframe.location.y + (next.location.y - keyframe.location.y) * interped,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped);
 					child.advanceTime(dt);
@@ -763,6 +765,13 @@ haxe_ds_ObjectMap.prototype = {
 		var id = key.__id__ || (key.__id__ = ++haxe_ds_ObjectMap.count);
 		this.h[id] = value;
 		this.h.__keys__[id] = key;
+	}
+	,remove: function(key) {
+		var id = key.__id__;
+		if(this.h.__keys__[id] == null) return false;
+		delete(this.h[id]);
+		delete(this.h.__keys__[id]);
+		return true;
 	}
 	,keys: function() {
 		var a = [];
@@ -1290,6 +1299,14 @@ pixi_display_Movie.prototype = $extend(PIXI.Container.prototype,{
 		return movie.player;
 	}
 	,renderEmptyFrame: function(keyframe) {
+		var layerContainer = this.layers.h[keyframe.layer.__id__];
+		if(this.displaying.h.__keys__[keyframe.layer.__id__] != null) layerContainer.removeChild((function($this) {
+			var $r;
+			var key = $this.displaying.h[keyframe.layer.__id__];
+			$r = $this.movieChildren.h[key.__id__];
+			return $r;
+		}(this)));
+		this.displaying.remove(keyframe.layer);
 	}
 	,completeRender: function() {
 	}
@@ -1304,89 +1321,92 @@ pixi_display_PixiLayer.__super__ = PIXI.Container;
 pixi_display_PixiLayer.prototype = $extend(PIXI.Container.prototype,{
 	updateTransform: function() {
 		
-                if (!this.visible)
+            if (!this.visible)
+            {
+                return;
+            }
+		
+             // create some matrix refs for easy access
+            var pt = this.parent.worldTransform;
+            var wt = this.worldTransform;
+
+            // temporary matrix variables
+            var a, b, c, d, tx, ty,
+                rotY = this.rotation + this.skew.y,
+                rotX = this.rotation + this.skew.x;
+        ;
+		
+            // so if rotation is between 0 then we can simplify the multiplication process..
+            if (rotY % (Math.PI*2) || rotX % (Math.PI*2))
+            {
+                // check to see if the rotation is the same as the previous render. This means we only need to use sin and cos when rotation actually changes
+                if (rotX !== this._cachedRotX || rotY !== this._cachedRotY)
                 {
-                    return;
+                    // cache new values
+                    this._cachedRotX = rotX;
+                    this._cachedRotY = rotY;
+
+                    // recalculate expensive ops
+                    this._crA = Math.cos(rotY);
+                    this._srB = Math.sin(rotY);
+
+                    this._srC = Math.sin(-rotX);
+                    this._crD = Math.cos(rotX);
                 }
 
-                 // create some matrix refs for easy access
-                var pt = this.parent.worldTransform;
-                var wt = this.worldTransform;
+                // get the matrix values of the displayobject based on its transform properties..
+                a  = this._crA * this.scale.x;
+                b  = this._srB * this.scale.x;
+                c  = this._srC * this.scale.y;
+                d  = this._crD * this.scale.y;
+                tx = this.position.x;
+                ty = this.position.y;
 
-                // temporary matrix variables
-                var a, b, c, d, tx, ty,
-                    rotY = this.rotation + this.skew.y,
-                    rotX = this.rotation + this.skew.x;
-
-                // so if rotation is between 0 then we can simplify the multiplication process..
-                if (rotY % (Math.PI*2) || rotX % (Math.PI*2))
+                // check for pivot.. not often used so geared towards that fact!
+                if (this.pivot.x || this.pivot.y)
                 {
-                    // check to see if the rotation is the same as the previous render. This means we only need to use sin and cos when rotation actually changes
-                    if (rotX !== this._cachedRotX || rotY !== this._cachedRotY)
-                    {
-                        // cache new values
-                        this._cachedRotX = rotX;
-                        this._cachedRotY = rotY;
-
-                        // recalculate expensive ops
-                        this._crA = Math.cos(rotY);
-                        this._srB = Math.sin(rotY);
-
-                        this._srC = Math.sin(-rotX);
-                        this._crD = Math.cos(rotX);
-                    }
-
-                    // get the matrix values of the displayobject based on its transform properties..
-                    a  = this._crA * this.scale.x;
-                    b  = this._srB * this.scale.x;
-                    c  = this._srC * this.scale.y;
-                    d  = this._crD * this.scale.y;
-                    tx = this.position.x;
-                    ty = this.position.y;
-
-                    // check for pivot.. not often used so geared towards that fact!
-                    if (this.pivot.x || this.pivot.y)
-                    {
-                        tx -= this.pivot.x * a + this.pivot.y * c;
-                        ty -= this.pivot.x * b + this.pivot.y * d;
-                    }
-
-                    // concat the parent matrix with the objects transform.
-                    wt.a  = a  * pt.a + b  * pt.c;
-                    wt.b  = a  * pt.b + b  * pt.d;
-                    wt.c  = c  * pt.a + d  * pt.c;
-                    wt.d  = c  * pt.b + d  * pt.d;
-                    wt.tx = tx * pt.a + ty * pt.c + pt.tx;
-                    wt.ty = tx * pt.b + ty * pt.d + pt.ty;
-                }
-                else
-                {
-                    // lets do the fast version as we know there is no rotation..
-                    a  = this.scale.x;
-                    d  = this.scale.y;
-
-                    tx = this.position.x - this.pivot.x * a;
-                    ty = this.position.y - this.pivot.y * d;
-
-                    wt.a  = a  * pt.a;
-                    wt.b  = a  * pt.b;
-                    wt.c  = d  * pt.c;
-                    wt.d  = d  * pt.d;
-                    wt.tx = tx * pt.a + ty * pt.c + pt.tx;
-                    wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+                    tx -= this.pivot.x * a + this.pivot.y * c;
+                    ty -= this.pivot.x * b + this.pivot.y * d;
                 }
 
-                // multiply the alphas..
-                this.worldAlpha = this.alpha * this.parent.worldAlpha;
+                // concat the parent matrix with the objects transform.
+                wt.a  = a  * pt.a + b  * pt.c;
+                wt.b  = a  * pt.b + b  * pt.d;
+                wt.c  = c  * pt.a + d  * pt.c;
+                wt.d  = c  * pt.b + d  * pt.d;
+                wt.tx = tx * pt.a + ty * pt.c + pt.tx;
+                wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+            }
+            else
+            {
+                // lets do the fast version as we know there is no rotation..
+                a  = this.scale.x;
+                d  = this.scale.y;
 
-                // reset the bounds each time this is called!
-                this._currentBounds = null;
+                tx = this.position.x - this.pivot.x * a;
+                ty = this.position.y - this.pivot.y * d;
 
+                wt.a  = a  * pt.a;
+                wt.b  = a  * pt.b;
+                wt.c  = d  * pt.c;
+                wt.d  = d  * pt.d;
+                wt.tx = tx * pt.a + ty * pt.c + pt.tx;
+                wt.ty = tx * pt.b + ty * pt.d + pt.ty;
+            }
+        ;
+		
 
-                 for (var i = 0, j = this.children.length; i < j; ++i)
-                {
-                    this.children[i].updateTransform();
-                }   
+            // multiply the alphas..
+            this.worldAlpha = this.alpha * this.parent.worldAlpha;
+
+            // reset the bounds each time this is called!
+            this._currentBounds = null;
+        ;
+		
+            for (var i = 0, j = this.children.length; i < j; ++i)
+            {
+                this.children[i].updateTransform();
+            }   
         ;
 	}
 	,__class__: pixi_display_PixiLayer
