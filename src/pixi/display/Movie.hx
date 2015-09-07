@@ -71,13 +71,29 @@ class Movie extends Container implements FlumpMovie{
 			displaying[keyframe.layer] = keyframe.displayKey;
 			if(displaying[keyframe.layer] != null) layer.addChild(movieChildren[keyframe.displayKey]);
 		}
-		
+
+
+
+		//movieChildren[keyframe.displayKey].x = keyframe.pivot.x;
+		//movieChildren[keyframe.displayKey].y = keyframe.pivot.y;
+
+		//trace(keyframe.pivot.x, keyframe.pivot.y);
+
 		layer.x = x;
 		layer.y = y;
 		layer.scale.x = scaleX;
 		layer.scale.y = scaleY;
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
+		layer.pivot.x = keyframe.pivot.x;
+		layer.pivot.y = keyframe.pivot.y;
+
+		//layer.pivot.x = keyframe.pivot.x;
+		//layer.pivot.y = keyframe.pivot.y;
+
+
+		//layer.x -= keyframe.pivot.x;
+		//layer.y -= keyframe.pivot.y;
 	}
 
 
@@ -91,8 +107,10 @@ class Movie extends Container implements FlumpMovie{
 	
 	public function renderEmptyFrame(keyframe:Keyframe):Void{
 		var layerContainer = layers[keyframe.layer];
-		if(displaying.exists(keyframe.layer)) layerContainer.removeChild( movieChildren[ displaying[keyframe.layer] ] );
-		displaying.remove(keyframe.layer);
+		if(displaying.exists(keyframe.layer)){
+			layerContainer.removeChild( movieChildren[ displaying[keyframe.layer] ] );
+			displaying.remove(keyframe.layer);
+		}
 	}
 	
 

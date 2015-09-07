@@ -30,8 +30,10 @@ class FlumpFactory{
 		var texture = textures[symbol.texture];
 		
 		var sprite = new Sprite(texture);
-		sprite.anchor.x = symbol.origin.x;
-		sprite.anchor.y = symbol.origin.y;
+		sprite.pivot.x = symbol.origin.x;
+		sprite.pivot.y = symbol.origin.y;
+		//sprite.anchor.x = symbol.origin.x;
+		//sprite.anchor.y = symbol.origin.y;
 		return sprite;
 	}
 

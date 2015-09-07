@@ -55,11 +55,11 @@ class PixiLayer extends Container{
                 ty = this.position.y;
 
                 // check for pivot.. not often used so geared towards that fact!
-                if (this.pivot.x || this.pivot.y)
-                {
+                //if (this.pivot.x || this.pivot.y)
+                //{
                     tx -= this.pivot.x * a + this.pivot.y * c;
                     ty -= this.pivot.x * b + this.pivot.y * d;
-                }
+                //}
 
                 // concat the parent matrix with the objects transform.
                 wt.a  = a  * pt.a + b  * pt.c;

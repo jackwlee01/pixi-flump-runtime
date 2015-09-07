@@ -1193,8 +1193,8 @@ pixi_display_FlumpFactory.prototype = {
 		var symbol = this.library.sprites.get(id);
 		var texture = this.textures.get(symbol.texture);
 		var sprite = new PIXI.Sprite(texture);
-		sprite.anchor.x = symbol.origin.x;
-		sprite.anchor.y = symbol.origin.y;
+		sprite.pivot.x = symbol.origin.x;
+		sprite.pivot.y = symbol.origin.y;
 		return sprite;
 	}
 	,createDisplayObject: function(id) {
@@ -1294,6 +1294,8 @@ pixi_display_Movie.prototype = $extend(PIXI.Container.prototype,{
 		layer.scale.y = scaleY;
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
+		layer.pivot.x = keyframe.pivot.x;
+		layer.pivot.y = keyframe.pivot.y;
 	}
 	,renderMovieFrame: function(keyframe,x,y,scaleX,scaleY,skewX,skewY) {
 		this.renderFrame(keyframe,x,y,scaleX,scaleY,skewX,skewY);
@@ -1302,13 +1304,15 @@ pixi_display_Movie.prototype = $extend(PIXI.Container.prototype,{
 	}
 	,renderEmptyFrame: function(keyframe) {
 		var layerContainer = this.layers.h[keyframe.layer.__id__];
-		if(this.displaying.h.__keys__[keyframe.layer.__id__] != null) layerContainer.removeChild((function($this) {
-			var $r;
-			var key = $this.displaying.h[keyframe.layer.__id__];
-			$r = $this.movieChildren.h[key.__id__];
-			return $r;
-		}(this)));
-		this.displaying.remove(keyframe.layer);
+		if(this.displaying.h.__keys__[keyframe.layer.__id__] != null) {
+			layerContainer.removeChild((function($this) {
+				var $r;
+				var key = $this.displaying.h[keyframe.layer.__id__];
+				$r = $this.movieChildren.h[key.__id__];
+				return $r;
+			}(this)));
+			this.displaying.remove(keyframe.layer);
+		}
 	}
 	,completeRender: function() {
 	}
@@ -1365,11 +1369,11 @@ pixi_display_PixiLayer.prototype = $extend(PIXI.Container.prototype,{
                 ty = this.position.y;
 
                 // check for pivot.. not often used so geared towards that fact!
-                if (this.pivot.x || this.pivot.y)
-                {
+                //if (this.pivot.x || this.pivot.y)
+                //{
                     tx -= this.pivot.x * a + this.pivot.y * c;
                     ty -= this.pivot.x * b + this.pivot.y * d;
-                }
+                //}
 
                 // concat the parent matrix with the objects transform.
                 wt.a  = a  * pt.a + b  * pt.c;
