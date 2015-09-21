@@ -3,7 +3,7 @@ package pixi.display;
 import flump.DisplayObjectKey;
 import flump.library.MovieSymbol;
 import flump.MoviePlayer;
-import flump.FlumpMovie;
+import flump.IFlumpMovie;
 import flump.library.Layer;
 import flump.library.Keyframe;
 import pixi.core.display.Container;
@@ -11,7 +11,7 @@ import pixi.core.display.DisplayObject;
 import pixi.core.math.Point;
 
 
-class Movie extends Container implements FlumpMovie{
+class FlumpMovie extends Container implements IFlumpMovie{
 
 	public var player:MoviePlayer;
 	public var layers = new Map<Layer, PixiLayer>();
@@ -50,7 +50,7 @@ class Movie extends Container implements FlumpMovie{
 
 	public function getChildMovie(keyframe:Keyframe):MoviePlayer{
 		ensureChildExists(keyframe);
-		var movie:Movie = cast movieChildren[keyframe.displayKey];
+		var movie:FlumpMovie = cast movieChildren[keyframe.displayKey];
 		return movie.player;
 	}
 
@@ -97,7 +97,7 @@ class Movie extends Container implements FlumpMovie{
 
 	public function renderMovieFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):MoviePlayer{
 		renderFrame(keyframe, x, y, scaleX, scaleY, skewX, skewY);
-		var movie:Movie = cast movieChildren[keyframe.displayKey];
+		var movie:FlumpMovie = cast movieChildren[keyframe.displayKey];
 		return movie.player;
 	}
 

@@ -4,7 +4,7 @@ import flump.library.Keyframe;
 import flump.library.Layer;
 
 
-interface FlumpMovie{
+interface IFlumpMovie{
 
 	function beginSetup():Void;
 	function createLayer(layer:Layer):Void;

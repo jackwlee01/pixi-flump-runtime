@@ -1,6 +1,6 @@
 package flump;
 
-import flump.FlumpMovie;
+import flump.IFlumpMovie;
 import flump.library.MovieSymbol;
 import flump.library.Layer;
 import flump.library.Keyframe;
@@ -12,7 +12,7 @@ using Std;
 class MoviePlayer{
 
 	private var symbol:MovieSymbol;
-	private var movie:FlumpMovie;
+	private var movie:IFlumpMovie;
 
 	private var elapsed:Float = 0.0; // Total time that has elapsed
 	private var advanced:Float = 0.0; // Time advanced since the last frame
@@ -26,7 +26,7 @@ class MoviePlayer{
 	private var STATE_STOPPED:String = "stopped";
 	
 
-	public function new(symbol:MovieSymbol, movie:FlumpMovie){
+	public function new(symbol:MovieSymbol, movie:IFlumpMovie){
 		this.symbol = symbol;
 		this.movie = movie;
 		
@@ -197,7 +197,6 @@ class MoviePlayer{
 			}
 		}
 
-
 		while(position < 0) position += symbol.duration;
 		
 		movie.startRender();
@@ -225,24 +224,13 @@ class MoviePlayer{
 				if(keyframe.symbol.is(MovieSymbol)){
 					var childMovie = movie.getChildMovie(keyframe);
 
-
 					if(childMovie.independantTimeline){
-						//trace(elapsed, lastRender);
 						childMovie.advanceTime(advanced);
 						childMovie.render();
 					}else{
 						childMovie.elapsed = position;
 						childMovie.render();
 					}
-					
-					/*
-					if(childMovie.isIndependant == false){
-						childMovie.elapsed = elapsed;
-						childMovie.render(dt);
-					}else{
-						childMovie.advanceTime(dt * speed);
-					}
-					*/
 				}
 			}
 		}

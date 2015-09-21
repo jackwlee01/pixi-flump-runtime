@@ -20,8 +20,8 @@ class FlumpFactory{
 	}
 
 
-	public function createMovie(id:String):Movie{
-		return new Movie(library.movies[id], this);
+	public function createMovie(id:String):FlumpMovie{
+		return new FlumpMovie(library.movies[id], this);
 	}
 
 
@@ -32,8 +32,6 @@ class FlumpFactory{
 		var sprite = new Sprite(texture);
 		sprite.pivot.x = symbol.origin.x;
 		sprite.pivot.y = symbol.origin.y;
-		//sprite.anchor.x = symbol.origin.x;
-		//sprite.anchor.y = symbol.origin.y;
 		return sprite;
 	}
 
