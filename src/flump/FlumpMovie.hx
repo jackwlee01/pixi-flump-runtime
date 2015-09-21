@@ -15,6 +15,7 @@ interface FlumpMovie{
 
 	function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):Void;
 	function renderMovieFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):MoviePlayer;
+	function getChildMovie(keyframe:Keyframe):MoviePlayer;
 	function renderEmptyFrame(keyframe:Keyframe):Void;
 
 }

@@ -34,7 +34,6 @@ class Movie extends Container implements FlumpMovie{
 	/////////////////////////////////////////////////////
 
 	public function beginSetup():Void{
-
 	}
 
 	
@@ -46,6 +45,20 @@ class Movie extends Container implements FlumpMovie{
 
 	public function endSetup():Void{
 
+	}
+
+
+	public function getChildMovie(keyframe:Keyframe):MoviePlayer{
+		ensureChildExists(keyframe);
+		var movie:Movie = cast movieChildren[keyframe.displayKey];
+		return movie.player;
+	}
+
+
+	private function ensureChildExists(keyframe:Keyframe){
+		if(movieChildren.exists(keyframe.displayKey) == false){
+			movieChildren[keyframe.displayKey] = factory.createDisplayObject(keyframe.symbolId);
+		}
 	}
 
 
@@ -62,22 +75,13 @@ class Movie extends Container implements FlumpMovie{
 	public function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):Void{
 		var layer = layers[keyframe.layer];
 		
-		if(movieChildren.exists(keyframe.displayKey) == false){
-			movieChildren[keyframe.displayKey] = factory.createDisplayObject(keyframe.symbolId);
-		}
+		ensureChildExists(keyframe);
 
 		if(displaying[keyframe.layer] != keyframe.displayKey){
 			if(displaying.exists(keyframe.layer)) layer.removeChild( movieChildren[ displaying[keyframe.layer] ] );
 			displaying[keyframe.layer] = keyframe.displayKey;
 			if(displaying[keyframe.layer] != null) layer.addChild(movieChildren[keyframe.displayKey]);
 		}
-
-
-
-		//movieChildren[keyframe.displayKey].x = keyframe.pivot.x;
-		//movieChildren[keyframe.displayKey].y = keyframe.pivot.y;
-
-		//trace(keyframe.pivot.x, keyframe.pivot.y);
 
 		layer.x = x;
 		layer.y = y;
@@ -87,13 +91,6 @@ class Movie extends Container implements FlumpMovie{
 		layer.skew.y = skewY;
 		layer.pivot.x = keyframe.pivot.x;
 		layer.pivot.y = keyframe.pivot.y;
-
-		//layer.pivot.x = keyframe.pivot.x;
-		//layer.pivot.y = keyframe.pivot.y;
-
-
-		//layer.x -= keyframe.pivot.x;
-		//layer.y -= keyframe.pivot.y;
 	}
 
 
