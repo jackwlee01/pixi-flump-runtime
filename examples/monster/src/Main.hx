@@ -2,14 +2,14 @@ package;
 	
 import flump.library.FlumpLibrary;
 import pixi.display.FlumpFactory;
-import pixi.display.Movie;
+import pixi.display.FlumpMovie;
 import pixi.plugins.app.Application;
 import pixi.display.FlumpLibraryLoader;
 
 
 class Main extends Application{
 
-	private var movies = new Array<Movie>();
+	private var movies = new Array<FlumpMovie>();
 	
 
 	public static function main():Void {
@@ -19,7 +19,6 @@ class Main extends Application{
 
 	public function new(){
 		super();
-		this.onUpdate = tick;
 		super.start();
 
 		FlumpLibraryLoader.load("./flump-assets").addOnce( onLibraryLoaded );	
@@ -28,15 +27,10 @@ class Main extends Application{
 
 	public function onLibraryLoaded(factory:FlumpFactory){
 		var monster = factory.createMovie("walk");
-		_stage.addChild(monster);
+		stage.addChild(monster);
 		monster.x = 200;
 		monster.y = 200;
 		movies.push(monster);
-	}
-
-
-	public function tick(time:Float){
-		for(movie in movies) movie.player.advanceTime(time);
 	}
 
 }

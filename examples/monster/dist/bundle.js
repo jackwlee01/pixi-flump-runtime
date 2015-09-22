@@ -117,26 +117,26 @@ pixi_plugins_app_Application.prototype = {
 		this.height = window.innerHeight;
 		this.set_fps(60);
 	}
-	,start: function(renderer,stats,parentDom) {
+	,start: function(rendererType,stats,parentDom) {
 		if(stats == null) stats = true;
-		if(renderer == null) renderer = "auto";
+		if(rendererType == null) rendererType = "auto";
 		var _this = window.document;
-		this._canvas = _this.createElement("canvas");
-		this._canvas.style.width = this.width + "px";
-		this._canvas.style.height = this.height + "px";
-		this._canvas.style.position = "absolute";
-		if(parentDom == null) window.document.body.appendChild(this._canvas); else parentDom.appendChild(this._canvas);
-		this._stage = new PIXI.Container();
+		this.canvas = _this.createElement("canvas");
+		this.canvas.style.width = this.width + "px";
+		this.canvas.style.height = this.height + "px";
+		this.canvas.style.position = "absolute";
+		if(parentDom == null) window.document.body.appendChild(this.canvas); else parentDom.appendChild(this.canvas);
+		this.stage = new PIXI.Container();
 		var renderingOptions = { };
-		renderingOptions.view = this._canvas;
+		renderingOptions.view = this.canvas;
 		renderingOptions.backgroundColor = this.backgroundColor;
 		renderingOptions.resolution = this.pixelRatio;
 		renderingOptions.antialias = this.antialias;
 		renderingOptions.forceFXAA = this.forceFXAA;
 		renderingOptions.autoResize = this.autoResize;
 		renderingOptions.transparent = this.transparent;
-		if(renderer == "auto") this._renderer = PIXI.autoDetectRenderer(this.width,this.height,renderingOptions); else if(renderer == "canvas") this._renderer = new PIXI.CanvasRenderer(this.width,this.height,renderingOptions); else this._renderer = new PIXI.WebGLRenderer(this.width,this.height,renderingOptions);
-		window.document.body.appendChild(this._renderer.view);
+		if(rendererType == "auto") this.renderer = PIXI.autoDetectRenderer(this.width,this.height,renderingOptions); else if(rendererType == "canvas") this.renderer = new PIXI.CanvasRenderer(this.width,this.height,renderingOptions); else this.renderer = new PIXI.WebGLRenderer(this.width,this.height,renderingOptions);
+		window.document.body.appendChild(this.renderer.view);
 		if(this.autoResize) window.onresize = $bind(this,this._onWindowResize);
 		window.requestAnimationFrame($bind(this,this._onRequestAnimationFrame));
 		this._lastTime = new Date();
@@ -145,9 +145,9 @@ pixi_plugins_app_Application.prototype = {
 	,_onWindowResize: function(event) {
 		this.width = window.innerWidth;
 		this.height = window.innerHeight;
-		this._renderer.resize(this.width,this.height);
-		this._canvas.style.width = this.width + "px";
-		this._canvas.style.height = this.height + "px";
+		this.renderer.resize(this.width,this.height);
+		this.canvas.style.width = this.width + "px";
+		this.canvas.style.height = this.height + "px";
 		if(this._stats != null) {
 			this._stats.domElement.style.top = "2px";
 			this._stats.domElement.style.right = "2px";
@@ -160,7 +160,7 @@ pixi_plugins_app_Application.prototype = {
 			this._frameCount = 0;
 			this._calculateElapsedTime();
 			if(this.onUpdate != null) this.onUpdate(this._elapsedTime);
-			this._renderer.render(this._stage);
+			this.renderer.render(this.stage);
 		}
 		window.requestAnimationFrame($bind(this,this._onRequestAnimationFrame));
 		if(this._stats != null) this._stats.update();
@@ -187,7 +187,6 @@ pixi_plugins_app_Application.prototype = {
 var Main = function() {
 	this.movies = [];
 	pixi_plugins_app_Application.call(this);
-	this.onUpdate = $bind(this,this.tick);
 	pixi_plugins_app_Application.prototype.start.call(this);
 	pixi_display_FlumpLibraryLoader.load("./flump-assets").addOnce($bind(this,this.onLibraryLoaded));
 };
@@ -199,19 +198,10 @@ Main.__super__ = pixi_plugins_app_Application;
 Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
 	onLibraryLoaded: function(factory) {
 		var monster = factory.createMovie("walk");
-		this._stage.addChild(monster);
+		this.stage.addChild(monster);
 		monster.x = 200;
 		monster.y = 200;
 		this.movies.push(monster);
-	}
-	,tick: function(time) {
-		var _g = 0;
-		var _g1 = this.movies;
-		while(_g < _g1.length) {
-			var movie = _g1[_g];
-			++_g;
-			movie.player.advanceTime(time);
-		}
 	}
 	,__class__: Main
 });
@@ -226,6 +216,14 @@ Reflect.compareMethods = function(f1,f2) {
 	if(!Reflect.isFunction(f1) || !Reflect.isFunction(f2)) return false;
 	return f1.scope == f2.scope && f1.method == f2.method && f1.method != null;
 };
+var Std = function() { };
+Std.__name__ = true;
+Std.string = function(s) {
+	return js_Boot.__string_rec(s,"");
+};
+Std["int"] = function(x) {
+	return x | 0;
+};
 var _$UInt_UInt_$Impl_$ = {};
 _$UInt_UInt_$Impl_$.__name__ = true;
 _$UInt_UInt_$Impl_$.gt = function(a,b) {
@@ -237,14 +235,31 @@ _$UInt_UInt_$Impl_$.toFloat = function(this1) {
 	var $int = this1;
 	if($int < 0) return 4294967296.0 + $int; else return $int + 0.0;
 };
-var flump_FlumpMovie = function() { };
-flump_FlumpMovie.__name__ = true;
-flump_FlumpMovie.prototype = {
-	__class__: flump_FlumpMovie
+var flump_DisplayObjectKey = function(symbolId) {
+	this.symbolId = symbolId;
+};
+flump_DisplayObjectKey.__name__ = true;
+flump_DisplayObjectKey.prototype = {
+	__class__: flump_DisplayObjectKey
+};
+var flump_IFlumpMovie = function() { };
+flump_IFlumpMovie.__name__ = true;
+flump_IFlumpMovie.prototype = {
+	__class__: flump_IFlumpMovie
 };
 var flump_MoviePlayer = function(symbol,movie) {
-	this.cursor = 0.0;
-	this.speed = 1.0;
+	this.position = 0.0;
+	this.childPlayers = new haxe_ds_ObjectMap();
+	this.createdChildren = new haxe_ds_ObjectMap();
+	this.currentChildrenKey = new haxe_ds_ObjectMap();
+	this.STATE_STOPPED = "stopped";
+	this.STATE_LOOPING = "looping";
+	this.STATE_PLAYING = "playing";
+	this.independantControl = false;
+	this.independantTimeline = true;
+	this.advanced = 0.0;
+	this.previousElapsed = 0.0;
+	this.elapsed = 0.0;
 	this.symbol = symbol;
 	this.movie = movie;
 	var _g = 0;
@@ -254,31 +269,160 @@ var flump_MoviePlayer = function(symbol,movie) {
 		++_g;
 		movie.createLayer(layer);
 	}
+	this.state = this.STATE_LOOPING;
 };
 flump_MoviePlayer.__name__ = true;
 flump_MoviePlayer.prototype = {
-	timeForIndex: function(index) {
-		return this.symbol.library.frameTime * index;
+	reset: function() {
+		this.elapsed = 0;
+		this.previousElapsed = 0;
+	}
+	,get_position: function() {
+		return (this.elapsed % this.symbol.duration + this.symbol.duration) % this.symbol.duration;
+	}
+	,get_totalFrames: function() {
+		return this.symbol.totalFrames;
+	}
+	,play: function() {
+		this.setState(this.STATE_PLAYING);
+		return this;
+	}
+	,loop: function() {
+		this.setState(this.STATE_LOOPING);
+		return this;
+	}
+	,stop: function() {
+		this.setState(this.STATE_STOPPED);
+		return this;
+	}
+	,goToLabel: function(label) {
+		if(!this.labelExists(label)) throw new js__$Boot_HaxeError("Symbol " + this.symbol.name + " does not have label " + label + ".");
+		this.set_currentFrame(this.getLabelFrame(label));
+		return this;
+	}
+	,goToFrame: function(frame) {
+		this.set_currentFrame(frame);
+		return this;
+	}
+	,goToPosition: function(time) {
+		this.elapsed = time;
+		this.previousElapsed = time;
+		return this;
+	}
+	,get_playing: function() {
+		return this.state == this.STATE_PLAYING;
+	}
+	,get_looping: function() {
+		return this.state == this.STATE_LOOPING;
+	}
+	,get_stopped: function() {
+		return this.state == this.STATE_STOPPED;
+	}
+	,getLabelFrame: function(label) {
+		if(!this.labelExists(label)) throw new js__$Boot_HaxeError("Symbol " + this.symbol.name + " does not have label " + label + ".");
+		return this.symbol.labels.get(label).keyframe.index;
+	}
+	,get_currentFrame: function() {
+		return Std["int"](this.get_position() / this.symbol.library.frameTime);
+	}
+	,set_currentFrame: function(value) {
+		this.goToPosition(this.symbol.library.frameTime * value);
+		return value;
+	}
+	,labelExists: function(label) {
+		return this.symbol.labels.exists("label");
+	}
+	,advanceTime: function(ms) {
+		if(this.state != this.STATE_STOPPED) this.elapsed += ms;
+		this.advanced += ms;
+		this.render();
+	}
+	,render: function() {
+		if(this.state == this.STATE_PLAYING) {
+			if(this.get_position() < 0) {
+				this.elapsed = 0;
+				this.stop();
+			} else if(this.get_position() > this.symbol.duration - this.symbol.library.frameTime) {
+				this.elapsed = this.symbol.duration - this.symbol.library.frameTime;
+				this.stop();
+			}
+		}
+		while(this.get_position() < 0) this.position += this.symbol.duration;
+		var _g = 0;
+		var _g1 = this.symbol.layers;
+		while(_g < _g1.length) {
+			var layer = _g1[_g];
+			++_g;
+			var keyframe = layer.getKeyframeForTime(this.get_position());
+			if(keyframe.isEmpty == true) this.removeChildIfNessessary(keyframe); else if(keyframe.isEmpty == false) {
+				var interped = this.getInterpolation(keyframe,this.get_position());
+				var next = keyframe.next;
+				if(next.isEmpty) next = keyframe;
+				this.movie.renderFrame(keyframe,keyframe.location.x + (next.location.x - keyframe.location.x) * interped,keyframe.location.y + (next.location.y - keyframe.location.y) * interped,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped);
+				if(this.currentChildrenKey.h[layer.__id__] != keyframe.displayKey) {
+					this.createChildIfNessessary(keyframe);
+					this.removeChildIfNessessary(keyframe);
+					this.addChildIfNessessary(keyframe);
+				}
+				if(js_Boot.__instanceof(keyframe.symbol,flump_library_MovieSymbol)) {
+					var childMovie = this.movie.getChildPlayer(keyframe);
+					if(childMovie.independantTimeline) {
+						childMovie.advanceTime(this.advanced);
+						childMovie.render();
+					} else {
+						childMovie.elapsed = this.get_position();
+						childMovie.render();
+					}
+				}
+			}
+		}
+		this.advanced = 0;
+		this.previousElapsed = this.elapsed;
+	}
+	,createChildIfNessessary: function(keyframe) {
+		if(keyframe.isEmpty) return;
+		if(this.createdChildren.h.__keys__[keyframe.displayKey.__id__] != null == false) {
+			this.movie.createFlumpChild(keyframe.displayKey);
+			{
+				this.createdChildren.set(keyframe.displayKey,true);
+				true;
+			}
+		}
+	}
+	,removeChildIfNessessary: function(keyframe) {
+		if(this.currentChildrenKey.h.__keys__[keyframe.layer.__id__] != null) {
+			this.movie.removeFlumpChild(keyframe.layer,keyframe.displayKey);
+			this.currentChildrenKey.remove(keyframe.layer);
+		}
+	}
+	,addChildIfNessessary: function(keyframe) {
+		if(keyframe.isEmpty) return;
+		var v = keyframe.displayKey;
+		this.currentChildrenKey.set(keyframe.layer,v);
+		v;
+		this.movie.addFlumpChild(keyframe.layer,keyframe.displayKey);
+	}
+	,setState: function(state) {
+		this.state = state;
+		var _g = 0;
+		var _g1 = this.symbol.layers;
+		while(_g < _g1.length) {
+			var layer = _g1[_g];
+			++_g;
+			var keyframe = layer.getKeyframeForTime(this.get_position());
+			this.createChildIfNessessary(keyframe);
+			if(js_Boot.__instanceof(keyframe.symbol,flump_library_MovieSymbol)) {
+				var childMovie = this.movie.getChildPlayer(keyframe);
+				if(childMovie.independantControl == false) childMovie.setState(state);
+			}
+		}
 	}
 	,timeForLabel: function(label) {
 		return this.symbol.labels.get(label).keyframe.time;
 	}
-	,hasLabel: function(label) {
-		return this.symbol.labels.exists("label");
-	}
-	,getFrameForLabel: function(label) {
-		return this.symbol.labels.get(label).keyframe.index;
-	}
-	,getKeyframeForTime: function(layer,time) {
-		var keyframe = layer.lastKeyframe;
-		while(keyframe.time > time) keyframe = keyframe.prev;
-		return keyframe;
-	}
 	,getInterpolation: function(keyframe,time) {
 		if(keyframe.tweened == false) return 0.0;
-		if(keyframe.next.isEmpty == true) return 0.0;
-		var interped;
-		if(this.speed >= 0) interped = (time - keyframe.time) / keyframe.duration; else interped = (keyframe.time - time) / keyframe.duration;
+		var interped = (time - keyframe.time) / keyframe.duration;
 		var ease = keyframe.ease;
 		if(ease != 0) {
 			var t;
@@ -290,32 +434,6 @@ flump_MoviePlayer.prototype = {
 			interped = ease * t + (1 - ease) * interped;
 		}
 		return interped;
-	}
-	,advanceTime: function(dt) {
-		this.cursor += dt * this.speed;
-		this.cursor = this.cursor % this.symbol.duration;
-		this.render(dt);
-	}
-	,render: function(dt) {
-		this.movie.startRender();
-		var _g = 0;
-		var _g1 = this.symbol.layers;
-		while(_g < _g1.length) {
-			var layer = _g1[_g];
-			++_g;
-			var keyframe = this.getKeyframeForTime(layer,this.cursor);
-			if(keyframe.isEmpty == true) this.movie.renderEmptyFrame(keyframe); else if(keyframe.isEmpty == false) {
-				var interped = this.getInterpolation(keyframe,this.cursor);
-				var next;
-				if(this.speed >= 0) next = keyframe.next; else next = keyframe.prev;
-				if(next.isEmpty) next = keyframe;
-				if(js_Boot.__instanceof(keyframe.symbol,flump_library_MovieSymbol)) {
-					var child = this.movie.renderMovieFrame(keyframe,keyframe.location.x + (next.location.x - keyframe.location.x) * interped,keyframe.location.y + (next.location.y - keyframe.location.y) * interped,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped);
-					child.advanceTime(dt);
-				} else this.movie.renderFrame(keyframe,keyframe.location.x + (next.location.x - keyframe.location.x) * interped,keyframe.location.y + (next.location.y - keyframe.location.y) * interped,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped);
-			}
-		}
-		this.movie.completeRender();
 	}
 	,__class__: flump_MoviePlayer
 };
@@ -468,41 +586,32 @@ flump_library_FlumpLibrary.parseJSON = function(raw) {
 					var keyframe2 = [_g52[_g42]];
 					++_g42;
 					var hasNonEmptySibling = Lambda.exists(layer1.keyframes,(function(keyframe2) {
-						return function(checkedKeyframe) {
-							return checkedKeyframe.isEmpty == false && checkedKeyframe != keyframe2[0];
+						return function(checkedKeyframe1) {
+							return checkedKeyframe1.isEmpty == false && checkedKeyframe1 != keyframe2[0];
 						};
 					})(keyframe2));
 					if(hasNonEmptySibling) {
-						var checked = keyframe2[0].prev;
-						while(checked.isEmpty) checked = checked.prev;
-						keyframe2[0].prevNonEmptyKeyframe = checked;
-						checked = keyframe2[0].next;
-						while(checked.isEmpty) checked = checked.next;
-						keyframe2[0].nextNonEmptyKeyframe = checked;
+						var checked1 = keyframe2[0].prev;
+						while(checked1.isEmpty) checked1 = checked1.prev;
+						keyframe2[0].prevNonEmptyKeyframe = checked1;
+						checked1 = keyframe2[0].next;
+						while(checked1.isEmpty) checked1 = checked1.next;
+						keyframe2[0].nextNonEmptyKeyframe = checked1;
 					} else {
 						keyframe2[0].prevNonEmptyKeyframe = keyframe2[0];
 						keyframe2[0].nextNonEmptyKeyframe = keyframe2[0];
 					}
 				}
-				var _g43 = 0;
-				var _g53 = layer1.keyframes;
-				while(_g43 < _g53.length) {
-					var keyframe3 = _g53[_g43];
-					++_g43;
-					var firstNonEmpty = Lambda.find(layer1.keyframes,(function() {
-						return function(checkedKeyframe1) {
-							return checkedKeyframe1.isEmpty == false;
-						};
-					})());
-					if(firstNonEmpty != null) {
-						var currentKey = firstNonEmpty;
-						var currentCheckedKeyframe = firstNonEmpty;
-						while(currentCheckedKeyframe.displayKey == null) {
-							if(currentCheckedKeyframe.symbolId != currentKey.symbolId) currentKey = currentCheckedKeyframe;
-							currentCheckedKeyframe.displayKey = currentKey;
-							currentCheckedKeyframe = currentCheckedKeyframe.nextNonEmptyKeyframe;
-						}
-					}
+				var firstNonEmpty = Lambda.find(layer1.keyframes,(function() {
+					return function(checkedKeyframe) {
+						return checkedKeyframe.isEmpty == false;
+					};
+				})());
+				if(firstNonEmpty != null) firstNonEmpty.displayKey = new flump_DisplayObjectKey(firstNonEmpty.symbolId);
+				var checked = firstNonEmpty.nextNonEmptyKeyframe;
+				while(checked != firstNonEmpty) {
+					if(checked.symbolId == checked.prevNonEmptyKeyframe.symbolId) checked.displayKey = checked.prevNonEmptyKeyframe.displayKey; else checked.displayKey = new flump_DisplayObjectKey(checked.symbolId);
+					checked = checked.nextNonEmptyKeyframe;
 				}
 			}
 		}
@@ -512,8 +621,36 @@ flump_library_FlumpLibrary.parseJSON = function(raw) {
 				if(_$UInt_UInt_$Impl_$.gt(layerLength,accum)) return layerLength; else return accum;
 			};
 		})();
-		symbol1.numFrames = Lambda.fold(symbol1.layers,getHighestFrameNumber,0);
-		symbol1.duration = _$UInt_UInt_$Impl_$.toFloat(symbol1.numFrames) * flumpLibrary.frameTime;
+		symbol1.totalFrames = Lambda.fold(symbol1.layers,getHighestFrameNumber,0);
+		symbol1.duration = _$UInt_UInt_$Impl_$.toFloat(symbol1.totalFrames) * flumpLibrary.frameTime;
+		var labels = [];
+		var _g23 = 0;
+		var _g32 = symbol1.layers;
+		while(_g23 < _g32.length) {
+			var layer2 = _g32[_g23];
+			++_g23;
+			var _g43 = 0;
+			var _g53 = layer2.keyframes;
+			while(_g43 < _g53.length) {
+				var keyframe3 = _g53[_g43];
+				++_g43;
+				if(keyframe3.label != null) labels.push(keyframe3.label);
+			}
+		}
+		haxe_ds_ArraySort.sort(labels,flump_library_FlumpLibrary.sortLabel);
+		var _g33 = 0;
+		var _g24 = labels.length;
+		while(_g33 < _g24) {
+			var i = _g33++;
+			var nextIndex = i + 1;
+			if(nextIndex >= labels.length) nextIndex = 0;
+			var label = labels[i];
+			var nextLabel = labels[nextIndex];
+			label.next = nextLabel;
+			nextLabel.prev = label;
+		}
+		symbol1.fistLabel = labels[0];
+		symbol1.lastLabel = labels[labels.length - 1];
 		{
 			movieSymbols.set(symbol1.name,symbol1);
 			symbol1;
@@ -527,6 +664,10 @@ flump_library_FlumpLibrary.parseJSON = function(raw) {
 	}
 	return flumpLibrary;
 };
+flump_library_FlumpLibrary.sortLabel = function(a,b) {
+	if(_$UInt_UInt_$Impl_$.gt(b.keyframe.index,a.keyframe.index)) return -1; else if(_$UInt_UInt_$Impl_$.gt(a.keyframe.index,b.keyframe.index)) return 1;
+	return 0;
+};
 flump_library_FlumpLibrary.prototype = {
 	__class__: flump_library_FlumpLibrary
 };
@@ -534,7 +675,16 @@ var flump_library_Keyframe = function() {
 };
 flump_library_Keyframe.__name__ = true;
 flump_library_Keyframe.prototype = {
-	__class__: flump_library_Keyframe
+	timeInside: function(time) {
+		return this.time <= time && this.time + this.duration > time;
+	}
+	,rangeInside: function(from,to) {
+		return this.timeInside(from) && this.timeInside(to);
+	}
+	,rangeIntersect: function(from,to) {
+		return this.timeInside(from) || this.timeInside(to);
+	}
+	,__class__: flump_library_Keyframe
 };
 var flump_library_Label = function() {
 };
@@ -548,7 +698,12 @@ var flump_library_Layer = function(name) {
 };
 flump_library_Layer.__name__ = true;
 flump_library_Layer.prototype = {
-	__class__: flump_library_Layer
+	getKeyframeForTime: function(time) {
+		var keyframe = this.lastKeyframe;
+		while(keyframe.time > time % this.movie.duration) keyframe = keyframe.prev;
+		return keyframe;
+	}
+	,__class__: flump_library_Layer
 };
 var flump_library_Symbol = function() {
 };
@@ -580,7 +735,7 @@ flump_library_MovieSymbol.prototype = $extend(flump_library_Symbol.prototype,{
 		output1 += repeat(" ",largestLayerChars);
 		output1 += "   ";
 		var _g1 = 0;
-		var _g = this.numFrames;
+		var _g = this.totalFrames;
 		while(_g1 < _g) {
 			var i = _g1++;
 			if(i % 5 == 0) output1 += i; else if(i % 6 != 0 || i < 10) output1 += " ";
@@ -589,7 +744,7 @@ flump_library_MovieSymbol.prototype = $extend(flump_library_Symbol.prototype,{
 		output1 += repeat(" ",largestLayerChars);
 		output1 += "   ";
 		var _g11 = 0;
-		var _g2 = this.numFrames;
+		var _g2 = this.totalFrames;
 		while(_g11 < _g2) {
 			var i1 = _g11++;
 			if(i1 % 5 == 0) output1 += "▽"; else output1 += " ";
@@ -756,6 +911,115 @@ haxe_Http.prototype = {
 	}
 	,__class__: haxe_Http
 };
+var haxe_ds_ArraySort = function() { };
+haxe_ds_ArraySort.__name__ = true;
+haxe_ds_ArraySort.sort = function(a,cmp) {
+	haxe_ds_ArraySort.rec(a,cmp,0,a.length);
+};
+haxe_ds_ArraySort.rec = function(a,cmp,from,to) {
+	var middle = from + to >> 1;
+	if(to - from < 12) {
+		if(to <= from) return;
+		var _g = from + 1;
+		while(_g < to) {
+			var i = _g++;
+			var j = i;
+			while(j > from) {
+				if(cmp(a[j],a[j - 1]) < 0) haxe_ds_ArraySort.swap(a,j - 1,j); else break;
+				j--;
+			}
+		}
+		return;
+	}
+	haxe_ds_ArraySort.rec(a,cmp,from,middle);
+	haxe_ds_ArraySort.rec(a,cmp,middle,to);
+	haxe_ds_ArraySort.doMerge(a,cmp,from,middle,to,middle - from,to - middle);
+};
+haxe_ds_ArraySort.doMerge = function(a,cmp,from,pivot,to,len1,len2) {
+	var first_cut;
+	var second_cut;
+	var len11;
+	var len22;
+	var new_mid;
+	if(len1 == 0 || len2 == 0) return;
+	if(len1 + len2 == 2) {
+		if(cmp(a[pivot],a[from]) < 0) haxe_ds_ArraySort.swap(a,pivot,from);
+		return;
+	}
+	if(len1 > len2) {
+		len11 = len1 >> 1;
+		first_cut = from + len11;
+		second_cut = haxe_ds_ArraySort.lower(a,cmp,pivot,to,first_cut);
+		len22 = second_cut - pivot;
+	} else {
+		len22 = len2 >> 1;
+		second_cut = pivot + len22;
+		first_cut = haxe_ds_ArraySort.upper(a,cmp,from,pivot,second_cut);
+		len11 = first_cut - from;
+	}
+	haxe_ds_ArraySort.rotate(a,cmp,first_cut,pivot,second_cut);
+	new_mid = first_cut + len22;
+	haxe_ds_ArraySort.doMerge(a,cmp,from,first_cut,new_mid,len11,len22);
+	haxe_ds_ArraySort.doMerge(a,cmp,new_mid,second_cut,to,len1 - len11,len2 - len22);
+};
+haxe_ds_ArraySort.rotate = function(a,cmp,from,mid,to) {
+	var n;
+	if(from == mid || mid == to) return;
+	n = haxe_ds_ArraySort.gcd(to - from,mid - from);
+	while(n-- != 0) {
+		var val = a[from + n];
+		var shift = mid - from;
+		var p1 = from + n;
+		var p2 = from + n + shift;
+		while(p2 != from + n) {
+			a[p1] = a[p2];
+			p1 = p2;
+			if(to - p2 > shift) p2 += shift; else p2 = from + (shift - (to - p2));
+		}
+		a[p1] = val;
+	}
+};
+haxe_ds_ArraySort.gcd = function(m,n) {
+	while(n != 0) {
+		var t = m % n;
+		m = n;
+		n = t;
+	}
+	return m;
+};
+haxe_ds_ArraySort.upper = function(a,cmp,from,to,val) {
+	var len = to - from;
+	var half;
+	var mid;
+	while(len > 0) {
+		half = len >> 1;
+		mid = from + half;
+		if(cmp(a[val],a[mid]) < 0) len = half; else {
+			from = mid + 1;
+			len = len - half - 1;
+		}
+	}
+	return from;
+};
+haxe_ds_ArraySort.lower = function(a,cmp,from,to,val) {
+	var len = to - from;
+	var half;
+	var mid;
+	while(len > 0) {
+		half = len >> 1;
+		mid = from + half;
+		if(cmp(a[mid],a[val]) < 0) {
+			from = mid + 1;
+			len = len - half - 1;
+		} else len = half;
+	}
+	return from;
+};
+haxe_ds_ArraySort.swap = function(a,i,j) {
+	var tmp = a[i];
+	a[i] = a[j];
+	a[j] = tmp;
+};
 var haxe_ds_ObjectMap = function() {
 	this.h = { };
 	this.h.__keys__ = { };
@@ -834,6 +1098,74 @@ js_Boot.getClass = function(o) {
 		var name = js_Boot.__nativeClassName(o);
 		if(name != null) return js_Boot.__resolveNativeClass(name);
 		return null;
+	}
+};
+js_Boot.__string_rec = function(o,s) {
+	if(o == null) return "null";
+	if(s.length >= 5) return "<...>";
+	var t = typeof(o);
+	if(t == "function" && (o.__name__ || o.__ename__)) t = "object";
+	switch(t) {
+	case "object":
+		if(o instanceof Array) {
+			if(o.__enum__) {
+				if(o.length == 2) return o[0];
+				var str2 = o[0] + "(";
+				s += "\t";
+				var _g1 = 2;
+				var _g = o.length;
+				while(_g1 < _g) {
+					var i1 = _g1++;
+					if(i1 != 2) str2 += "," + js_Boot.__string_rec(o[i1],s); else str2 += js_Boot.__string_rec(o[i1],s);
+				}
+				return str2 + ")";
+			}
+			var l = o.length;
+			var i;
+			var str1 = "[";
+			s += "\t";
+			var _g2 = 0;
+			while(_g2 < l) {
+				var i2 = _g2++;
+				str1 += (i2 > 0?",":"") + js_Boot.__string_rec(o[i2],s);
+			}
+			str1 += "]";
+			return str1;
+		}
+		var tostr;
+		try {
+			tostr = o.toString;
+		} catch( e ) {
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			return "???";
+		}
+		if(tostr != null && tostr != Object.toString && typeof(tostr) == "function") {
+			var s2 = o.toString();
+			if(s2 != "[object Object]") return s2;
+		}
+		var k = null;
+		var str = "{\n";
+		s += "\t";
+		var hasp = o.hasOwnProperty != null;
+		for( var k in o ) {
+		if(hasp && !o.hasOwnProperty(k)) {
+			continue;
+		}
+		if(k == "prototype" || k == "__class__" || k == "__super__" || k == "__interfaces__" || k == "__properties__") {
+			continue;
+		}
+		if(str.length != 2) str += ", \n";
+		str += s + k + " : " + js_Boot.__string_rec(o[k],s);
+		}
+		s = s.substring(1);
+		str += "\n" + s + "}";
+		return str;
+	case "function":
+		return "<function>";
+	case "string":
+		return o;
+	default:
+		return String(o);
 	}
 };
 js_Boot.__interfLoop = function(cc,cl) {
@@ -1187,7 +1519,7 @@ var pixi_display_FlumpFactory = function(library,textures) {
 pixi_display_FlumpFactory.__name__ = true;
 pixi_display_FlumpFactory.prototype = {
 	createMovie: function(id) {
-		return new pixi_display_Movie(this.library.movies.get(id),this);
+		return new pixi_display_FlumpMovie(this.library.movies.get(id),this,true);
 	}
 	,createSprite: function(id) {
 		var symbol = this.library.sprites.get(id);
@@ -1199,6 +1531,9 @@ pixi_display_FlumpFactory.prototype = {
 	}
 	,createDisplayObject: function(id) {
 		if(this.library.movies.exists(id)) return this.createMovie(id); else return this.createSprite(id);
+	}
+	,createChildDisplayObject: function(id) {
+		if(this.library.movies.exists(id)) return new pixi_display_FlumpMovie(this.library.movies.get(id),this,false); else return this.createSprite(id);
 	}
 	,__class__: pixi_display_FlumpFactory
 };
@@ -1245,49 +1580,105 @@ pixi_display_FlumpLibraryLoader.loadTextures = function(lib,path,complete) {
 	}
 	complete.dispatch(new pixi_display_FlumpFactory(lib,textures));
 };
-var pixi_display_Movie = function(symbol,flumpFactory) {
+var pixi_display_FlumpMovie = function(symbol,flumpFactory,master) {
+	this.animationSpeed = 1.0;
+	this.ticker = PIXI.ticker.shared;
 	this.displaying = new haxe_ds_ObjectMap();
 	this.movieChildren = new haxe_ds_ObjectMap();
+	this.layerLookup = new haxe_ds_StringMap();
 	this.layers = new haxe_ds_ObjectMap();
 	PIXI.Container.call(this);
+	this.symbol = symbol;
 	this.factory = flumpFactory;
+	this.master = master;
 	this.player = new flump_MoviePlayer(symbol,this);
+	if(master) this.once("added",$bind(this,this.onAdded));
 };
-pixi_display_Movie.__name__ = true;
-pixi_display_Movie.__interfaces__ = [flump_FlumpMovie];
-pixi_display_Movie.__super__ = PIXI.Container;
-pixi_display_Movie.prototype = $extend(PIXI.Container.prototype,{
-	beginSetup: function() {
+pixi_display_FlumpMovie.__name__ = true;
+pixi_display_FlumpMovie.__interfaces__ = [flump_IFlumpMovie];
+pixi_display_FlumpMovie.__super__ = PIXI.Container;
+pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
+	get_symbolId: function() {
+		return this.symbol.name;
+	}
+	,set_loop: function(value) {
+		return this.loop = value;
+	}
+	,set_onComplete: function(value) {
+		return null;
+	}
+	,set_currentFrame: function(value) {
+		this.player.set_currentFrame(value);
+		return value;
+	}
+	,get_playing: function() {
+		return this.player.get_playing();
+	}
+	,get_totalFrames: function() {
+		return this.player.get_totalFrames();
+	}
+	,stop: function() {
+		this.player.stop();
+	}
+	,play: function() {
+		if(this.loop) this.player.loop(); else this.player.play();
+	}
+	,gotoAndStop: function(frameNumber) {
+		this.player.goToFrame(frameNumber).stop();
+	}
+	,gotoAndPlay: function(frameNumber) {
+		if(this.loop) this.player.goToFrame(frameNumber).play(); else this.player.goToFrame(frameNumber).stop();
+	}
+	,getLayer: function(name) {
+		return this.layerLookup.get(name);
+	}
+	,onLabelEnter: function(label,callback) {
+		if(!this.player.labelExists(label)) throw new js__$Boot_HaxeError("Label " + label + "does not exist for movie " + this.symbol.name);
+		this.on("enter_" + label,callback);
+	}
+	,onLabelExit: function(label,callback) {
+		if(!this.player.labelExists(label)) throw new js__$Boot_HaxeError("Label " + label + "does not exist for movie " + this.symbol.name);
+		this.on("exit_" + label,callback);
+	}
+	,tick: function() {
+		this.player.advanceTime(this.ticker.elapsedMS * this.animationSpeed);
+	}
+	,onAdded: function(to) {
+		this.once("removed",$bind(this,this.onRemoved));
+		this.ticker.add($bind(this,this.tick));
+	}
+	,onRemoved: function(from) {
+		this.once("added",$bind(this,this.onAdded));
+		this.ticker.remove($bind(this,this.tick));
 	}
 	,createLayer: function(layer) {
 		var v = new pixi_display_PixiLayer();
 		this.layers.set(layer,v);
 		v;
+		var v1 = this.layers.h[layer.__id__];
+		this.layerLookup.set(layer.name,v1);
+		v1;
 		this.addChild(this.layers.h[layer.__id__]);
 	}
-	,endSetup: function() {
+	,getChildPlayer: function(keyframe) {
+		var movie = this.movieChildren.h[keyframe.displayKey.__id__];
+		return movie.player;
 	}
-	,startRender: function() {
+	,createFlumpChild: function(displayKey) {
+		var v = this.factory.createChildDisplayObject(displayKey.symbolId);
+		this.movieChildren.set(displayKey,v);
+		v;
+	}
+	,removeFlumpChild: function(layer,displayKey) {
+		var layer1 = this.layers.h[layer.__id__];
+		layer1.removeChildren();
+	}
+	,addFlumpChild: function(layer,displayKey) {
+		var layer1 = this.layers.h[layer.__id__];
+		layer1.addChild(this.movieChildren.h[displayKey.__id__]);
 	}
 	,renderFrame: function(keyframe,x,y,scaleX,scaleY,skewX,skewY) {
 		var layer = this.layers.h[keyframe.layer.__id__];
-		if(this.movieChildren.h.__keys__[keyframe.displayKey.__id__] != null == false) {
-			var v = this.factory.createDisplayObject(keyframe.symbolId);
-			this.movieChildren.set(keyframe.displayKey,v);
-			v;
-		}
-		if(this.displaying.h[keyframe.layer.__id__] != keyframe.displayKey) {
-			if(this.displaying.h.__keys__[keyframe.layer.__id__] != null) layer.removeChild((function($this) {
-				var $r;
-				var key = $this.displaying.h[keyframe.layer.__id__];
-				$r = $this.movieChildren.h[key.__id__];
-				return $r;
-			}(this)));
-			var v1 = keyframe.displayKey;
-			this.displaying.set(keyframe.layer,v1);
-			v1;
-			if(this.displaying.h[keyframe.layer.__id__] != null) layer.addChild(this.movieChildren.h[keyframe.displayKey.__id__]);
-		}
 		layer.x = x;
 		layer.y = y;
 		layer.scale.x = scaleX;
@@ -1297,26 +1688,13 @@ pixi_display_Movie.prototype = $extend(PIXI.Container.prototype,{
 		layer.pivot.x = keyframe.pivot.x;
 		layer.pivot.y = keyframe.pivot.y;
 	}
-	,renderMovieFrame: function(keyframe,x,y,scaleX,scaleY,skewX,skewY) {
-		this.renderFrame(keyframe,x,y,scaleX,scaleY,skewX,skewY);
-		var movie = this.movieChildren.h[keyframe.displayKey.__id__];
-		return movie.player;
+	,labelEnter: function(label) {
+		this.emit("enter_" + Std.string(label),this);
 	}
-	,renderEmptyFrame: function(keyframe) {
-		var layerContainer = this.layers.h[keyframe.layer.__id__];
-		if(this.displaying.h.__keys__[keyframe.layer.__id__] != null) {
-			layerContainer.removeChild((function($this) {
-				var $r;
-				var key = $this.displaying.h[keyframe.layer.__id__];
-				$r = $this.movieChildren.h[key.__id__];
-				return $r;
-			}(this)));
-			this.displaying.remove(keyframe.layer);
-		}
+	,labelExit: function(label) {
+		this.emit("exit_" + Std.string(label),this);
 	}
-	,completeRender: function() {
-	}
-	,__class__: pixi_display_Movie
+	,__class__: pixi_display_FlumpMovie
 });
 var pixi_display_PixiLayer = function() {
 	this.skew = new PIXI.Point();
@@ -1439,6 +1817,9 @@ pixi_plugins_app_Application.AUTO = "auto";
 pixi_plugins_app_Application.RECOMMENDED = "recommended";
 pixi_plugins_app_Application.CANVAS = "canvas";
 pixi_plugins_app_Application.WEBGL = "webgl";
+flump_library_Label.LABEL_ENTER = "labelEnter";
+flump_library_Label.LABEL_EXIT = "labelExit";
+flump_library_Label.LABEL_UPDATE = "labelUpdate";
 haxe_ds_ObjectMap.count = 0;
 js_Boot.__toStr = {}.toString;
 Main.main();
