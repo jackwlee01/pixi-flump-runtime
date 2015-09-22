@@ -151,29 +151,17 @@ class FlumpMovie extends Container implements IFlumpMovie{
 	/////////////////////////////////////////////////////
 
 	
-	private function beginSetup():Void{
-	}
-
-
+	
 	private function createLayer(layer:Layer):Void{
 		layers[layer] = new PixiLayer();
 		layerLookup[layer.name] = layers[layer];
 		addChild(layers[layer]);
 	}
-	
-
-	private function endSetup():Void{
-
-	}
 
 
-	private function getChildMovie(keyframe:Keyframe):MoviePlayer{
+	private function getChildPlayer(keyframe:Keyframe):MoviePlayer{
 		var movie:FlumpMovie = cast movieChildren[keyframe.displayKey];
 		return movie.player;
-	}
-
-
-	private function startRender():Void{
 	}
 
 
@@ -196,17 +184,6 @@ class FlumpMovie extends Container implements IFlumpMovie{
 
 	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):Void{
 		var layer = layers[keyframe.layer];
-		
-		/*
-		ensureChildExists(keyframe);
-
-		if(displaying[keyframe.layer] != keyframe.displayKey){
-			if(displaying.exists(keyframe.layer)) layer.removeChild( movieChildren[ displaying[keyframe.layer] ] );
-			displaying[keyframe.layer] = keyframe.displayKey;
-			if(displaying[keyframe.layer] != null) layer.addChild(movieChildren[keyframe.displayKey]);
-		}
-		*/
-
 		layer.x = x;
 		layer.y = y;
 		layer.scale.x = scaleX;
@@ -215,27 +192,6 @@ class FlumpMovie extends Container implements IFlumpMovie{
 		layer.skew.y = skewY;
 		layer.pivot.x = keyframe.pivot.x;
 		layer.pivot.y = keyframe.pivot.y;
-	}
-
-
-	private function renderMovieFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):MoviePlayer{
-		renderFrame(keyframe, x, y, scaleX, scaleY, skewX, skewY);
-		var movie:FlumpMovie = cast movieChildren[keyframe.displayKey];
-		return movie.player;
-	}
-
-
-	private function renderEmptyFrame(keyframe:Keyframe):Void{
-		var layerContainer = layers[keyframe.layer];
-		if(displaying.exists(keyframe.layer)){
-			layerContainer.removeChild( movieChildren[ displaying[keyframe.layer] ] );
-			displaying.remove(keyframe.layer);
-		}
-	}
-	
-
-	private function completeRender():Void{
-
 	}
 
 

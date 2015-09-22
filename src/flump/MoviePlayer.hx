@@ -21,10 +21,6 @@ class MoviePlayer{
 
 	public var independantTimeline:Bool = true;
 	public var independantControl:Bool = false;
-	
-	private var invalid:Bool = false;
-	private var pendingLabels = new Array<Label>();
-	private var currentKeyframes = new Array<Keyframe>();
 
 	private var state:String;
 	private var STATE_PLAYING:String = "playing";
@@ -42,7 +38,6 @@ class MoviePlayer{
 		
 		for(layer in symbol.layers){
 			movie.createLayer(layer);
-			currentKeyframes.unshift(layer.firstKeyframe);
 		}
 
 		state = STATE_LOOPING;
@@ -88,14 +83,12 @@ class MoviePlayer{
 	public function goToLabel(label:String){
 		if(!labelExists(label)) throw("Symbol " + symbol.name + " does not have label " + label + "." );
 		currentFrame = getLabelFrame(label);
-		invalid = true;
 		return this;
 	}
 
 
 	public function goToFrame(frame:Int){
 		currentFrame = frame;
-		invalid = true;
 		return this;
 	}
 
@@ -103,7 +96,6 @@ class MoviePlayer{
 	public function goToPosition(time:Float){
 		elapsed = time;
 		previousElapsed = time;
-		invalid = true;
 		return this;
 	}
 
@@ -148,46 +140,11 @@ class MoviePlayer{
 	public function advanceTime(ms:Float):Void{
 		if(state != STATE_STOPPED) elapsed += ms;
 		advanced += ms;
-
-		//if(master) symbol.fireLabels(onLabelFired);
-		//if(invalid) return advanceTime(0);
-
 		render();
 	}
 
 
-	/*
-	private function fireLabels(){
-		for(layer in symbol.layers){
-			var prev = layer.getKeyframeForTime(elapsed - advanced);
-			var next = prev;
-			var cur = layer.getKeyframeForTime(elapsed);
-			while(prev != cur){
-
-				// Label EXIT
-				if(next != null) if(next.label != null) labelExit(next.label);
-
-				if(next == null)
-
-				if(advanced > 0) next = next.next;
-				else next = next.prev;
-
-				// Label ENTER
-				
-				if(next != null) if(next.label != null && next != prev) label
-
-			}
-		}
-	}
-	*/
-
-
 	private function render():Void{
-		if(invalid){
-			advanced = 0;
-			invalid = false;
-		}
-
 		if(state == STATE_PLAYING){
 			if(position < 0){
 				elapsed = 0;
@@ -200,13 +157,11 @@ class MoviePlayer{
 
 		while(position < 0) position += symbol.duration;
 		
-		movie.startRender();
-
 		for(layer in symbol.layers){
 			var keyframe = layer.getKeyframeForTime(position);
 
 			if(keyframe.isEmpty == true){
-				movie.renderEmptyFrame(keyframe);
+				removeChildIfNessessary(keyframe);
 			}else if(keyframe.isEmpty == false){
 				var interped = getInterpolation(keyframe, position);
 				var next = keyframe.next;
@@ -230,7 +185,7 @@ class MoviePlayer{
 				}
 
 				if(keyframe.symbol.is(MovieSymbol)){
-					var childMovie = movie.getChildMovie(keyframe);
+					var childMovie = movie.getChildPlayer(keyframe);
 
 					if(childMovie.independantTimeline){
 						childMovie.advanceTime(advanced);
@@ -244,7 +199,6 @@ class MoviePlayer{
 		}
 		advanced = 0;
 		previousElapsed = elapsed;
-		movie.completeRender();
 	}
 
 
@@ -272,46 +226,7 @@ class MoviePlayer{
 	}
 
 
-	private function compileLabels(from:Float, to:Float){
-		for(layer in symbol.layers){
-			var prev = layer.getKeyframeForTime(from);
-
-			/*
-			if(prev.label != null){
-				if(pendingLabels.length == 0){
-					pendingLabels.push(prev.label);
-				else{
-					var checked = pendingLabels[pendingLabels.length];
-					var insertAt = pendingLabels.length;
-					while()
-				}
-			}
-			*/
-			
-			/*
-			var prev = layer.getKeyframeForTime(elapsed - advanced);
-			var next = prev;
-			var cur = layer.getKeyframeForTime(elapsed);
-			while(prev != cur){
-
-				// Label EXIT
-				if(next != null) if(next.label != null) labelExit(next.label);
-
-				if(next == null)
-
-				if(advanced > 0) next = next.next;
-				else next = next.prev;
-
-				// Label ENTER
-				
-				if(next != null) if(next.label != null && next != prev) label
-			}
-		*/
-		}
-	}
-
-
-
+	
 	//////////////////////////////////////////////////////////////
 	//
 	//  Utilities
@@ -326,7 +241,7 @@ class MoviePlayer{
 			createChildIfNessessary(keyframe);
 
 			if(keyframe.symbol.is(MovieSymbol)){
-				var childMovie = movie.getChildMovie(keyframe);
+				var childMovie = movie.getChildPlayer(keyframe);
 				if(childMovie.independantControl == false){
 					childMovie.setState(state);
 				}
