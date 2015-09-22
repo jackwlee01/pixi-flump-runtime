@@ -1,22 +1,31 @@
 package flump;
 
-import flump.library.Keyframe;
-import flump.library.Layer;
+import flump.library.*;
 
 
+@:allow(flump)
 interface IFlumpMovie{
 
-	function beginSetup():Void;
-	function createLayer(layer:Layer):Void;
-	function endSetup():Void;
+	private var master:Bool;
 
-	function startRender():Void;
-	function completeRender():Void;
+	private function beginSetup():Void;
+	private function createLayer(layer:Layer):Void;
+	private function endSetup():Void;
 
-	function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):Void;
-	function renderMovieFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):MoviePlayer;
-	function getChildMovie(keyframe:Keyframe):MoviePlayer;
-	function renderEmptyFrame(keyframe:Keyframe):Void;
+	private function startRender():Void;
+	private function completeRender():Void;
+
+	private function createFlumpChild(displayKey:DisplayObjectKey):Void;
+	private function removeFlumpChild(layer:Layer, displayKey:DisplayObjectKey):Void;
+	private function addFlumpChild(layer:Layer, displayKey:DisplayObjectKey):Void;
+
+	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):Void;
+	private function renderMovieFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):MoviePlayer;
+	private function getChildMovie(keyframe:Keyframe):MoviePlayer;
+	private function renderEmptyFrame(keyframe:Keyframe):Void;
+
+	private function labelEnter(label:Label):Void;
+	private function labelExit(label:Label):Void;
 
 }
 

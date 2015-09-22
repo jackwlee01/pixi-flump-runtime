@@ -3,4 +3,13 @@ package flump;
 import flump.library.Keyframe;
 
 
-typedef DisplayObjectKey = Keyframe;
+class DisplayObjectKey {
+
+	public var symbolId:String;
+
+
+	public function new(symbolId:String){
+		this.symbolId = symbolId;
+	}
+
+}

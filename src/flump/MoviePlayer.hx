@@ -1,5 +1,6 @@
 package flump;
 
+import flump.DisplayObjectKey;
 import flump.IFlumpMovie;
 import flump.library.MovieSymbol;
 import flump.library.Layer;
@@ -15,23 +16,42 @@ class MoviePlayer{
 	private var movie:IFlumpMovie;
 
 	private var elapsed:Float = 0.0; // Total time that has elapsed
+	private var previousElapsed:Float = 0.0;
 	private var advanced:Float = 0.0; // Time advanced since the last frame
 
 	public var independantTimeline:Bool = true;
 	public var independantControl:Bool = false;
 	
+	private var invalid:Bool = false;
+	private var pendingLabels = new Array<Label>();
+	private var currentKeyframes = new Array<Keyframe>();
+
 	private var state:String;
 	private var STATE_PLAYING:String = "playing";
 	private var STATE_LOOPING:String = "looping";
 	private var STATE_STOPPED:String = "stopped";
-	
+		
+	private var currentChildrenKey = new Map<Layer, DisplayObjectKey>();
+	private var createdChildren = new Map<DisplayObjectKey, Bool>();
+	private var childPlayers = new Map<DisplayObjectKey, MoviePlayer>();
+
 
 	public function new(symbol:MovieSymbol, movie:IFlumpMovie){
 		this.symbol = symbol;
 		this.movie = movie;
 		
-		for(layer in symbol.layers) movie.createLayer(layer);
+		for(layer in symbol.layers){
+			movie.createLayer(layer);
+			currentKeyframes.unshift(layer.firstKeyframe);
+		}
+
 		state = STATE_LOOPING;
+	}
+
+
+	private function reset(){
+		elapsed = 0;
+		previousElapsed = 0;
 	}
 
 
@@ -41,9 +61,9 @@ class MoviePlayer{
 	}
 
 
-	public var numFrames (get, null) :UInt;
-	private function get_numFrames(){
-		return symbol.numFrames;
+	public var totalFrames (get, null) :UInt;
+	private function get_totalFrames(){
+		return symbol.totalFrames;
 	}
 
 
@@ -66,45 +86,46 @@ class MoviePlayer{
 
 
 	public function goToLabel(label:String){
-		if(!hasLabel(label)) throw("Symbol " + symbol.name + " does not have label " + label + "." );
+		if(!labelExists(label)) throw("Symbol " + symbol.name + " does not have label " + label + "." );
 		currentFrame = getLabelFrame(label);
+		invalid = true;
 		return this;
 	}
 
 
 	public function goToFrame(frame:Int){
 		currentFrame = frame;
+		invalid = true;
 		return this;
 	}
 
 
 	public function goToPosition(time:Float){
 		elapsed = time;
+		previousElapsed = time;
+		invalid = true;
 		return this;
 	}
 
 
-
-	public var isPlaying(get, null):Bool;
-	private function get_isPlaying(){
+	public var playing(get, null):Bool;
+	private function get_playing(){
 		return state == STATE_PLAYING;
 	}
 
-
-	public var isLooping(get, null):Bool;
-	private function get_isLooping(){
+	public var looping(get, null):Bool;
+	private function get_looping(){
 		return state == STATE_LOOPING;
 	}
 
-
-	public var isStopped(get, null):Bool;
-	private function get_isStopped(){
+	public var stopped(get, null):Bool;
+	private function get_stopped(){
 		return state == STATE_STOPPED;
 	}
 
 
 	public function getLabelFrame(label:String):UInt{
-		if(!hasLabel(label)) throw("Symbol " + symbol.name + " does not have label " + label + "." );
+		if(!labelExists(label)) throw("Symbol " + symbol.name + " does not have label " + label + "." );
 		return symbol.labels.get(label).keyframe.index;
 	}
 	
@@ -119,8 +140,174 @@ class MoviePlayer{
 	}
 
 
-	public function hasLabel(label:String):Bool{
+	public function labelExists(label:String):Bool{
 		return symbol.labels.exists("label");
+	}
+
+
+	public function advanceTime(ms:Float):Void{
+		if(state != STATE_STOPPED) elapsed += ms;
+		advanced += ms;
+
+		//if(master) symbol.fireLabels(onLabelFired);
+		//if(invalid) return advanceTime(0);
+
+		render();
+	}
+
+
+	/*
+	private function fireLabels(){
+		for(layer in symbol.layers){
+			var prev = layer.getKeyframeForTime(elapsed - advanced);
+			var next = prev;
+			var cur = layer.getKeyframeForTime(elapsed);
+			while(prev != cur){
+
+				// Label EXIT
+				if(next != null) if(next.label != null) labelExit(next.label);
+
+				if(next == null)
+
+				if(advanced > 0) next = next.next;
+				else next = next.prev;
+
+				// Label ENTER
+				
+				if(next != null) if(next.label != null && next != prev) label
+
+			}
+		}
+	}
+	*/
+
+
+	private function render():Void{
+		if(invalid){
+			advanced = 0;
+			invalid = false;
+		}
+
+		if(state == STATE_PLAYING){
+			if(position < 0){
+				elapsed = 0;
+				stop();
+			}else if(position > symbol.duration - symbol.library.frameTime){
+				elapsed = symbol.duration - symbol.library.frameTime;
+				stop();
+			}
+		}
+
+		while(position < 0) position += symbol.duration;
+		
+		movie.startRender();
+
+		for(layer in symbol.layers){
+			var keyframe = layer.getKeyframeForTime(position);
+
+			if(keyframe.isEmpty == true){
+				movie.renderEmptyFrame(keyframe);
+			}else if(keyframe.isEmpty == false){
+				var interped = getInterpolation(keyframe, position);
+				var next = keyframe.next;
+				if(next.isEmpty) next = keyframe; // NASTY! FIX THIS!!
+
+				movie.renderFrame(
+					keyframe,
+					keyframe.location.x + (next.location.x - keyframe.location.x) * interped,
+					keyframe.location.y + (next.location.y - keyframe.location.y) * interped,
+					keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,
+					keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,
+					keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,
+					keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped
+				);
+
+
+				if(currentChildrenKey.get(layer) != keyframe.displayKey){
+					createChildIfNessessary(keyframe);
+					removeChildIfNessessary(keyframe);
+					addChildIfNessessary(keyframe);
+				}
+
+				if(keyframe.symbol.is(MovieSymbol)){
+					var childMovie = movie.getChildMovie(keyframe);
+
+					if(childMovie.independantTimeline){
+						childMovie.advanceTime(advanced);
+						childMovie.render();
+					}else{
+						childMovie.elapsed = position;
+						childMovie.render();
+					}
+				}
+			}
+		}
+		advanced = 0;
+		previousElapsed = elapsed;
+		movie.completeRender();
+	}
+
+
+	private function createChildIfNessessary(keyframe:Keyframe){
+		if(keyframe.isEmpty) return;
+		if(createdChildren.exists(keyframe.displayKey) == false){
+			movie.createFlumpChild(keyframe.displayKey);
+			createdChildren[keyframe.displayKey] = true;
+		}
+	}
+
+
+	private function removeChildIfNessessary(keyframe:Keyframe){
+		if(currentChildrenKey.exists(keyframe.layer)){
+			movie.removeFlumpChild(keyframe.layer, keyframe.displayKey);
+			currentChildrenKey.remove(keyframe.layer);
+		}
+	}
+
+
+	private function addChildIfNessessary(keyframe:Keyframe){
+		if(keyframe.isEmpty) return;
+		currentChildrenKey[keyframe.layer] = keyframe.displayKey;
+		movie.addFlumpChild(keyframe.layer, keyframe.displayKey);
+	}
+
+
+	private function compileLabels(from:Float, to:Float){
+		for(layer in symbol.layers){
+			var prev = layer.getKeyframeForTime(from);
+
+			/*
+			if(prev.label != null){
+				if(pendingLabels.length == 0){
+					pendingLabels.push(prev.label);
+				else{
+					var checked = pendingLabels[pendingLabels.length];
+					var insertAt = pendingLabels.length;
+					while()
+				}
+			}
+			*/
+			
+			/*
+			var prev = layer.getKeyframeForTime(elapsed - advanced);
+			var next = prev;
+			var cur = layer.getKeyframeForTime(elapsed);
+			while(prev != cur){
+
+				// Label EXIT
+				if(next != null) if(next.label != null) labelExit(next.label);
+
+				if(next == null)
+
+				if(advanced > 0) next = next.next;
+				else next = next.prev;
+
+				// Label ENTER
+				
+				if(next != null) if(next.label != null && next != prev) label
+			}
+		*/
+		}
 	}
 
 
@@ -135,7 +322,9 @@ class MoviePlayer{
 		this.state = state;
 
 		for(layer in symbol.layers){
-			var keyframe = getKeyframeForTime(layer, position);
+			var keyframe = layer.getKeyframeForTime(position);
+			createChildIfNessessary(keyframe);
+
 			if(keyframe.symbol.is(MovieSymbol)){
 				var childMovie = movie.getChildMovie(keyframe);
 				if(childMovie.independantControl == false){
@@ -145,16 +334,10 @@ class MoviePlayer{
 		}
 	}
 
-	
+
+
 	private function timeForLabel(label:String):Float{
 		return symbol.labels.get(label).keyframe.time;
-	}
-
-
-	private function getKeyframeForTime(layer:Layer, time:Float){
-		var keyframe = layer.lastKeyframe;
-		while(keyframe.time > time) keyframe = keyframe.prev;
-		return keyframe;
 	}
 
 
@@ -179,64 +362,6 @@ class MoviePlayer{
 		return interped;
 	}
 
-	public function advanceTime(dt:Float){
-		if(state != STATE_STOPPED) elapsed += dt;
-		advanced += dt;
-		render();
-	}
-
-
-	public function render(){
-		if(state == STATE_PLAYING){
-			if(position < 0){
-				elapsed = 0;
-				stop();
-			}else if(position > symbol.duration - symbol.library.frameTime){
-				elapsed = symbol.duration - symbol.library.frameTime;
-				stop();
-			}
-		}
-
-		while(position < 0) position += symbol.duration;
-		
-		movie.startRender();
-
-		for(layer in symbol.layers){
-			var keyframe = getKeyframeForTime(layer, position);
-
-			if(keyframe.isEmpty == true){
-				movie.renderEmptyFrame(keyframe);
-			}else if(keyframe.isEmpty == false){
-				var interped = getInterpolation(keyframe, position);
-				var next = keyframe.next;
-				if(next.isEmpty) next = keyframe; // NASTY! FIX THIS!!
-
-				movie.renderFrame(
-					keyframe,
-					keyframe.location.x + (next.location.x - keyframe.location.x) * interped,
-					keyframe.location.y + (next.location.y - keyframe.location.y) * interped,
-					keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,
-					keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,
-					keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,
-					keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped
-				);
-
-				if(keyframe.symbol.is(MovieSymbol)){
-					var childMovie = movie.getChildMovie(keyframe);
-
-					if(childMovie.independantTimeline){
-						childMovie.advanceTime(advanced);
-						childMovie.render();
-					}else{
-						childMovie.elapsed = position;
-						childMovie.render();
-					}
-				}
-			}
-		}
-		advanced = 0;
-		movie.completeRender();
-	}
 
 }
 

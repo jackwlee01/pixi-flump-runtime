@@ -16,4 +16,11 @@ class Layer{
 		this.name = name;
 	}
 
+
+	public function getKeyframeForTime(time:Float){
+		var keyframe = lastKeyframe;
+		while(keyframe.time > time % movie.duration) keyframe = keyframe.prev;
+		return keyframe;
+	}
+
 }

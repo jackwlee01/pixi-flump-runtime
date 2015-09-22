@@ -2,6 +2,7 @@ package flump.library;
 
 import flump.DisplayObjectKey;
 import flump.json.FlumpJSON;
+import flump.library.Label;
 using Lambda;
 
 
@@ -86,7 +87,6 @@ class FlumpLibrary{
 						keyframe.scale = keyframeSpec.scale == null ? new Point(1,1) : new Point(keyframeSpec.scale.x, keyframeSpec.scale.y);
 						keyframe.skew = keyframeSpec.skew == null ? new Point(0,0) : new Point(keyframeSpec.skew.x, keyframeSpec.skew.y);
 						
-
 						keyframe.ease = keyframeSpec.ease == null ? 0 : keyframeSpec.ease;
 					}
 
@@ -134,19 +134,14 @@ class FlumpLibrary{
 						}
 					}
 
-					for(keyframe in layer.keyframes){
-						var firstNonEmpty = layer.keyframes.find(function(checkedKeyframe) return checkedKeyframe.isEmpty == false);
-						if(firstNonEmpty != null){
-							var currentKey = firstNonEmpty;
-							var currentCheckedKeyframe = firstNonEmpty;
-							while(currentCheckedKeyframe.displayKey == null){
-								if(currentCheckedKeyframe.symbolId != currentKey.symbolId){
-									currentKey = currentCheckedKeyframe;
-								}
-								currentCheckedKeyframe.displayKey = currentKey;
-								currentCheckedKeyframe = currentCheckedKeyframe.nextNonEmptyKeyframe;
-							}
-						}
+					// Set up diplay keys
+					var firstNonEmpty = layer.keyframes.find(function(checkedKeyframe) return checkedKeyframe.isEmpty == false);
+					if(firstNonEmpty != null) firstNonEmpty.displayKey = new DisplayObjectKey(firstNonEmpty.symbolId);
+					var checked = firstNonEmpty.nextNonEmptyKeyframe;
+					while(checked != firstNonEmpty){
+						if(checked.symbolId == checked.prevNonEmptyKeyframe.symbolId) checked.displayKey = checked.prevNonEmptyKeyframe.displayKey;
+						else checked.displayKey = new DisplayObjectKey(checked.symbolId);
+						checked = checked.nextNonEmptyKeyframe;
 					}
 				}		
 			}
@@ -158,10 +153,31 @@ class FlumpLibrary{
 					: accum;
 			}
 
-			symbol.numFrames = symbol.layers.fold( getHighestFrameNumber, 0 );
-			symbol.duration = symbol.numFrames * flumpLibrary.frameTime;
+			symbol.totalFrames = symbol.layers.fold( getHighestFrameNumber, 0 );
+			symbol.duration = symbol.totalFrames * flumpLibrary.frameTime;
+
+			var labels = new Array<Label>();
+			for(layer in symbol.layers){
+				for(keyframe in layer.keyframes){
+					if(keyframe.label != null){
+						labels.push(keyframe.label);
+					}
+				}
+			}
+			haxe.ds.ArraySort.sort(labels, sortLabel);
+			for(i in 0...labels.length){
+				var nextIndex = i+1;
+				if(nextIndex >= labels.length) nextIndex = 0;
+
+				var label = labels[i];
+				var nextLabel = labels[nextIndex];
+				label.next = nextLabel;
+				nextLabel.prev = label;
+			}
+			symbol.fistLabel = labels[0];
+			symbol.lastLabel = labels[labels.length-1];
 			
-			movieSymbols[symbol.name] = symbol;
+			movieSymbols[symbol.name] = symbol;			
 		}
 
 		for(keyframe in pendingSymbolAttachments.keys()){
@@ -170,6 +186,13 @@ class FlumpLibrary{
 		}
 
 		return flumpLibrary;
+	}
+
+
+	private static function sortLabel(a:Label, b:Label):Int{
+		if(a.keyframe.index < b.keyframe.index) return -1;
+		else if(a.keyframe.index > b.keyframe.index) return 1;
+		return 0;
 	}
 
 

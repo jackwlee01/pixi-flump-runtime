@@ -10,12 +10,14 @@ class MovieSymbol extends Symbol{
 	public var library:FlumpLibrary;
 
 	public var duration:Float;
-	public var numFrames:UInt;
-
+	public var totalFrames:UInt;
+	public var fistLabel:Label;
+	public var lastLabel:Label;
 
 	public function new(){
 		super();
 	}
+
 
 	public function debug(){
 		var largestLayerChars = Lambda.fold(layers, function(layer, result) return layer.name.length > result ? layer.name.length : result, 0);
@@ -34,7 +36,7 @@ class MovieSymbol extends Symbol{
 
 		output += repeat(" ", largestLayerChars);	
 		output += "   ";
-		for(i in 0...numFrames){
+		for(i in 0...totalFrames){
 			if(i%5 == 0) output += i;
 			else{
 				if(i % 6 != 0 || i < 10) output += " ";
@@ -44,7 +46,7 @@ class MovieSymbol extends Symbol{
 
 		output += repeat(" ", largestLayerChars);	
 		output += "   ";
-		for(i in 0...numFrames){
+		for(i in 0...totalFrames){
 			if(i%5 == 0) output += "▽";
 			else output += " ";
 		}
