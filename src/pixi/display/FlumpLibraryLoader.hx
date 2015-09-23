@@ -9,6 +9,7 @@ import pixi.core.math.Point;
 import pixi.core.math.shapes.Rectangle;
 import pixi.core.textures.Texture;
 import pixi.core.textures.BaseTexture;
+import pixi.core.ticker.Ticker;
 
 
 class FlumpLibraryLoader{

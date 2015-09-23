@@ -7,8 +7,8 @@ import pixi.core.math.Point;
 class PixiLayer extends Container{
 
     public var skew = new Point();
-
-    public function updateTransform(){
+    
+    override public function updateTransform(){
         untyped __js__('
             if (!this.visible)
             {

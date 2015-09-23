@@ -31,5 +31,18 @@ class Keyframe{
 
 	public function new(){}
 
+
+	public function timeInside(time:Float){
+		return (this.time <= time) && (this.time + duration) > time;
+	}
+
+	public function rangeInside(from:Float, to:Float){
+		return timeInside(from) && timeInside(to);
+	}
+
+	public function rangeIntersect(from:Float, to:Float){
+		return timeInside(from) || timeInside(to);
+	}
+
 }
 

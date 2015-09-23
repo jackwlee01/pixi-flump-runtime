@@ -1452,508 +1452,508 @@ process.umask = function() { return 0; };
 /*! http://mths.be/punycode v1.2.4 by @mathias */
 ;(function(root) {
 
-	/** Detect free variables */
-	var freeExports = typeof exports == 'object' && exports;
-	var freeModule = typeof module == 'object' && module &&
-		module.exports == freeExports && module;
-	var freeGlobal = typeof global == 'object' && global;
-	if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal) {
-		root = freeGlobal;
-	}
+    /** Detect free variables */
+    var freeExports = typeof exports == 'object' && exports;
+    var freeModule = typeof module == 'object' && module &&
+        module.exports == freeExports && module;
+    var freeGlobal = typeof global == 'object' && global;
+    if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal) {
+        root = freeGlobal;
+    }
 
-	/**
-	 * The `punycode` object.
-	 * @name punycode
-	 * @type Object
-	 */
-	var punycode,
+    /**
+     * The `punycode` object.
+     * @name punycode
+     * @type Object
+     */
+    var punycode,
 
-	/** Highest positive signed 32-bit float value */
-	maxInt = 2147483647, // aka. 0x7FFFFFFF or 2^31-1
+    /** Highest positive signed 32-bit float value */
+    maxInt = 2147483647, // aka. 0x7FFFFFFF or 2^31-1
 
-	/** Bootstring parameters */
-	base = 36,
-	tMin = 1,
-	tMax = 26,
-	skew = 38,
-	damp = 700,
-	initialBias = 72,
-	initialN = 128, // 0x80
-	delimiter = '-', // '\x2D'
+    /** Bootstring parameters */
+    base = 36,
+    tMin = 1,
+    tMax = 26,
+    skew = 38,
+    damp = 700,
+    initialBias = 72,
+    initialN = 128, // 0x80
+    delimiter = '-', // '\x2D'
 
-	/** Regular expressions */
-	regexPunycode = /^xn--/,
-	regexNonASCII = /[^ -~]/, // unprintable ASCII chars + non-ASCII chars
-	regexSeparators = /\x2E|\u3002|\uFF0E|\uFF61/g, // RFC 3490 separators
+    /** Regular expressions */
+    regexPunycode = /^xn--/,
+    regexNonASCII = /[^ -~]/, // unprintable ASCII chars + non-ASCII chars
+    regexSeparators = /\x2E|\u3002|\uFF0E|\uFF61/g, // RFC 3490 separators
 
-	/** Error messages */
-	errors = {
-		'overflow': 'Overflow: input needs wider integers to process',
-		'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
-		'invalid-input': 'Invalid input'
-	},
+    /** Error messages */
+    errors = {
+        'overflow': 'Overflow: input needs wider integers to process',
+        'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
+        'invalid-input': 'Invalid input'
+    },
 
-	/** Convenience shortcuts */
-	baseMinusTMin = base - tMin,
-	floor = Math.floor,
-	stringFromCharCode = String.fromCharCode,
+    /** Convenience shortcuts */
+    baseMinusTMin = base - tMin,
+    floor = Math.floor,
+    stringFromCharCode = String.fromCharCode,
 
-	/** Temporary variable */
-	key;
+    /** Temporary variable */
+    key;
 
-	/*--------------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------------*/
 
-	/**
-	 * A generic error utility function.
-	 * @private
-	 * @param {String} type The error type.
-	 * @returns {Error} Throws a `RangeError` with the applicable error message.
-	 */
-	function error(type) {
-		throw RangeError(errors[type]);
-	}
+    /**
+     * A generic error utility function.
+     * @private
+     * @param {String} type The error type.
+     * @returns {Error} Throws a `RangeError` with the applicable error message.
+     */
+    function error(type) {
+        throw RangeError(errors[type]);
+    }
 
-	/**
-	 * A generic `Array#map` utility function.
-	 * @private
-	 * @param {Array} array The array to iterate over.
-	 * @param {Function} callback The function that gets called for every array
-	 * item.
-	 * @returns {Array} A new array of values returned by the callback function.
-	 */
-	function map(array, fn) {
-		var length = array.length;
-		while (length--) {
-			array[length] = fn(array[length]);
-		}
-		return array;
-	}
+    /**
+     * A generic `Array#map` utility function.
+     * @private
+     * @param {Array} array The array to iterate over.
+     * @param {Function} callback The function that gets called for every array
+     * item.
+     * @returns {Array} A new array of values returned by the callback function.
+     */
+    function map(array, fn) {
+        var length = array.length;
+        while (length--) {
+            array[length] = fn(array[length]);
+        }
+        return array;
+    }
 
-	/**
-	 * A simple `Array#map`-like wrapper to work with domain name strings.
-	 * @private
-	 * @param {String} domain The domain name.
-	 * @param {Function} callback The function that gets called for every
-	 * character.
-	 * @returns {Array} A new string of characters returned by the callback
-	 * function.
-	 */
-	function mapDomain(string, fn) {
-		return map(string.split(regexSeparators), fn).join('.');
-	}
+    /**
+     * A simple `Array#map`-like wrapper to work with domain name strings.
+     * @private
+     * @param {String} domain The domain name.
+     * @param {Function} callback The function that gets called for every
+     * character.
+     * @returns {Array} A new string of characters returned by the callback
+     * function.
+     */
+    function mapDomain(string, fn) {
+        return map(string.split(regexSeparators), fn).join('.');
+    }
 
-	/**
-	 * Creates an array containing the numeric code points of each Unicode
-	 * character in the string. While JavaScript uses UCS-2 internally,
-	 * this function will convert a pair of surrogate halves (each of which
-	 * UCS-2 exposes as separate characters) into a single code point,
-	 * matching UTF-16.
-	 * @see `punycode.ucs2.encode`
-	 * @see <http://mathiasbynens.be/notes/javascript-encoding>
-	 * @memberOf punycode.ucs2
-	 * @name decode
-	 * @param {String} string The Unicode input string (UCS-2).
-	 * @returns {Array} The new array of code points.
-	 */
-	function ucs2decode(string) {
-		var output = [],
-		    counter = 0,
-		    length = string.length,
-		    value,
-		    extra;
-		while (counter < length) {
-			value = string.charCodeAt(counter++);
-			if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
-				// high surrogate, and there is a next character
-				extra = string.charCodeAt(counter++);
-				if ((extra & 0xFC00) == 0xDC00) { // low surrogate
-					output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
-				} else {
-					// unmatched surrogate; only append this code unit, in case the next
-					// code unit is the high surrogate of a surrogate pair
-					output.push(value);
-					counter--;
-				}
-			} else {
-				output.push(value);
-			}
-		}
-		return output;
-	}
+    /**
+     * Creates an array containing the numeric code points of each Unicode
+     * character in the string. While JavaScript uses UCS-2 internally,
+     * this function will convert a pair of surrogate halves (each of which
+     * UCS-2 exposes as separate characters) into a single code point,
+     * matching UTF-16.
+     * @see `punycode.ucs2.encode`
+     * @see <http://mathiasbynens.be/notes/javascript-encoding>
+     * @memberOf punycode.ucs2
+     * @name decode
+     * @param {String} string The Unicode input string (UCS-2).
+     * @returns {Array} The new array of code points.
+     */
+    function ucs2decode(string) {
+        var output = [],
+            counter = 0,
+            length = string.length,
+            value,
+            extra;
+        while (counter < length) {
+            value = string.charCodeAt(counter++);
+            if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
+                // high surrogate, and there is a next character
+                extra = string.charCodeAt(counter++);
+                if ((extra & 0xFC00) == 0xDC00) { // low surrogate
+                    output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
+                } else {
+                    // unmatched surrogate; only append this code unit, in case the next
+                    // code unit is the high surrogate of a surrogate pair
+                    output.push(value);
+                    counter--;
+                }
+            } else {
+                output.push(value);
+            }
+        }
+        return output;
+    }
 
-	/**
-	 * Creates a string based on an array of numeric code points.
-	 * @see `punycode.ucs2.decode`
-	 * @memberOf punycode.ucs2
-	 * @name encode
-	 * @param {Array} codePoints The array of numeric code points.
-	 * @returns {String} The new Unicode string (UCS-2).
-	 */
-	function ucs2encode(array) {
-		return map(array, function(value) {
-			var output = '';
-			if (value > 0xFFFF) {
-				value -= 0x10000;
-				output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
-				value = 0xDC00 | value & 0x3FF;
-			}
-			output += stringFromCharCode(value);
-			return output;
-		}).join('');
-	}
+    /**
+     * Creates a string based on an array of numeric code points.
+     * @see `punycode.ucs2.decode`
+     * @memberOf punycode.ucs2
+     * @name encode
+     * @param {Array} codePoints The array of numeric code points.
+     * @returns {String} The new Unicode string (UCS-2).
+     */
+    function ucs2encode(array) {
+        return map(array, function(value) {
+            var output = '';
+            if (value > 0xFFFF) {
+                value -= 0x10000;
+                output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
+                value = 0xDC00 | value & 0x3FF;
+            }
+            output += stringFromCharCode(value);
+            return output;
+        }).join('');
+    }
 
-	/**
-	 * Converts a basic code point into a digit/integer.
-	 * @see `digitToBasic()`
-	 * @private
-	 * @param {Number} codePoint The basic numeric code point value.
-	 * @returns {Number} The numeric value of a basic code point (for use in
-	 * representing integers) in the range `0` to `base - 1`, or `base` if
-	 * the code point does not represent a value.
-	 */
-	function basicToDigit(codePoint) {
-		if (codePoint - 48 < 10) {
-			return codePoint - 22;
-		}
-		if (codePoint - 65 < 26) {
-			return codePoint - 65;
-		}
-		if (codePoint - 97 < 26) {
-			return codePoint - 97;
-		}
-		return base;
-	}
+    /**
+     * Converts a basic code point into a digit/integer.
+     * @see `digitToBasic()`
+     * @private
+     * @param {Number} codePoint The basic numeric code point value.
+     * @returns {Number} The numeric value of a basic code point (for use in
+     * representing integers) in the range `0` to `base - 1`, or `base` if
+     * the code point does not represent a value.
+     */
+    function basicToDigit(codePoint) {
+        if (codePoint - 48 < 10) {
+            return codePoint - 22;
+        }
+        if (codePoint - 65 < 26) {
+            return codePoint - 65;
+        }
+        if (codePoint - 97 < 26) {
+            return codePoint - 97;
+        }
+        return base;
+    }
 
-	/**
-	 * Converts a digit/integer into a basic code point.
-	 * @see `basicToDigit()`
-	 * @private
-	 * @param {Number} digit The numeric value of a basic code point.
-	 * @returns {Number} The basic code point whose value (when used for
-	 * representing integers) is `digit`, which needs to be in the range
-	 * `0` to `base - 1`. If `flag` is non-zero, the uppercase form is
-	 * used; else, the lowercase form is used. The behavior is undefined
-	 * if `flag` is non-zero and `digit` has no uppercase form.
-	 */
-	function digitToBasic(digit, flag) {
-		//  0..25 map to ASCII a..z or A..Z
-		// 26..35 map to ASCII 0..9
-		return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
-	}
+    /**
+     * Converts a digit/integer into a basic code point.
+     * @see `basicToDigit()`
+     * @private
+     * @param {Number} digit The numeric value of a basic code point.
+     * @returns {Number} The basic code point whose value (when used for
+     * representing integers) is `digit`, which needs to be in the range
+     * `0` to `base - 1`. If `flag` is non-zero, the uppercase form is
+     * used; else, the lowercase form is used. The behavior is undefined
+     * if `flag` is non-zero and `digit` has no uppercase form.
+     */
+    function digitToBasic(digit, flag) {
+        //  0..25 map to ASCII a..z or A..Z
+        // 26..35 map to ASCII 0..9
+        return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
+    }
 
-	/**
-	 * Bias adaptation function as per section 3.4 of RFC 3492.
-	 * http://tools.ietf.org/html/rfc3492#section-3.4
-	 * @private
-	 */
-	function adapt(delta, numPoints, firstTime) {
-		var k = 0;
-		delta = firstTime ? floor(delta / damp) : delta >> 1;
-		delta += floor(delta / numPoints);
-		for (/* no initialization */; delta > baseMinusTMin * tMax >> 1; k += base) {
-			delta = floor(delta / baseMinusTMin);
-		}
-		return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
-	}
+    /**
+     * Bias adaptation function as per section 3.4 of RFC 3492.
+     * http://tools.ietf.org/html/rfc3492#section-3.4
+     * @private
+     */
+    function adapt(delta, numPoints, firstTime) {
+        var k = 0;
+        delta = firstTime ? floor(delta / damp) : delta >> 1;
+        delta += floor(delta / numPoints);
+        for (/* no initialization */; delta > baseMinusTMin * tMax >> 1; k += base) {
+            delta = floor(delta / baseMinusTMin);
+        }
+        return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
+    }
 
-	/**
-	 * Converts a Punycode string of ASCII-only symbols to a string of Unicode
-	 * symbols.
-	 * @memberOf punycode
-	 * @param {String} input The Punycode string of ASCII-only symbols.
-	 * @returns {String} The resulting string of Unicode symbols.
-	 */
-	function decode(input) {
-		// Don't use UCS-2
-		var output = [],
-		    inputLength = input.length,
-		    out,
-		    i = 0,
-		    n = initialN,
-		    bias = initialBias,
-		    basic,
-		    j,
-		    index,
-		    oldi,
-		    w,
-		    k,
-		    digit,
-		    t,
-		    /** Cached calculation results */
-		    baseMinusT;
+    /**
+     * Converts a Punycode string of ASCII-only symbols to a string of Unicode
+     * symbols.
+     * @memberOf punycode
+     * @param {String} input The Punycode string of ASCII-only symbols.
+     * @returns {String} The resulting string of Unicode symbols.
+     */
+    function decode(input) {
+        // Don't use UCS-2
+        var output = [],
+            inputLength = input.length,
+            out,
+            i = 0,
+            n = initialN,
+            bias = initialBias,
+            basic,
+            j,
+            index,
+            oldi,
+            w,
+            k,
+            digit,
+            t,
+            /** Cached calculation results */
+            baseMinusT;
 
-		// Handle the basic code points: let `basic` be the number of input code
-		// points before the last delimiter, or `0` if there is none, then copy
-		// the first basic code points to the output.
+        // Handle the basic code points: let `basic` be the number of input code
+        // points before the last delimiter, or `0` if there is none, then copy
+        // the first basic code points to the output.
 
-		basic = input.lastIndexOf(delimiter);
-		if (basic < 0) {
-			basic = 0;
-		}
+        basic = input.lastIndexOf(delimiter);
+        if (basic < 0) {
+            basic = 0;
+        }
 
-		for (j = 0; j < basic; ++j) {
-			// if it's not a basic code point
-			if (input.charCodeAt(j) >= 0x80) {
-				error('not-basic');
-			}
-			output.push(input.charCodeAt(j));
-		}
+        for (j = 0; j < basic; ++j) {
+            // if it's not a basic code point
+            if (input.charCodeAt(j) >= 0x80) {
+                error('not-basic');
+            }
+            output.push(input.charCodeAt(j));
+        }
 
-		// Main decoding loop: start just after the last delimiter if any basic code
-		// points were copied; start at the beginning otherwise.
+        // Main decoding loop: start just after the last delimiter if any basic code
+        // points were copied; start at the beginning otherwise.
 
-		for (index = basic > 0 ? basic + 1 : 0; index < inputLength; /* no final expression */) {
+        for (index = basic > 0 ? basic + 1 : 0; index < inputLength; /* no final expression */) {
 
-			// `index` is the index of the next character to be consumed.
-			// Decode a generalized variable-length integer into `delta`,
-			// which gets added to `i`. The overflow checking is easier
-			// if we increase `i` as we go, then subtract off its starting
-			// value at the end to obtain `delta`.
-			for (oldi = i, w = 1, k = base; /* no condition */; k += base) {
+            // `index` is the index of the next character to be consumed.
+            // Decode a generalized variable-length integer into `delta`,
+            // which gets added to `i`. The overflow checking is easier
+            // if we increase `i` as we go, then subtract off its starting
+            // value at the end to obtain `delta`.
+            for (oldi = i, w = 1, k = base; /* no condition */; k += base) {
 
-				if (index >= inputLength) {
-					error('invalid-input');
-				}
+                if (index >= inputLength) {
+                    error('invalid-input');
+                }
 
-				digit = basicToDigit(input.charCodeAt(index++));
+                digit = basicToDigit(input.charCodeAt(index++));
 
-				if (digit >= base || digit > floor((maxInt - i) / w)) {
-					error('overflow');
-				}
+                if (digit >= base || digit > floor((maxInt - i) / w)) {
+                    error('overflow');
+                }
 
-				i += digit * w;
-				t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+                i += digit * w;
+                t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
 
-				if (digit < t) {
-					break;
-				}
+                if (digit < t) {
+                    break;
+                }
 
-				baseMinusT = base - t;
-				if (w > floor(maxInt / baseMinusT)) {
-					error('overflow');
-				}
+                baseMinusT = base - t;
+                if (w > floor(maxInt / baseMinusT)) {
+                    error('overflow');
+                }
 
-				w *= baseMinusT;
+                w *= baseMinusT;
 
-			}
+            }
 
-			out = output.length + 1;
-			bias = adapt(i - oldi, out, oldi == 0);
+            out = output.length + 1;
+            bias = adapt(i - oldi, out, oldi == 0);
 
-			// `i` was supposed to wrap around from `out` to `0`,
-			// incrementing `n` each time, so we'll fix that now:
-			if (floor(i / out) > maxInt - n) {
-				error('overflow');
-			}
+            // `i` was supposed to wrap around from `out` to `0`,
+            // incrementing `n` each time, so we'll fix that now:
+            if (floor(i / out) > maxInt - n) {
+                error('overflow');
+            }
 
-			n += floor(i / out);
-			i %= out;
+            n += floor(i / out);
+            i %= out;
 
-			// Insert `n` at position `i` of the output
-			output.splice(i++, 0, n);
+            // Insert `n` at position `i` of the output
+            output.splice(i++, 0, n);
 
-		}
+        }
 
-		return ucs2encode(output);
-	}
+        return ucs2encode(output);
+    }
 
-	/**
-	 * Converts a string of Unicode symbols to a Punycode string of ASCII-only
-	 * symbols.
-	 * @memberOf punycode
-	 * @param {String} input The string of Unicode symbols.
-	 * @returns {String} The resulting Punycode string of ASCII-only symbols.
-	 */
-	function encode(input) {
-		var n,
-		    delta,
-		    handledCPCount,
-		    basicLength,
-		    bias,
-		    j,
-		    m,
-		    q,
-		    k,
-		    t,
-		    currentValue,
-		    output = [],
-		    /** `inputLength` will hold the number of code points in `input`. */
-		    inputLength,
-		    /** Cached calculation results */
-		    handledCPCountPlusOne,
-		    baseMinusT,
-		    qMinusT;
+    /**
+     * Converts a string of Unicode symbols to a Punycode string of ASCII-only
+     * symbols.
+     * @memberOf punycode
+     * @param {String} input The string of Unicode symbols.
+     * @returns {String} The resulting Punycode string of ASCII-only symbols.
+     */
+    function encode(input) {
+        var n,
+            delta,
+            handledCPCount,
+            basicLength,
+            bias,
+            j,
+            m,
+            q,
+            k,
+            t,
+            currentValue,
+            output = [],
+            /** `inputLength` will hold the number of code points in `input`. */
+            inputLength,
+            /** Cached calculation results */
+            handledCPCountPlusOne,
+            baseMinusT,
+            qMinusT;
 
-		// Convert the input in UCS-2 to Unicode
-		input = ucs2decode(input);
+        // Convert the input in UCS-2 to Unicode
+        input = ucs2decode(input);
 
-		// Cache the length
-		inputLength = input.length;
+        // Cache the length
+        inputLength = input.length;
 
-		// Initialize the state
-		n = initialN;
-		delta = 0;
-		bias = initialBias;
+        // Initialize the state
+        n = initialN;
+        delta = 0;
+        bias = initialBias;
 
-		// Handle the basic code points
-		for (j = 0; j < inputLength; ++j) {
-			currentValue = input[j];
-			if (currentValue < 0x80) {
-				output.push(stringFromCharCode(currentValue));
-			}
-		}
+        // Handle the basic code points
+        for (j = 0; j < inputLength; ++j) {
+            currentValue = input[j];
+            if (currentValue < 0x80) {
+                output.push(stringFromCharCode(currentValue));
+            }
+        }
 
-		handledCPCount = basicLength = output.length;
+        handledCPCount = basicLength = output.length;
 
-		// `handledCPCount` is the number of code points that have been handled;
-		// `basicLength` is the number of basic code points.
+        // `handledCPCount` is the number of code points that have been handled;
+        // `basicLength` is the number of basic code points.
 
-		// Finish the basic string - if it is not empty - with a delimiter
-		if (basicLength) {
-			output.push(delimiter);
-		}
+        // Finish the basic string - if it is not empty - with a delimiter
+        if (basicLength) {
+            output.push(delimiter);
+        }
 
-		// Main encoding loop:
-		while (handledCPCount < inputLength) {
+        // Main encoding loop:
+        while (handledCPCount < inputLength) {
 
-			// All non-basic code points < n have been handled already. Find the next
-			// larger one:
-			for (m = maxInt, j = 0; j < inputLength; ++j) {
-				currentValue = input[j];
-				if (currentValue >= n && currentValue < m) {
-					m = currentValue;
-				}
-			}
+            // All non-basic code points < n have been handled already. Find the next
+            // larger one:
+            for (m = maxInt, j = 0; j < inputLength; ++j) {
+                currentValue = input[j];
+                if (currentValue >= n && currentValue < m) {
+                    m = currentValue;
+                }
+            }
 
-			// Increase `delta` enough to advance the decoder's <n,i> state to <m,0>,
-			// but guard against overflow
-			handledCPCountPlusOne = handledCPCount + 1;
-			if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
-				error('overflow');
-			}
+            // Increase `delta` enough to advance the decoder's <n,i> state to <m,0>,
+            // but guard against overflow
+            handledCPCountPlusOne = handledCPCount + 1;
+            if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
+                error('overflow');
+            }
 
-			delta += (m - n) * handledCPCountPlusOne;
-			n = m;
+            delta += (m - n) * handledCPCountPlusOne;
+            n = m;
 
-			for (j = 0; j < inputLength; ++j) {
-				currentValue = input[j];
+            for (j = 0; j < inputLength; ++j) {
+                currentValue = input[j];
 
-				if (currentValue < n && ++delta > maxInt) {
-					error('overflow');
-				}
+                if (currentValue < n && ++delta > maxInt) {
+                    error('overflow');
+                }
 
-				if (currentValue == n) {
-					// Represent delta as a generalized variable-length integer
-					for (q = delta, k = base; /* no condition */; k += base) {
-						t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
-						if (q < t) {
-							break;
-						}
-						qMinusT = q - t;
-						baseMinusT = base - t;
-						output.push(
-							stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0))
-						);
-						q = floor(qMinusT / baseMinusT);
-					}
+                if (currentValue == n) {
+                    // Represent delta as a generalized variable-length integer
+                    for (q = delta, k = base; /* no condition */; k += base) {
+                        t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+                        if (q < t) {
+                            break;
+                        }
+                        qMinusT = q - t;
+                        baseMinusT = base - t;
+                        output.push(
+                            stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0))
+                        );
+                        q = floor(qMinusT / baseMinusT);
+                    }
 
-					output.push(stringFromCharCode(digitToBasic(q, 0)));
-					bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
-					delta = 0;
-					++handledCPCount;
-				}
-			}
+                    output.push(stringFromCharCode(digitToBasic(q, 0)));
+                    bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
+                    delta = 0;
+                    ++handledCPCount;
+                }
+            }
 
-			++delta;
-			++n;
+            ++delta;
+            ++n;
 
-		}
-		return output.join('');
-	}
+        }
+        return output.join('');
+    }
 
-	/**
-	 * Converts a Punycode string representing a domain name to Unicode. Only the
-	 * Punycoded parts of the domain name will be converted, i.e. it doesn't
-	 * matter if you call it on a string that has already been converted to
-	 * Unicode.
-	 * @memberOf punycode
-	 * @param {String} domain The Punycode domain name to convert to Unicode.
-	 * @returns {String} The Unicode representation of the given Punycode
-	 * string.
-	 */
-	function toUnicode(domain) {
-		return mapDomain(domain, function(string) {
-			return regexPunycode.test(string)
-				? decode(string.slice(4).toLowerCase())
-				: string;
-		});
-	}
+    /**
+     * Converts a Punycode string representing a domain name to Unicode. Only the
+     * Punycoded parts of the domain name will be converted, i.e. it doesn't
+     * matter if you call it on a string that has already been converted to
+     * Unicode.
+     * @memberOf punycode
+     * @param {String} domain The Punycode domain name to convert to Unicode.
+     * @returns {String} The Unicode representation of the given Punycode
+     * string.
+     */
+    function toUnicode(domain) {
+        return mapDomain(domain, function(string) {
+            return regexPunycode.test(string)
+                ? decode(string.slice(4).toLowerCase())
+                : string;
+        });
+    }
 
-	/**
-	 * Converts a Unicode string representing a domain name to Punycode. Only the
-	 * non-ASCII parts of the domain name will be converted, i.e. it doesn't
-	 * matter if you call it with a domain that's already in ASCII.
-	 * @memberOf punycode
-	 * @param {String} domain The domain name to convert, as a Unicode string.
-	 * @returns {String} The Punycode representation of the given domain name.
-	 */
-	function toASCII(domain) {
-		return mapDomain(domain, function(string) {
-			return regexNonASCII.test(string)
-				? 'xn--' + encode(string)
-				: string;
-		});
-	}
+    /**
+     * Converts a Unicode string representing a domain name to Punycode. Only the
+     * non-ASCII parts of the domain name will be converted, i.e. it doesn't
+     * matter if you call it with a domain that's already in ASCII.
+     * @memberOf punycode
+     * @param {String} domain The domain name to convert, as a Unicode string.
+     * @returns {String} The Punycode representation of the given domain name.
+     */
+    function toASCII(domain) {
+        return mapDomain(domain, function(string) {
+            return regexNonASCII.test(string)
+                ? 'xn--' + encode(string)
+                : string;
+        });
+    }
 
-	/*--------------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------------*/
 
-	/** Define the public API */
-	punycode = {
-		/**
-		 * A string representing the current Punycode.js version number.
-		 * @memberOf punycode
-		 * @type String
-		 */
-		'version': '1.2.4',
-		/**
-		 * An object of methods to convert from JavaScript's internal character
-		 * representation (UCS-2) to Unicode code points, and back.
-		 * @see <http://mathiasbynens.be/notes/javascript-encoding>
-		 * @memberOf punycode
-		 * @type Object
-		 */
-		'ucs2': {
-			'decode': ucs2decode,
-			'encode': ucs2encode
-		},
-		'decode': decode,
-		'encode': encode,
-		'toASCII': toASCII,
-		'toUnicode': toUnicode
-	};
+    /** Define the public API */
+    punycode = {
+        /**
+         * A string representing the current Punycode.js version number.
+         * @memberOf punycode
+         * @type String
+         */
+        'version': '1.2.4',
+        /**
+         * An object of methods to convert from JavaScript's internal character
+         * representation (UCS-2) to Unicode code points, and back.
+         * @see <http://mathiasbynens.be/notes/javascript-encoding>
+         * @memberOf punycode
+         * @type Object
+         */
+        'ucs2': {
+            'decode': ucs2decode,
+            'encode': ucs2encode
+        },
+        'decode': decode,
+        'encode': encode,
+        'toASCII': toASCII,
+        'toUnicode': toUnicode
+    };
 
-	/** Expose `punycode` */
-	// Some AMD build optimizers, like r.js, check for specific condition patterns
-	// like the following:
-	if (
-		typeof define == 'function' &&
-		typeof define.amd == 'object' &&
-		define.amd
-	) {
-		define('punycode', function() {
-			return punycode;
-		});
-	} else if (freeExports && !freeExports.nodeType) {
-		if (freeModule) { // in Node.js or RingoJS v0.8.0+
-			freeModule.exports = punycode;
-		} else { // in Narwhal or RingoJS v0.7.0-
-			for (key in punycode) {
-				punycode.hasOwnProperty(key) && (freeExports[key] = punycode[key]);
-			}
-		}
-	} else { // in Rhino or a web browser
-		root.punycode = punycode;
-	}
+    /** Expose `punycode` */
+    // Some AMD build optimizers, like r.js, check for specific condition patterns
+    // like the following:
+    if (
+        typeof define == 'function' &&
+        typeof define.amd == 'object' &&
+        define.amd
+    ) {
+        define('punycode', function() {
+            return punycode;
+        });
+    } else if (freeExports && !freeExports.nodeType) {
+        if (freeModule) { // in Node.js or RingoJS v0.8.0+
+            freeModule.exports = punycode;
+        } else { // in Narwhal or RingoJS v0.7.0-
+            for (key in punycode) {
+                punycode.hasOwnProperty(key) && (freeExports[key] = punycode[key]);
+            }
+        }
+    } else { // in Rhino or a web browser
+        root.punycode = punycode;
+    }
 
 }(this));
 
@@ -3772,28 +3772,28 @@ module.exports = EventEmitter;
 'use strict';
 
 function ToObject(val) {
-	if (val == null) {
-		throw new TypeError('Object.assign cannot be called with null or undefined');
-	}
+    if (val == null) {
+        throw new TypeError('Object.assign cannot be called with null or undefined');
+    }
 
-	return Object(val);
+    return Object(val);
 }
 
 module.exports = Object.assign || function (target, source) {
-	var from;
-	var keys;
-	var to = ToObject(target);
+    var from;
+    var keys;
+    var to = ToObject(target);
 
-	for (var s = 1; s < arguments.length; s++) {
-		from = arguments[s];
-		keys = Object.keys(Object(from));
+    for (var s = 1; s < arguments.length; s++) {
+        from = arguments[s];
+        keys = Object.keys(Object(from));
 
-		for (var i = 0; i < keys.length; i++) {
-			to[keys[i]] = from[keys[i]];
-		}
-	}
+        for (var i = 0; i < keys.length; i++) {
+            to[keys[i]] = from[keys[i]];
+        }
+    }
 
-	return to;
+    return to;
 };
 
 },{}],13:[function(require,module,exports){
@@ -5982,6 +5982,11 @@ Resource.prototype._getExtension = function () {
         ext = url.substring(slashIndex + 1, url.indexOf(';', slashIndex));
     }
     else {
+        var queryStart = url.indexOf('?');
+        if (queryStart !== -1) {
+            url = url.substring(0, queryStart);
+        }
+
         ext = url.substring(url.lastIndexOf('.') + 1);
     }
 
@@ -6318,7 +6323,7 @@ module.exports = function () {
 },{"../../Resource":16,"../../b64":17}],21:[function(require,module,exports){
 module.exports={
   "name": "pixi.js",
-  "version": "3.0.6",
+  "version": "3.0.7",
   "description": "Pixi.js is a fast lightweight 2D library that works across all devices.",
   "author": "Mat Groves",
   "contributors": [
@@ -6334,43 +6339,49 @@ module.exports={
     "url": "https://github.com/GoodBoyDigital/pixi.js.git"
   },
   "scripts": {
+    "start": "gulp && gulp watch",
     "test": "gulp && testem ci",
+    "build": "gulp",
     "docs": "jsdoc -c ./gulp/util/jsdoc.conf.json -R README.md"
   },
+  "files": [
+    "bin/",
+    "src/"
+  ],
   "dependencies": {
     "async": "^0.9.0",
     "brfs": "^1.4.0",
-    "earcut": "^2.0.0",
+    "earcut": "^2.0.1",
     "eventemitter3": "^1.1.0",
     "object-assign": "^2.0.0",
-    "resource-loader": "^1.6.0"
+    "resource-loader": "^1.6.1"
   },
   "devDependencies": {
-    "browserify": "^9.0.8",
-    "chai": "^2.2.0",
-    "del": "^1.1.1",
-    "gulp": "^3.8.11",
-    "gulp-cached": "^1.0.4",
+    "browserify": "^10.2.3",
+    "chai": "^3.0.0",
+    "del": "^1.2.0",
+    "gulp": "^3.9.0",
+    "gulp-cached": "^1.1.0",
     "gulp-concat": "^2.5.2",
     "gulp-debug": "^2.0.1",
-    "gulp-jshint": "^1.10.0",
+    "gulp-jshint": "^1.11.0",
     "gulp-mirror": "^0.4.0",
-    "gulp-plumber": "^1.0.0",
+    "gulp-plumber": "^1.0.1",
     "gulp-rename": "^1.2.2",
     "gulp-sourcemaps": "^1.5.2",
     "gulp-uglify": "^1.2.0",
-    "gulp-util": "^3.0.4",
+    "gulp-util": "^3.0.5",
     "jaguarjs-jsdoc": "git+https://github.com/davidshimjs/jaguarjs-jsdoc.git",
-    "jsdoc": "^3.3.0-beta3",
+    "jsdoc": "^3.3.0",
     "jshint-summary": "^0.4.0",
     "minimist": "^1.1.1",
-    "mocha": "^2.2.4",
+    "mocha": "^2.2.5",
     "require-dir": "^0.3.0",
-    "run-sequence": "^1.0.2",
-    "testem": "^0.8.2",
+    "run-sequence": "^1.1.0",
+    "testem": "^0.8.3",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
-    "watchify": "^3.1.2"
+    "watchify": "^3.2.1"
   },
   "browserify": {
     "transform": [
@@ -6485,6 +6496,31 @@ var CONST = {
         SATURATION:     14,
         COLOR:          15,
         LUMINOSITY:     16
+    },
+
+    /**
+     * Various webgl draw modes. These can be used to specify which GL drawMode to use
+     * under certain situations and renderers.
+     *
+     * @static
+     * @constant
+     * @property {object} DRAW_MODES
+     * @property {number} DRAW_MODES.POINTS
+     * @property {number} DRAW_MODES.LINES
+     * @property {number} DRAW_MODES.LINE_LOOP
+     * @property {number} DRAW_MODES.LINE_STRIP
+     * @property {number} DRAW_MODES.TRIANGLES
+     * @property {number} DRAW_MODES.TRIANGLE_STRIP
+     * @property {number} DRAW_MODES.TRIANGLE_FAN
+     */
+    DRAW_MODES: {
+        POINTS:         0,
+        LINES:          1,
+        LINE_LOOP:      2,
+        LINE_STRIP:     3,
+        TRIANGLES:      4,
+        TRIANGLE_STRIP: 5,
+        TRIANGLE_FAN:   6
     },
 
     /**
@@ -6709,6 +6745,9 @@ Container.prototype.addChildAt = function (child, index)
         child.parent = this;
 
         this.children.splice(index, 0, child);
+
+        child.emit('added', this);
+
         return child;
     }
     else
@@ -6826,6 +6865,8 @@ Container.prototype.removeChildAt = function (index)
     child.parent = null;
     this.children.splice(index, 1);
 
+    child.emit('removed', this);
+
     return child;
 };
 
@@ -6875,7 +6916,7 @@ Container.prototype.generateTexture = function (renderer, resolution, scaleMode)
 {
     var bounds = this.getLocalBounds();
 
-    var renderTexture = new RenderTexture(renderer, bounds.width | 0, bounds.height | 0, renderer, scaleMode, resolution);
+    var renderTexture = new RenderTexture(renderer, bounds.width | 0, bounds.height | 0, scaleMode, resolution);
 
     _tempMatrix.tx = -bounds.x;
     _tempMatrix.ty = -bounds.y;
@@ -7373,7 +7414,6 @@ Object.defineProperties(DisplayObject.prototype, {
      * To remove a mask, set this property to null.
      *
      * @member {Graphics}
-     * @property {Graphics}
      * @memberof PIXI.DisplayObject#
      */
     mask: {
@@ -8765,7 +8805,7 @@ Graphics.prototype.drawShape = function (shape)
 
     if (data.type === CONST.SHAPES.POLY)
     {
-        data.shape.closed = this.filling;
+        data.shape.closed = data.shape.closed || this.filling;
         this.currentPath = data;
     }
 
@@ -8912,6 +8952,12 @@ function GraphicsRenderer(renderer)
 
     this.primitiveShader = null;
     this.complexPrimitiveShader = null;
+
+    /**
+     * This is the maximum number of points a poly can contain before it is rendered as a complex polygon (using the stencil buffer)
+     * @type {Number}
+     */
+    this.maximumSimplePolySize = 200;
 }
 
 GraphicsRenderer.prototype = Object.create(ObjectRenderer.prototype);
@@ -9087,16 +9133,14 @@ GraphicsRenderer.prototype.updateGraphics = function(graphics)
             {
                 if (data.points.length >= 6)
                 {
-                    if (data.points.length < 6 * 2)
+                    if (data.points.length < this.maximumSimplePolySize * 2)
                     {
                         webGLData = this.switchMode(webGL, 0);
 
                         var canDrawUsingSimple = this.buildPoly(data, webGLData);
-                   //     console.log(canDrawUsingSimple);
 
                         if (!canDrawUsingSimple)
                         {
-                        //    console.log("<>>>")
                             webGLData = this.switchMode(webGL, 1);
                             this.buildComplexPoly(data, webGLData);
                         }
@@ -9273,7 +9317,7 @@ GraphicsRenderer.prototype.buildRoundedRectangle = function (graphicsData, webGL
     this.quadraticBezierCurve(x + width, y + radius, x + width, y, x + width - radius, y, recPoints);
     this.quadraticBezierCurve(x + radius, y, x, y, x, y + radius + 0.0000000001, recPoints);
 
-    // this tiny number deals with the issue that occurs when points overlap and polyK fails to triangulate the item.
+    // this tiny number deals with the issue that occurs when points overlap and earcut fails to triangulate the item.
     // TODO - fix this properly, this is not very elegant.. but it works for now.
 
     if (graphicsData.fill)
@@ -9888,13 +9932,14 @@ WebGLGraphicsData.prototype.upload = function () {
 };
 
 WebGLGraphicsData.prototype.destroy = function () {
-    this.gl = null;
     this.color = null;
     this.points = null;
     this.indices = null;
 
     this.gl.deleteBuffer(this.buffer);
     this.gl.deleteBuffer(this.indexBuffer);
+    
+    this.gl = null;
 
     this.buffer = null;
     this.indexBuffer = null;
@@ -9918,7 +9963,6 @@ WebGLGraphicsData.prototype.destroy = function () {
 var core = module.exports = Object.assign(require('./const'), require('./math'), {
     // utils
     utils: require('./utils'),
-    math: require('./math'),
     ticker: require('./ticker'),
 
     // display
@@ -9960,6 +10004,8 @@ var core = module.exports = Object.assign(require('./const'), require('./math'),
 
     // filters - webgl
     AbstractFilter:         require('./renderers/webgl/filters/AbstractFilter'),
+    FXAAFilter:             require('./renderers/webgl/filters/FXAAFilter'),
+    SpriteMaskFilter:       require('./renderers/webgl/filters/SpriteMaskFilter'),
 
     /**
      * This helper function will automatically detect which renderer you should be using.
@@ -9994,7 +10040,7 @@ var core = module.exports = Object.assign(require('./const'), require('./math'),
     }
 });
 
-},{"./const":22,"./display/Container":23,"./display/DisplayObject":24,"./graphics/Graphics":25,"./graphics/GraphicsData":26,"./graphics/webgl/GraphicsRenderer":27,"./math":32,"./particles/ParticleContainer":38,"./particles/webgl/ParticleRenderer":40,"./renderers/canvas/CanvasRenderer":43,"./renderers/canvas/utils/CanvasBuffer":44,"./renderers/canvas/utils/CanvasGraphics":45,"./renderers/webgl/WebGLRenderer":48,"./renderers/webgl/filters/AbstractFilter":49,"./renderers/webgl/managers/ShaderManager":55,"./renderers/webgl/shaders/Shader":60,"./renderers/webgl/utils/ObjectRenderer":62,"./renderers/webgl/utils/RenderTarget":64,"./sprites/Sprite":66,"./sprites/webgl/SpriteRenderer":67,"./text/Text":68,"./textures/BaseTexture":69,"./textures/RenderTexture":70,"./textures/Texture":71,"./textures/TextureUvs":72,"./textures/VideoBaseTexture":73,"./ticker":75,"./utils":76}],30:[function(require,module,exports){
+},{"./const":22,"./display/Container":23,"./display/DisplayObject":24,"./graphics/Graphics":25,"./graphics/GraphicsData":26,"./graphics/webgl/GraphicsRenderer":27,"./math":32,"./particles/ParticleContainer":38,"./particles/webgl/ParticleRenderer":40,"./renderers/canvas/CanvasRenderer":43,"./renderers/canvas/utils/CanvasBuffer":44,"./renderers/canvas/utils/CanvasGraphics":45,"./renderers/webgl/WebGLRenderer":48,"./renderers/webgl/filters/AbstractFilter":49,"./renderers/webgl/filters/FXAAFilter":50,"./renderers/webgl/filters/SpriteMaskFilter":51,"./renderers/webgl/managers/ShaderManager":55,"./renderers/webgl/shaders/Shader":60,"./renderers/webgl/utils/ObjectRenderer":62,"./renderers/webgl/utils/RenderTarget":64,"./sprites/Sprite":66,"./sprites/webgl/SpriteRenderer":67,"./text/Text":68,"./textures/BaseTexture":69,"./textures/RenderTexture":70,"./textures/Texture":71,"./textures/TextureUvs":72,"./textures/VideoBaseTexture":73,"./ticker":75,"./utils":76}],30:[function(require,module,exports){
 var Point = require('./Point');
 
 /**
@@ -10077,14 +10123,14 @@ Matrix.prototype.fromArray = function (array)
  * @param transpose {boolean} Whether we need to transpose the matrix or not
  * @return {number[]} the newly created array which contains the matrix
  */
-Matrix.prototype.toArray = function (transpose)
+Matrix.prototype.toArray = function (transpose, out)
 {
     if (!this.array)
     {
         this.array = new Float32Array(9);
     }
 
-    var array = this.array;
+    var array = out || this.array;
 
     if (transpose)
     {
@@ -10425,7 +10471,17 @@ Point.prototype.set = function (x, y)
 };
 
 },{}],32:[function(require,module,exports){
+/**
+ * Math classes and utilities mixed into PIXI namespace.
+ *
+ * @lends PIXI
+ */
 module.exports = {
+    // These will be mixed to be made publicly available,
+    // while this module is used internally in core
+    // to avoid circular dependencies and cut down on
+    // internal module requires.
+
     Point:      require('./Point'),
     Matrix:     require('./Matrix'),
 
@@ -11231,7 +11287,7 @@ ParticleContainer.prototype.destroy = function () {
 
     if (this._buffers) {
         for (var i = 0; i < this._buffers.length; ++i) {
-            this._buffers.destroy();
+            this._buffers[i].destroy();
         }
     }
 
@@ -11999,7 +12055,9 @@ function ParticleShader(shaderManager)
             'uniform float uAlpha;',
 
             'void main(void){',
-            '   gl_FragColor = texture2D(uSampler, vTextureCoord) * vColor * uAlpha ;',
+            '  vec4 color = texture2D(uSampler, vTextureCoord) * vColor * uAlpha;',
+            '  if (color.a == 0.0) discard;',
+            '  gl_FragColor = color;',
             '}'
         ].join('\n'),
         // custom uniforms
@@ -12478,6 +12536,21 @@ CanvasRenderer.prototype.renderDisplayObject = function (displayObject, context)
     this.context = context;
     displayObject.renderCanvas(this);
     this.context = tempContext;
+};
+
+CanvasRenderer.prototype.resize = function (w, h)
+{
+    SystemRenderer.prototype.resize.call(this, w, h);
+
+    //reset the scale mode.. oddly this seems to be reset when the canvas is resized.
+    //surely a browser bug?? Let pixi fix that for you..
+    this.currentScaleMode = CONST.SCALE_MODES.DEFAULT;
+    
+    if(this.smoothProperty)
+    {
+        this.context[this.smoothProperty] = (this.currentScaleMode === CONST.SCALE_MODES.LINEAR);
+    }
+
 };
 
 /**
@@ -13432,7 +13505,7 @@ function WebGLRenderer(width, height, options)
     this._initContext();
 
     // map some webGL blend modes..
-    this._mapBlendModes();
+    this._mapGlModes();
 
     /**
      * An array of render targets
@@ -13760,7 +13833,7 @@ WebGLRenderer.prototype.destroy = function (removeView)
     // call base destroy
     SystemRenderer.prototype.destroy.call(this, removeView);
 
-    this.uuid = 0;
+    this.uid = 0;
 
     // destroy the managers
     this.shaderManager.destroy();
@@ -13788,7 +13861,7 @@ WebGLRenderer.prototype.destroy = function (removeView)
  *
  * @private
  */
-WebGLRenderer.prototype._mapBlendModes = function ()
+WebGLRenderer.prototype._mapGlModes = function ()
 {
     var gl = this.gl;
 
@@ -13813,6 +13886,19 @@ WebGLRenderer.prototype._mapBlendModes = function ()
         this.blendModes[CONST.BLEND_MODES.SATURATION]    = [gl.ONE,       gl.ONE_MINUS_SRC_ALPHA];
         this.blendModes[CONST.BLEND_MODES.COLOR]         = [gl.ONE,       gl.ONE_MINUS_SRC_ALPHA];
         this.blendModes[CONST.BLEND_MODES.LUMINOSITY]    = [gl.ONE,       gl.ONE_MINUS_SRC_ALPHA];
+    }
+
+    if (!this.drawModes)
+    {
+        this.drawModes = {};
+
+        this.drawModes[CONST.DRAW_MODES.POINTS]         = gl.POINTS;
+        this.drawModes[CONST.DRAW_MODES.LINES]          = gl.LINES;
+        this.drawModes[CONST.DRAW_MODES.LINE_LOOP]      = gl.LINE_LOOP;
+        this.drawModes[CONST.DRAW_MODES.LINE_STRIP]     = gl.LINE_STRIP;
+        this.drawModes[CONST.DRAW_MODES.TRIANGLES]      = gl.TRIANGLES;
+        this.drawModes[CONST.DRAW_MODES.TRIANGLE_STRIP] = gl.TRIANGLE_STRIP;
+        this.drawModes[CONST.DRAW_MODES.TRIANGLE_FAN]   = gl.TRIANGLE_FAN;
     }
 };
 
@@ -14809,12 +14895,12 @@ ShaderManager.prototype.setAttribs = function (attribs)
  */
 ShaderManager.prototype.setShader = function (shader)
 {
-    if (this._currentId === shader.uuid)
+    if (this._currentId === shader.uid)
     {
         return false;
     }
 
-    this._currentId = shader.uuid;
+    this._currentId = shader.uid;
 
     this.currentShader = shader;
 
@@ -15210,7 +15296,7 @@ module.exports = WebGLManager;
  */
 WebGLManager.prototype.onContextChange = function ()
 {
-	// do some codes init!
+    // do some codes init!
 };
 
 /**
@@ -15370,7 +15456,7 @@ function Shader(shaderManager, vertexSrc, fragmentSrc, uniforms, attributes)
      * @member {number}
      * @readonly
      */
-    this.uuid = utils.uuid();
+    this.uid = utils.uid();
 
     /**
      * The current WebGL drawing context
@@ -15574,6 +15660,12 @@ Shader.prototype.syncUniform = function (uniform)
 
     switch (uniform.type)
     {
+        case 'b':
+        case 'bool':
+        case 'boolean':
+            gl.uniform1i(location, value ? 1 : 0);
+            break;
+
         // single int value
         case 'i':
         case '1i':
@@ -16512,7 +16604,7 @@ RenderTarget.prototype.destroy = function()
  */
 function StencilMaskStack()
 {
-	/**
+    /**
      * The actual stack
      *
      * @member {Array}
@@ -17130,14 +17222,15 @@ function SpriteRenderer(renderer)
     ObjectRenderer.call(this, renderer);
 
     /**
-     *
+     * Number of values sent in the vertex buffer.
+     * positionX, positionY, colorR, colorG, colorB = 5
      *
      * @member {number}
      */
     this.vertSize = 5;
 
     /**
-     *
+     * The size of the vertex information in bytes.
      *
      * @member {number}
      */
@@ -17151,45 +17244,40 @@ function SpriteRenderer(renderer)
     this.size = CONST.SPRITE_BATCH_SIZE; // 2000 is a nice balance between mobile / desktop
 
     // the total number of bytes in our batch
-    var numVerts = this.size * 4 * this.vertByteSize;
-    // the total number of indices in our batch
+    var numVerts = (this.size * 4) * this.vertByteSize;
+
+    // the total number of indices in our batch, there are 6 points per quad.
     var numIndices = this.size * 6;
 
     /**
-     * Holds the vertices
+     * Holds the vertex data that will be sent to the vertex shader.
      *
      * @member {ArrayBuffer}
      */
     this.vertices = new ArrayBuffer(numVerts);
 
     /**
-     * View on the vertices as a Float32Array
+     * View on the vertices as a Float32Array for positions
      *
      * @member {Float32Array}
      */
     this.positions = new Float32Array(this.vertices);
 
     /**
-     * Holds the color components
+     * View on the vertices as a Uint32Array for colors
      *
      * @member {Uint32Array}
      */
     this.colors = new Uint32Array(this.vertices);
 
     /**
-     * Holds the indices
+     * Holds the indices of the geometry (quads) to draw
      *
      * @member {Uint16Array}
      */
     this.indices = new Uint16Array(numIndices);
 
-    /**
-     *
-     *
-     * @member {number}
-     */
-    this.lastIndexCount = 0;
-
+    // fill the indices with the quads to draw
     for (var i=0, j=0; i < numIndices; i += 6, j += 4)
     {
         this.indices[i + 0] = j + 0;
@@ -17201,49 +17289,14 @@ function SpriteRenderer(renderer)
     }
 
     /**
-     *
-     *
-     * @member {boolean}
-     */
-    this.drawing = false;
-
-    /**
-     *
+     * The current size of the batch, each render() call adds to this number.
      *
      * @member {number}
      */
     this.currentBatchSize = 0;
 
     /**
-     *
-     *
-     * @member {BaseTexture}
-     */
-    this.currentBaseTexture = null;
-
-    /**
-     *
-     *
-     * @member {Array}
-     */
-    this.textures = [];
-
-    /**
-     *
-     *
-     * @member {Array}
-     */
-    this.blendModes = [];
-
-    /**
-     *
-     *
-     * @member {Array}
-     */
-    this.shaders = [];
-
-    /**
-     *
+     * The current sprites in the batch.
      *
      * @member {Array}
      */
@@ -17281,8 +17334,6 @@ SpriteRenderer.prototype.onContextChange = function ()
     this.vertexBuffer = gl.createBuffer();
     this.indexBuffer = gl.createBuffer();
 
-    // 65535 is max index, so 65535 / 6 = 10922.
-
     //upload the index data
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
@@ -17307,7 +17358,6 @@ SpriteRenderer.prototype.render = function (sprite)
     if (this.currentBatchSize >= this.size)
     {
         this.flush();
-        this.currentBaseTexture = texture.baseTexture;
     }
 
     // get the uvs for the texture
@@ -17469,7 +17519,7 @@ SpriteRenderer.prototype.flush = function ()
         nextShader = sprite.shader || this.shader;
 
         blendSwap = currentBlendMode !== nextBlendMode;
-        shaderSwap = currentShader !== nextShader; // should I use uuidS???
+        shaderSwap = currentShader !== nextShader; // should I use uidS???
 
         if (currentBaseTexture !== nextTexture || blendSwap || shaderSwap)
         {
@@ -17607,13 +17657,6 @@ SpriteRenderer.prototype.destroy = function ()
     this.vertexBuffer = null;
     this.indexBuffer = null;
 
-    this.currentBaseTexture = null;
-
-    this.drawing = false;
-
-    this.textures = null;
-    this.blendModes = null;
-    this.shaders = null;
     this.sprites = null;
     this.shader = null;
 };
@@ -18249,7 +18292,7 @@ function BaseTexture(source, scaleMode, resolution)
 {
     EventEmitter.call(this);
 
-    this.uuid = utils.uuid();
+    this.uid = utils.uid();
 
     /**
      * The Resolution of the texture.
@@ -18650,7 +18693,7 @@ BaseTexture.fromCanvas = function (canvas, scaleMode)
 {
     if (!canvas._pixiId)
     {
-        canvas._pixiId = 'canvas_' + utils.uuid();
+        canvas._pixiId = 'canvas_' + utils.uid();
     }
 
     var baseTexture = utils.BaseTextureCache[canvas._pixiId];
@@ -18927,7 +18970,7 @@ RenderTexture.prototype.renderWebGL = function (displayObject, matrix, clear, up
     this.textureBuffer.activate();
     
     // setWorld Alpha to ensure that the object is renderer at full opacity
-    displayObject.worldAlpha = displayObject.alpha;
+    displayObject.worldAlpha = 1;
 
     if (updateTransform)
     {
@@ -19795,7 +19838,7 @@ VideoBaseTexture.fromVideo = function (video, scaleMode)
 {
     if (!video._pixiId)
     {
-        video._pixiId = 'video_' + utils.uuid();
+        video._pixiId = 'video_' + utils.uid();
     }
 
     var baseTexture = utils.BaseTextureCache[video._pixiId];
@@ -20289,11 +20332,11 @@ var utils = module.exports = {
     async:          require('async'),
 
     /**
-     * Gets the next uuid
+     * Gets the next unique identifier
      *
-     * @return {number} The next uuid to use.
+     * @return {number} The next unique identifier to use.
      */
-    uuid: function ()
+    uid: function ()
     {
         return ++utils._uid;
     },
@@ -20501,7 +20544,16 @@ var utils = module.exports = {
         }
     },
 
+    /**
+     * @todo Describe property usage
+     * @private
+     */
     TextureCache: {},
+
+    /**
+     * @todo Describe property usage
+     * @private
+     */
     BaseTextureCache: {}
 };
 
@@ -20580,7 +20632,7 @@ module.exports = {
 var core = require('./core'),
     mesh = require('./mesh'),
     extras = require('./extras'),
-    utils = require('./core/utils');
+    filters = require('./filters');
 
 /**
  * @class
@@ -20589,7 +20641,8 @@ var core = require('./core'),
  * @see {@link PIXI.ParticleContainer}
  * @throws {ReferenceError} SpriteBatch does not exist any more, please use the new ParticleContainer instead.
  */
-core.SpriteBatch = function() {
+core.SpriteBatch = function()
+{
     throw new ReferenceError('SpriteBatch does not exist any more, please use the new ParticleContainer instead.');
 };
 
@@ -20600,7 +20653,8 @@ core.SpriteBatch = function() {
  * @see {@link PIXI.loaders.Loader}
  * @throws {ReferenceError} The loader system was overhauled in pixi v3, please see the new PIXI.loaders.Loader class.
  */
-core.AssetLoader = function() {
+core.AssetLoader = function()
+{
     throw new ReferenceError('The loader system was overhauled in pixi v3, please see the new PIXI.loaders.Loader class.');
 };
 
@@ -20614,7 +20668,8 @@ Object.defineProperties(core, {
      * @deprecated since version 3.0
      */
     Stage: {
-        get: function() {
+        get: function()
+        {
             console.warn('You do not need to use a PIXI Stage any more, you can simply render any container.');
             return core.Container;
         }
@@ -20628,7 +20683,8 @@ Object.defineProperties(core, {
      * @deprecated since version 3.0
      */
     DisplayObjectContainer: {
-        get: function() {
+        get: function()
+        {
             console.warn('DisplayObjectContainer has been shortened to Container, please use Container from now on.');
             return core.Container;
         }
@@ -20642,7 +20698,8 @@ Object.defineProperties(core, {
      * @deprecated since version 3.0
      */
     Strip: {
-        get: function() {
+        get: function()
+        {
             console.warn('The Strip class has been renamed to Mesh and moved to mesh.Mesh, please use mesh.Mesh from now on.');
             return mesh.Mesh;
         }
@@ -20656,7 +20713,8 @@ Object.defineProperties(core, {
      * @deprecated since version 3.0
      */
     Rope: {
-        get: function() {
+        get: function()
+        {
             console.warn('The Rope class has been moved to mesh.Rope, please use mesh.Rope from now on.');
             return mesh.Rope;
         }
@@ -20670,11 +20728,13 @@ Object.defineProperties(core, {
      * @deprecated since version 3.0
      */
     MovieClip: {
-        get: function() {
+        get: function()
+        {
             console.warn('The MovieClip class has been moved to extras.MovieClip, please use extras.MovieClip from now on.');
             return extras.MovieClip;
         }
     },
+
     /**
      * @class
      * @private
@@ -20683,11 +20743,13 @@ Object.defineProperties(core, {
      * @deprecated since version 3.0
      */
     TilingSprite: {
-        get: function() {
+        get: function()
+        {
             console.warn('The TilingSprite class has been moved to extras.TilingSprite, please use extras.TilingSprite from now on.');
             return extras.TilingSprite;
         }
     },
+
     /**
      * @class
      * @private
@@ -20696,11 +20758,13 @@ Object.defineProperties(core, {
      * @deprecated since version 3.0
      */
     BitmapText: {
-        get: function() {
+        get: function()
+        {
             console.warn('The BitmapText class has been moved to extras.BitmapText, please use extras.BitmapText from now on.');
             return extras.BitmapText;
         }
     },
+
     /**
      * @class
      * @private
@@ -20709,11 +20773,13 @@ Object.defineProperties(core, {
      * @deprecated since version 3.0
      */
     blendModes: {
-        get: function() {
+        get: function()
+        {
             console.warn('The blendModes has been moved to BLEND_MODES, please use BLEND_MODES from now on.');
             return core.BLEND_MODES;
         }
     },
+
     /**
      * @class
      * @private
@@ -20722,11 +20788,13 @@ Object.defineProperties(core, {
      * @deprecated since version 3.0
      */
     scaleModes: {
-        get: function() {
+        get: function()
+        {
             console.warn('The scaleModes has been moved to SCALE_MODES, please use SCALE_MODES from now on.');
             return core.SCALE_MODES;
         }
     },
+
     /**
      * @class
      * @private
@@ -20735,11 +20803,13 @@ Object.defineProperties(core, {
      * @deprecated since version 3.0
      */
     BaseTextureCache: {
-        get: function () {
+        get: function ()
+        {
             console.warn('The BaseTextureCache class has been moved to utils.BaseTextureCache, please use utils.BaseTextureCache from now on.');
-            return utils.BaseTextureCache;
+            return core.utils.BaseTextureCache;
         }
     },
+
     /**
      * @class
      * @private
@@ -20748,9 +20818,25 @@ Object.defineProperties(core, {
      * @deprecated since version 3.0
      */
     TextureCache: {
-        get: function () {
+        get: function ()
+        {
             console.warn('The TextureCache class has been moved to utils.TextureCache, please use utils.TextureCache from now on.');
-            return utils.TextureCache;
+            return core.utils.TextureCache;
+        }
+    },
+
+    /**
+     * @namespace
+     * @private
+     * @name PIXI.math
+     * @see {@link PIXI}
+     * @deprecated since version 3.0.6
+     */
+    math: {
+        get: function ()
+        {
+            console.warn('The math namespace is deprecated, please access members already accessible on PIXI.');
+            return core;
         }
     }
 });
@@ -20762,7 +20848,8 @@ Object.defineProperties(core, {
  * @see {@link PIXI.Sprite#texture}
  * @deprecated since version 3.0
  */
-core.Sprite.prototype.setTexture = function(texture) {
+core.Sprite.prototype.setTexture = function(texture)
+{
     this.texture = texture;
     console.warn('setTexture is now deprecated, please use the texture property, e.g : sprite.texture = texture;');
 };
@@ -20773,7 +20860,8 @@ core.Sprite.prototype.setTexture = function(texture) {
  * @see {@link PIXI.BitmapText#text}
  * @deprecated since version 3.0
  */
-extras.BitmapText.prototype.setText = function(text) {
+extras.BitmapText.prototype.setText = function(text)
+{
     this.text = text;
     console.warn('setText is now deprecated, please use the text property, e.g : myBitmapText.text = \'my text\';');
 };
@@ -20784,7 +20872,8 @@ extras.BitmapText.prototype.setText = function(text) {
  * @see {@link PIXI.Text#text}
  * @deprecated since version 3.0
  */
-core.Text.prototype.setText = function(text) {
+core.Text.prototype.setText = function(text)
+{
     this.text = text;
     console.warn('setText is now deprecated, please use the text property, e.g : myText.text = \'my text\';');
 };
@@ -20795,7 +20884,8 @@ core.Text.prototype.setText = function(text) {
  * @see {@link PIXI.Text#style}
  * @deprecated since version 3.0
  */
-core.Text.prototype.setStyle = function(style) {
+core.Text.prototype.setStyle = function(style)
+{
     this.style = style;
     console.warn('setStyle is now deprecated, please use the style property, e.g : myText.style = style;');
 };
@@ -20806,12 +20896,73 @@ core.Text.prototype.setStyle = function(style) {
  * @see {@link PIXI.Texture#setFrame}
  * @deprecated since version 3.0
  */
-core.Texture.prototype.setFrame = function(frame) {
+core.Texture.prototype.setFrame = function(frame)
+{
     this.frame = frame;
     console.warn('setFrame is now deprecated, please use the frame property, e.g : myTexture.frame = frame;');
 };
 
-},{"./core":29,"./core/utils":76,"./extras":85,"./mesh":126}],79:[function(require,module,exports){
+Object.defineProperties(filters, {
+
+    /**
+     * @class
+     * @private
+     * @name PIXI.filters.AbstractFilter
+     * @see {@link PIXI.AbstractFilter}
+     * @deprecated since version 3.0.6
+     */
+    AbstractFilter: {
+        get: function()
+        {
+            console.warn('filters.AbstractFilter is an undocumented alias, please use AbstractFilter from now on.');
+            return core.AbstractFilter;
+        }
+    },
+
+    /**
+     * @class
+     * @private
+     * @name PIXI.filters.FXAAFilter
+     * @see {@link PIXI.FXAAFilter}
+     * @deprecated since version 3.0.6
+     */
+    FXAAFilter: {
+        get: function()
+        {
+            console.warn('filters.FXAAFilter is an undocumented alias, please use FXAAFilter from now on.');
+            return core.FXAAFilter;
+        }
+    },
+
+    /**
+     * @class
+     * @private
+     * @name PIXI.filters.SpriteMaskFilter
+     * @see {@link PIXI.SpriteMaskFilter}
+     * @deprecated since version 3.0.6
+     */
+    SpriteMaskFilter: {
+        get: function()
+        {
+            console.warn('filters.SpriteMaskFilter is an undocumented alias, please use SpriteMaskFilter from now on.');
+            return core.SpriteMaskFilter;
+        }
+    }
+});
+
+/**
+ * @method
+ * @name PIXI.utils.uuid
+ * @see {@link PIXI.utils.uid}
+ * @deprecated since version 3.0.6
+ */
+core.utils.uuid = function ()
+{
+    console.warn('utils.uuid() is deprecated, please use utils.uid() from now on.');
+    return core.utils.uid();
+};
+
+},{"./core":29,"./extras":85,"./filters":102,"./mesh":126}],79:[function(require,module,exports){
 var core = require('../core');
 
 /**
@@ -21030,7 +21181,7 @@ Object.defineProperties(BitmapText.prototype, {
 BitmapText.prototype.updateText = function ()
 {
     var data = BitmapText.fonts[this._font.name];
-    var pos = new core.math.Point();
+    var pos = new core.Point();
     var prevCharCode = null;
     var chars = [];
     var lastLineWidth = 0;
@@ -21085,7 +21236,7 @@ BitmapText.prototype.updateText = function ()
             pos.x += charData.kerning[prevCharCode];
         }
 
-        chars.push({texture:charData.texture, line: line, charCode: charCode, position: new core.math.Point(pos.x + charData.xOffset, pos.y + charData.yOffset)});
+        chars.push({texture:charData.texture, line: line, charCode: charCode, position: new core.Point(pos.x + charData.xOffset, pos.y + charData.yOffset)});
         lastLineWidth = pos.x + (charData.texture.width + charData.xOffset);
         pos.x += charData.xAdvance;
 
@@ -21490,7 +21641,7 @@ function TilingSprite(texture, width, height)
      *
      * @member {Point}
      */
-    this.tileScale = new core.math.Point(1,1);
+    this.tileScale = new core.Point(1,1);
 
 
     /**
@@ -21498,7 +21649,7 @@ function TilingSprite(texture, width, height)
      *
      * @member {Point}
      */
-    this.tilePosition = new core.math.Point(0,0);
+    this.tilePosition = new core.Point(0,0);
 
     ///// private
 
@@ -21551,7 +21702,6 @@ function TilingSprite(texture, width, height)
         '   vec2 coord = aTextureCoord;',
         '   coord -= uTransform.xy;',
         '   coord /= uTransform.zw;',
-        '   coord /= uFrame.zw;',
         '   vTextureCoord = coord;',
 
         '   vColor = vec4(aColor.rgb * aColor.a, aColor.a);',
@@ -21565,11 +21715,12 @@ function TilingSprite(texture, width, height)
 
         'uniform sampler2D uSampler;',
         'uniform vec4 uFrame;',
+        'uniform vec2 uPixelSize;',
 
         'void main(void){',
 
-        '   vec2 coord = fract(vTextureCoord);',
-        '   coord *= uFrame.zw;',
+        '   vec2 coord = mod(vTextureCoord, uFrame.zw);',
+        '   coord = clamp(coord, uPixelSize, uFrame.zw - uPixelSize);',
         '   coord += uFrame.xy;',
 
         '   gl_FragColor =  texture2D(uSampler, coord) * vColor ;',
@@ -21579,8 +21730,8 @@ function TilingSprite(texture, width, height)
             // set the uniforms
             {
                 uFrame: { type: '4fv', value: [0,0,1,1] },
-
-                uTransform: { type: '4fv', value: [0,0,1,1] }
+                uTransform: { type: '4fv', value: [0,0,1,1] },
+                uPixelSize : { type : '2fv', value: [1, 1]}
             }
       );
 }
@@ -21658,9 +21809,9 @@ TilingSprite.prototype._renderWebGL = function (renderer)
     texture._frame.width = this.width;
     texture._frame.height = this.height;
 
-    //PADDING
+    this.shader.uniforms.uPixelSize.value[0] = 1.0/tw;
+    this.shader.uniforms.uPixelSize.value[1] = 1.0/th;
 
-    // apply padding to stop gaps in the tile when numbers are not rounded
     this.shader.uniforms.uFrame.value[0] = tempUvs.x0;
     this.shader.uniforms.uFrame.value[1] = tempUvs.y0;
     this.shader.uniforms.uFrame.value[2] = tempUvs.x1 - tempUvs.x0;
@@ -21990,8 +22141,10 @@ DisplayObject.prototype._renderCachedWebGL = function (renderer)
     {
         return;
     }
-    
+
     this._initCachedDisplayObject( renderer );
+
+    this._cachedSprite.worldAlpha = this.worldAlpha;
 
     renderer.setObjectRenderer(renderer.plugins.sprite);
     renderer.plugins.sprite.render( this._cachedSprite );
@@ -23597,7 +23750,7 @@ var core = require('../../core');
  */
 function DisplacementFilter(sprite)
 {
-    var maskMatrix = new core.math.Matrix();
+    var maskMatrix = new core.Matrix();
     sprite.renderable = false;
 
     core.AbstractFilter.call(this,
@@ -23617,7 +23770,7 @@ function DisplacementFilter(sprite)
     this.maskMatrix = maskMatrix;
 
 
-    this.scale = new core.math.Point(20,20);
+    this.scale = new core.Point(20,20);
 
 }
 
@@ -24054,11 +24207,6 @@ Object.defineProperties(GrayFilter.prototype, {
  * @namespace PIXI.filters
  */
 module.exports = {
-    // expose some internal filters...
-    AbstractFilter:     require('../core/renderers/webgl/filters/AbstractFilter'),
-    FXAAFilter:         require('../core/renderers/webgl/filters/FXAAFilter'),
-    SpriteMaskFilter:   require('../core/renderers/webgl/filters/SpriteMaskFilter'),
-    // add the rest!
     AsciiFilter:        require('./ascii/AsciiFilter'),
     BloomFilter:        require('./bloom/BloomFilter'),
     BlurFilter:         require('./blur/BlurFilter'),
@@ -24087,7 +24235,7 @@ module.exports = {
     TwistFilter:        require('./twist/TwistFilter')
 };
 
-},{"../core/renderers/webgl/filters/AbstractFilter":49,"../core/renderers/webgl/filters/FXAAFilter":50,"../core/renderers/webgl/filters/SpriteMaskFilter":51,"./ascii/AsciiFilter":86,"./bloom/BloomFilter":87,"./blur/BlurDirFilter":88,"./blur/BlurFilter":89,"./blur/BlurXFilter":90,"./blur/BlurYFilter":91,"./blur/SmartBlurFilter":92,"./color/ColorMatrixFilter":93,"./color/ColorStepFilter":94,"./convolution/ConvolutionFilter":95,"./crosshatch/CrossHatchFilter":96,"./displacement/DisplacementFilter":97,"./dot/DotScreenFilter":98,"./dropshadow/DropShadowFilter":100,"./gray/GrayFilter":101,"./invert/InvertFilter":103,"./noise/NoiseFilter":104,"./normal/NormalMapFilter":105,"./pixelate/PixelateFilter":106,"./rgb/RGBSplitFilter":107,"./sepia/SepiaFilter":108,"./shockwave/ShockwaveFilter":109,"./tiltshift/TiltShiftFilter":111,"./tiltshift/TiltShiftXFilter":112,"./tiltshift/TiltShiftYFilter":113,"./twist/TwistFilter":114}],103:[function(require,module,exports){
+},{"./ascii/AsciiFilter":86,"./bloom/BloomFilter":87,"./blur/BlurDirFilter":88,"./blur/BlurFilter":89,"./blur/BlurXFilter":90,"./blur/BlurYFilter":91,"./blur/SmartBlurFilter":92,"./color/ColorMatrixFilter":93,"./color/ColorStepFilter":94,"./convolution/ConvolutionFilter":95,"./crosshatch/CrossHatchFilter":96,"./displacement/DisplacementFilter":97,"./dot/DotScreenFilter":98,"./dropshadow/DropShadowFilter":100,"./gray/GrayFilter":101,"./invert/InvertFilter":103,"./noise/NoiseFilter":104,"./normal/NormalMapFilter":105,"./pixelate/PixelateFilter":106,"./rgb/RGBSplitFilter":107,"./sepia/SepiaFilter":108,"./shockwave/ShockwaveFilter":109,"./tiltshift/TiltShiftFilter":111,"./tiltshift/TiltShiftXFilter":112,"./tiltshift/TiltShiftYFilter":113,"./twist/TwistFilter":114}],103:[function(require,module,exports){
 var core = require('../../core');
 // @see https://github.com/substack/brfs/issues/25
 
@@ -25030,7 +25178,7 @@ InteractionData.prototype.getLocalPosition = function (displayObject, point, glo
         a10 = worldTransform.b, a11 = worldTransform.d, a12 = worldTransform.ty,
         id = 1 / (a00 * a11 + a01 * -a10);
 
-    point = point || new core.math.Point();
+    point = point || new core.Point();
 
     point.x = a11 * id * global.x + -a01 * id * global.x + (a12 * a01 - a02 * a11) * id;
     point.y = a00 * id * global.y + -a10 * id * global.y + (-a12 * a00 + a02 * a10) * id;
@@ -25959,7 +26107,6 @@ module.exports = interactiveTarget;
 },{}],119:[function(require,module,exports){
 var Resource = require('resource-loader').Resource,
     core = require('../core'),
-    utils = require('../core/utils'),
     extras = require('../extras'),
     path = require('path');
 
@@ -25981,7 +26128,7 @@ function parse(resource, texture) {
     {
         var charCode = parseInt(letters[i].getAttribute('id'), 10);
 
-        var textureRect = new core.math.Rectangle(
+        var textureRect = new core.Rectangle(
             parseInt(letters[i].getAttribute('x'), 10) + texture.frame.x,
             parseInt(letters[i].getAttribute('y'), 10) + texture.frame.y,
             parseInt(letters[i].getAttribute('width'), 10),
@@ -26058,9 +26205,9 @@ module.exports = function ()
             xmlUrl += '/';
         }
         var textureUrl = xmlUrl + resource.data.getElementsByTagName('page')[0].getAttribute('file');
-        if (utils.TextureCache[textureUrl]) {
+        if (core.utils.TextureCache[textureUrl]) {
             //reuse existing texture
-            parse(resource, utils.TextureCache[textureUrl]);
+            parse(resource, core.utils.TextureCache[textureUrl]);
             next();
         }
         else {
@@ -26077,7 +26224,7 @@ module.exports = function ()
     };
 };
 
-},{"../core":29,"../core/utils":76,"../extras":85,"path":3,"resource-loader":18}],120:[function(require,module,exports){
+},{"../core":29,"../extras":85,"path":3,"resource-loader":18}],120:[function(require,module,exports){
 /**
  * @file        Main export of the PIXI loaders library
  * @author      Mat Groves <mat@goodboydigital.com>
@@ -26201,16 +26348,16 @@ module.exports = function ()
                     var trim = null;
 
                     if (frames[i].rotated) {
-                        size = new core.math.Rectangle(rect.x, rect.y, rect.h, rect.w);
+                        size = new core.Rectangle(rect.x, rect.y, rect.h, rect.w);
                     }
                     else {
-                        size = new core.math.Rectangle(rect.x, rect.y, rect.w, rect.h);
+                        size = new core.Rectangle(rect.x, rect.y, rect.w, rect.h);
                     }
 
                     //  Check to see if the sprite is trimmed
                     if (frames[i].trimmed)
                     {
-                        trim = new core.math.Rectangle(
+                        trim = new core.Rectangle(
                             frames[i].spriteSourceSize.x / resolution,
                             frames[i].spriteSourceSize.y / resolution,
                             frames[i].sourceSize.w / resolution,
@@ -26263,7 +26410,9 @@ module.exports = function ()
 };
 
 },{"../core":29}],124:[function(require,module,exports){
-var core = require('../core');
+var core = require('../core'),
+    tempPoint = new core.Point(),
+    tempPolygon = new core.Polygon();
 
 /**
  * Base mesh class
@@ -26294,9 +26443,9 @@ function Mesh(texture, vertices, uvs, indices, drawMode)
      * @member {Float32Array}
      */
     this.uvs = uvs || new Float32Array([0, 1,
-                                 1, 1,
-                                 1, 0,
-                                 0, 1]);
+        1, 1,
+        1, 0,
+        0, 1]);
 
     /**
      * An array of vertices
@@ -26304,9 +26453,9 @@ function Mesh(texture, vertices, uvs, indices, drawMode)
      * @member {Float32Array}
      */
     this.vertices = vertices || new Float32Array([0, 0,
-                                      100, 0,
-                                      100, 100,
-                                      0, 100]);
+        100, 0,
+        100, 100,
+        0, 100]);
 
     /*
      * @member {Uint16Array} An array containing the indices of the vertices
@@ -26598,18 +26747,18 @@ Mesh.prototype.renderMeshFlat = function (Mesh)
 };
 
 /*
-Mesh.prototype.setTexture = function (texture)
-{
-    //TODO SET THE TEXTURES
-    //TODO VISIBILITY
-    //TODO SETTER
+ Mesh.prototype.setTexture = function (texture)
+ {
+ //TODO SET THE TEXTURES
+ //TODO VISIBILITY
+ //TODO SETTER
 
-    // stop current texture
-    this.texture = texture;
-    this.width   = texture.frame.width;
-    this.height  = texture.frame.height;
-    this.updateFrame = true;
-};
+ // stop current texture
+ this.texture = texture;
+ this.width   = texture.frame.width;
+ this.height  = texture.frame.height;
+ this.updateFrame = true;
+ };
  */
 
 /**
@@ -26631,54 +26780,102 @@ Mesh.prototype._onTextureUpdate = function ()
  */
 Mesh.prototype.getBounds = function (matrix)
 {
-    var worldTransform = matrix || this.worldTransform;
+    if (!this._currentBounds) {
+        var worldTransform = matrix || this.worldTransform;
 
-    var a = worldTransform.a;
-    var b = worldTransform.b;
-    var c = worldTransform.c;
-    var d = worldTransform.d;
-    var tx = worldTransform.tx;
-    var ty = worldTransform.ty;
+        var a = worldTransform.a;
+        var b = worldTransform.b;
+        var c = worldTransform.c;
+        var d = worldTransform.d;
+        var tx = worldTransform.tx;
+        var ty = worldTransform.ty;
 
-    var maxX = -Infinity;
-    var maxY = -Infinity;
+        var maxX = -Infinity;
+        var maxY = -Infinity;
 
-    var minX = Infinity;
-    var minY = Infinity;
+        var minX = Infinity;
+        var minY = Infinity;
 
-    var vertices = this.vertices;
-    for (var i = 0, n = vertices.length; i < n; i += 2)
-    {
-        var rawX = vertices[i], rawY = vertices[i + 1];
-        var x = (a * rawX) + (c * rawY) + tx;
-        var y = (d * rawY) + (b * rawX) + ty;
+        var vertices = this.vertices;
+        for (var i = 0, n = vertices.length; i < n; i += 2) {
+            var rawX = vertices[i], rawY = vertices[i + 1];
+            var x = (a * rawX) + (c * rawY) + tx;
+            var y = (d * rawY) + (b * rawX) + ty;
 
-        minX = x < minX ? x : minX;
-        minY = y < minY ? y : minY;
+            minX = x < minX ? x : minX;
+            minY = y < minY ? y : minY;
 
-        maxX = x > maxX ? x : maxX;
-        maxY = y > maxY ? y : maxY;
+            maxX = x > maxX ? x : maxX;
+            maxY = y > maxY ? y : maxY;
+        }
+
+        if (minX === -Infinity || maxY === Infinity) {
+            return core.Rectangle.EMPTY;
+        }
+
+        var bounds = this._bounds;
+
+        bounds.x = minX;
+        bounds.width = maxX - minX;
+
+        bounds.y = minY;
+        bounds.height = maxY - minY;
+
+        // store a reference so that if this function gets called again in the render cycle we do not have to recalculate
+        this._currentBounds = bounds;
     }
 
-    if (minX === -Infinity || maxY === Infinity)
-    {
-        return core.math.Rectangle.EMPTY;
-    }
-
-    var bounds = this._bounds;
-
-    bounds.x = minX;
-    bounds.width = maxX - minX;
-
-    bounds.y = minY;
-    bounds.height = maxY - minY;
-
-    // store a reference so that if this function gets called again in the render cycle we do not have to recalculate
-    this._currentBounds = bounds;
-
-    return bounds;
+    return this._currentBounds;
 };
 
+/**
+ * Tests if a point is inside this mesh. Works only for TRIANGLE_MESH
+ *
+ * @param point {Point} the point to test
+ * @return {boolean} the result of the test
+ */
+Mesh.prototype.containsPoint = function( point ) {
+    if (!this.getBounds().contains(point.x, point.y)) {
+        return false;
+    }
+    this.worldTransform.applyInverse(point,  tempPoint);
+
+    var vertices = this.vertices;
+    var points = tempPolygon.points;
+    var i, len;
+
+    if (this.drawMode === Mesh.DRAW_MODES.TRIANGLES) {
+        var indices = this.indices;
+        len = this.indices.length;
+        //TODO: inline this.
+        for (i=0;i<len;i+=3) {
+            var ind0 = indices[i]*2, ind1 = indices[i+1]*2, ind2 = indices[i+2]*2;
+            points[0] = vertices[ind0];
+            points[1] = vertices[ind0+1];
+            points[2] = vertices[ind1];
+            points[3] = vertices[ind1+1];
+            points[4] = vertices[ind2];
+            points[5] = vertices[ind2+1];
+            if (tempPolygon.contains(tempPoint.x, tempPoint.y)) {
+                return true;
+            }
+        }
+    } else {
+        len = vertices.length;
+        for (i=0;i<len;i+=6) {
+            points[0] = vertices[i];
+            points[1] = vertices[i+1];
+            points[2] = vertices[i+2];
+            points[3] = vertices[i+3];
+            points[4] = vertices[i+4];
+            points[5] = vertices[i+5];
+            if (tempPolygon.contains(tempPoint.x, tempPoint.y)) {
+                return true;
+            }
+        }
+    }
+    return false;
+};
 /**
  * Different drawing buffer modes supported
  *
@@ -26781,8 +26978,8 @@ Rope.prototype.refresh = function ()
     var colors = this.colors;
 
     var textureUvs = this._texture._uvs;
-    var offset = new core.math.Point(textureUvs.x0, textureUvs.y0);
-    var factor = new core.math.Point(textureUvs.x2 - textureUvs.x0, textureUvs.y2 - textureUvs.y0);
+    var offset = new core.Point(textureUvs.x0, textureUvs.y0);
+    var factor = new core.Point(textureUvs.x2 - textureUvs.x0, textureUvs.y2 - textureUvs.y0);
 
     uvs[0] = 0 + offset.x;
     uvs[1] = 0 + offset.y;
@@ -26925,8 +27122,7 @@ module.exports = {
 };
 
 },{"./Mesh":124,"./Rope":125,"./webgl/MeshRenderer":127,"./webgl/MeshShader":128}],127:[function(require,module,exports){
-var ObjectRenderer = require('../../core/renderers/webgl/utils/ObjectRenderer'),
-    WebGLRenderer = require('../../core/renderers/webgl/WebGLRenderer'),
+var core = require('../../core'),
     Mesh = require('../Mesh');
 
 /**
@@ -26950,7 +27146,7 @@ var ObjectRenderer = require('../../core/renderers/webgl/utils/ObjectRenderer'),
  */
 function MeshRenderer(renderer)
 {
-    ObjectRenderer.call(this, renderer);
+    core.ObjectRenderer.call(this, renderer);
 
 
     /**
@@ -26972,11 +27168,11 @@ function MeshRenderer(renderer)
     }
 }
 
-MeshRenderer.prototype = Object.create(ObjectRenderer.prototype);
+MeshRenderer.prototype = Object.create(core.ObjectRenderer.prototype);
 MeshRenderer.prototype.constructor = MeshRenderer;
 module.exports = MeshRenderer;
 
-WebGLRenderer.registerPlugin('mesh', MeshRenderer);
+core.WebGLRenderer.registerPlugin('mesh', MeshRenderer);
 
 /**
  * Sets up the renderer context and necessary buffers.
@@ -26996,7 +27192,6 @@ MeshRenderer.prototype.onContextChange = function ()
  */
 MeshRenderer.prototype.render = function (mesh)
 {
-//    return;
     if(!mesh._vertexBuffer)
     {
         this._initWebGL(mesh);
@@ -27140,7 +27335,7 @@ MeshRenderer.prototype.destroy = function ()
 {
 };
 
-},{"../../core/renderers/webgl/WebGLRenderer":48,"../../core/renderers/webgl/utils/ObjectRenderer":62,"../Mesh":124}],128:[function(require,module,exports){
+},{"../../core":29,"../Mesh":124}],128:[function(require,module,exports){
 var core = require('../../core');
 
 /**

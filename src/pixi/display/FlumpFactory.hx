@@ -6,8 +6,10 @@ import flump.library.MovieSymbol;
 import pixi.core.display.DisplayObject;
 import pixi.core.sprites.Sprite;
 import pixi.core.textures.Texture;
+import pixi.core.ticker.Ticker;
 
 
+@:access(pixi.display.FlumpMovie)
 class FlumpFactory{
 	
 	private var library:FlumpLibrary;
@@ -20,8 +22,8 @@ class FlumpFactory{
 	}
 
 
-	public function createMovie(id:String):Movie{
-		return new Movie(library.movies[id], this);
+	public function createMovie(id:String):FlumpMovie{
+		return new FlumpMovie(library.movies[id], this, true);
 	}
 
 
@@ -32,8 +34,6 @@ class FlumpFactory{
 		var sprite = new Sprite(texture);
 		sprite.pivot.x = symbol.origin.x;
 		sprite.pivot.y = symbol.origin.y;
-		//sprite.anchor.x = symbol.origin.x;
-		//sprite.anchor.y = symbol.origin.y;
 		return sprite;
 	}
 
@@ -41,6 +41,13 @@ class FlumpFactory{
 	public function createDisplayObject(id:String):DisplayObject{
 		return library.movies.exists(id)
 		? createMovie(id)
+		: createSprite(id);
+	}
+
+
+	private function createChildDisplayObject(id:String):DisplayObject{
+		return library.movies.exists(id)
+		? new FlumpMovie(library.movies[id], this, false)
 		: createSprite(id);
 	}
 
