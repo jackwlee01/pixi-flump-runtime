@@ -8,7 +8,7 @@ class PixiLayer extends Container{
 
     public var skew = new Point();
 
-    override public function updateTransform(){
+    public function updateTransform(){
         untyped __js__('
             if (!this.visible)
             {
