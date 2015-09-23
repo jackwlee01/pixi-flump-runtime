@@ -63,10 +63,14 @@ class FlumpMovie extends Container implements IFlumpMovie{
 		return null;
 	}
 
-	public var currentFrame(default, set):Int;
+	public var currentFrame(get, set):Int;
 	private function set_currentFrame(value){
 		player.currentFrame = value;
 		return value;
+	}
+	
+	private function get_currentFrame() {
+		return player.currentFrame;
 	}
 
 	public var playing(get, null):Bool;
