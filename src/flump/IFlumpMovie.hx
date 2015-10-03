@@ -13,6 +13,8 @@ interface IFlumpMovie{
 
 	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):Void;
 	private function getChildPlayer(keyframe:Keyframe):MoviePlayer;
+
+	private function onAnimationComplete():Void;
 	
 	private function labelEnter(label:Label):Void;
 	private function labelExit(label:Label):Void;

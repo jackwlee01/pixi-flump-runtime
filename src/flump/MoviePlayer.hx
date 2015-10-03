@@ -105,10 +105,12 @@ class MoviePlayer{
 		return state == STATE_PLAYING;
 	}
 
+
 	public var looping(get, null):Bool;
 	private function get_looping(){
 		return state == STATE_LOOPING;
 	}
+
 
 	public var stopped(get, null):Bool;
 	private function get_stopped(){
@@ -149,9 +151,11 @@ class MoviePlayer{
 			if(position < 0){
 				elapsed = 0;
 				stop();
+				movie.onAnimationComplete();
 			}else if(position > symbol.duration - symbol.library.frameTime){
 				elapsed = symbol.duration - symbol.library.frameTime;
 				stop();
+				movie.onAnimationComplete();
 			}
 		}
 
@@ -250,9 +254,8 @@ class MoviePlayer{
 	}
 
 
-
 	private function timeForLabel(label:String):Float{
-		return symbol.labels.get(label).keyframe.time;
+		return symbol.labels[label].keyframe.time;
 	}
 
 
