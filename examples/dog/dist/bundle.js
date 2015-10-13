@@ -190,6 +190,7 @@ var Main = function() {
 	var _g = this;
 	pixi_plugins_app_Application.call(this);
 	pixi_plugins_app_Application.prototype.start.call(this);
+	this.onUpdate = $bind(this,this.tick);
 	pixi_display_FlumpLibraryLoader.load("./flump-assets/dog").addOnce($bind(this,this.onLibraryLoaded));
 	window.document.onmousemove = function(e) {
 		_g.pos = e.pageX * 3;
@@ -203,15 +204,23 @@ Main.__super__ = pixi_plugins_app_Application;
 Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
 	onLibraryLoaded: function(factory) {
 		var movie = factory.createMovie("TestScene");
+		var onLabelPassed = function(label) {
+			console.log(label);
+			if(label == "forthFrame") movie.gotoAndPlay(37);
+		};
+		movie.animationSpeed = 40;
 		this.stage.addChild(movie);
 		this.movies.push(movie);
-		movie.player.loop();
+		movie.on("labelPassed",onLabelPassed);
+		var dog = movie.getChildMovie("DogRunning");
 		var placeholder = movie.getLayer("Placeholder");
 		var graphics = new PIXI.Graphics();
 		graphics.lineColor = 10027008;
 		graphics.beginFill(39168);
 		graphics.drawCircle(100,100,100);
 		placeholder.addChild(graphics);
+	}
+	,tick: function(t) {
 	}
 	,__class__: Main
 });
@@ -241,6 +250,11 @@ _$UInt_UInt_$Impl_$.gt = function(a,b) {
 	var bNeg = b < 0;
 	if(aNeg != bNeg) return aNeg; else return a > b;
 };
+_$UInt_UInt_$Impl_$.gte = function(a,b) {
+	var aNeg = a < 0;
+	var bNeg = b < 0;
+	if(aNeg != bNeg) return aNeg; else return a >= b;
+};
 _$UInt_UInt_$Impl_$.toFloat = function(this1) {
 	var $int = this1;
 	if($int < 0) return 4294967296.0 + $int; else return $int + 0.0;
@@ -259,6 +273,9 @@ flump_IFlumpMovie.prototype = {
 };
 var flump_MoviePlayer = function(symbol,movie) {
 	this.position = 0.0;
+	this.fullyGenerated = false;
+	this.dirty = false;
+	this.labelsToFire = [];
 	this.childPlayers = new haxe_ds_ObjectMap();
 	this.createdChildren = new haxe_ds_ObjectMap();
 	this.currentChildrenKey = new haxe_ds_ObjectMap();
@@ -283,7 +300,16 @@ var flump_MoviePlayer = function(symbol,movie) {
 };
 flump_MoviePlayer.__name__ = true;
 flump_MoviePlayer.prototype = {
-	reset: function() {
+	getDisplayKey: function(layerId,keyframeIndex) {
+		if(keyframeIndex == null) keyframeIndex = 0;
+		var layer = this.symbol.getLayer(layerId);
+		if(layer == null) throw new js__$Boot_HaxeError("Layer " + layerId + " does not exist.");
+		var keyframe = layer.getKeyframeForFrame(keyframeIndex);
+		if(keyframe == null) throw new js__$Boot_HaxeError("Keyframe does not exist at index " + Std.string(_$UInt_UInt_$Impl_$.toFloat(keyframeIndex)));
+		this.createChildIfNessessary(keyframe);
+		return keyframe.displayKey;
+	}
+	,reset: function() {
 		this.elapsed = 0;
 		this.previousElapsed = 0;
 	}
@@ -317,6 +343,8 @@ flump_MoviePlayer.prototype = {
 	,goToPosition: function(time) {
 		this.elapsed = time;
 		this.previousElapsed = time;
+		this.clearLabels();
+		this.fireLabels();
 		return this;
 	}
 	,get_playing: function() {
@@ -343,18 +371,50 @@ flump_MoviePlayer.prototype = {
 		return this.symbol.labels.exists("label");
 	}
 	,advanceTime: function(ms) {
-		if(this.state != this.STATE_STOPPED) this.elapsed += ms;
+		if(this.state != this.STATE_STOPPED) {
+			this.elapsed += ms;
+			while(this.elapsed < 0) {
+				this.elapsed += this.symbol.duration;
+				this.previousElapsed += this.symbol.duration;
+			}
+		}
 		this.advanced += ms;
+		if(this.state != this.STATE_STOPPED) this.fireLabels();
 		this.render();
+	}
+	,clearLabels: function() {
+		while(this.labelsToFire.length > 0) this.labelsToFire.pop();
+	}
+	,fireLabels: function() {
+		if(this.symbol.firstLabel == null) return;
+		if(this.previousElapsed > this.elapsed) return;
+		var label;
+		if(this.previousElapsed <= this.elapsed) label = this.symbol.firstLabel; else label = this.symbol.lastLabel;
+		var checking = true;
+		while(checking) if(label.keyframe.time > this.previousElapsed % this.symbol.duration) checking = false; else if(_$UInt_UInt_$Impl_$.gte(label.keyframe.index,label.next.keyframe.index)) {
+			checking = false;
+			label = label.next;
+		} else label = label.next;
+		var firstChecked = label;
+		while(label != null) {
+			var checkFrom = this.previousElapsed % this.symbol.duration;
+			var checkTo = this.elapsed % this.symbol.duration;
+			if(label.keyframe.insideRangeStart(checkFrom,checkTo)) this.labelsToFire.push(label);
+			label = label.next;
+			if(label == firstChecked) label = null;
+		}
+		while(this.labelsToFire.length > 0) this.movie.labelPassed(this.labelsToFire.shift());
 	}
 	,render: function() {
 		if(this.state == this.STATE_PLAYING) {
 			if(this.get_position() < 0) {
 				this.elapsed = 0;
 				this.stop();
+				this.movie.onAnimationComplete();
 			} else if(this.get_position() > this.symbol.duration - this.symbol.library.frameTime) {
 				this.elapsed = this.symbol.duration - this.symbol.library.frameTime;
 				this.stop();
+				this.movie.onAnimationComplete();
 			}
 		}
 		while(this.get_position() < 0) this.position += this.symbol.duration;
@@ -659,7 +719,7 @@ flump_library_FlumpLibrary.parseJSON = function(raw) {
 			label.next = nextLabel;
 			nextLabel.prev = label;
 		}
-		symbol1.fistLabel = labels[0];
+		symbol1.firstLabel = labels[0];
 		symbol1.lastLabel = labels[labels.length - 1];
 		{
 			movieSymbols.set(symbol1.name,symbol1);
@@ -694,6 +754,14 @@ flump_library_Keyframe.prototype = {
 	,rangeIntersect: function(from,to) {
 		return this.timeInside(from) || this.timeInside(to);
 	}
+	,insideRangeStart: function(from,to) {
+		if(from == to && to == this.time) return true;
+		if(from <= to) return this.time > from && this.time <= to; else return this.time > from || this.time <= to;
+	}
+	,insideRangeEnd: function(from,to) {
+		if(from == to && to == this.time + this.duration) return true;
+		if(from > to) return to <= this.time + this.duration && from > this.time + this.duration; else return to <= this.time + this.duration || from > this.time + this.duration;
+	}
 	,__class__: flump_library_Keyframe
 };
 var flump_library_Label = function() {
@@ -708,7 +776,17 @@ var flump_library_Layer = function(name) {
 };
 flump_library_Layer.__name__ = true;
 flump_library_Layer.prototype = {
-	getKeyframeForTime: function(time) {
+	getKeyframeForFrame: function(index) {
+		var _g = 0;
+		var _g1 = this.keyframes;
+		while(_g < _g1.length) {
+			var keyframe = _g1[_g];
+			++_g;
+			if(keyframe.index == index) return keyframe;
+		}
+		return null;
+	}
+	,getKeyframeForTime: function(time) {
 		var keyframe = this.lastKeyframe;
 		while(keyframe.time > time % this.movie.duration) keyframe = keyframe.prev;
 		return keyframe;
@@ -729,7 +807,17 @@ var flump_library_MovieSymbol = function() {
 flump_library_MovieSymbol.__name__ = true;
 flump_library_MovieSymbol.__super__ = flump_library_Symbol;
 flump_library_MovieSymbol.prototype = $extend(flump_library_Symbol.prototype,{
-	debug: function() {
+	getLayer: function(name) {
+		var _g = 0;
+		var _g1 = this.layers;
+		while(_g < _g1.length) {
+			var layer = _g1[_g];
+			++_g;
+			if(layer.name == name) return layer;
+		}
+		return null;
+	}
+	,debug: function() {
 		var largestLayerChars = Lambda.fold(this.layers,function(layer,result) {
 			if(layer.name.length > result) return layer.name.length; else return result;
 		},0);
@@ -1602,27 +1690,61 @@ var pixi_display_FlumpMovie = function(symbol,flumpFactory,master) {
 	this.factory = flumpFactory;
 	this.master = master;
 	this.player = new flump_MoviePlayer(symbol,this);
+	this.set_loop(true);
 	if(master) this.once("added",$bind(this,this.onAdded));
 };
 pixi_display_FlumpMovie.__name__ = true;
 pixi_display_FlumpMovie.__interfaces__ = [flump_IFlumpMovie];
 pixi_display_FlumpMovie.__super__ = PIXI.Container;
 pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
-	get_symbolId: function() {
+	getLayer: function(layerId) {
+		if(this.layerLookup.exists(layerId) == false) throw new js__$Boot_HaxeError("Layer " + layerId + "does not exist");
+		return this.layerLookup.get(layerId);
+	}
+	,getChildDisplayObject: function(layerId,keyframeIndex) {
+		if(keyframeIndex == null) keyframeIndex = 0;
+		var key = this.player.getDisplayKey(layerId,keyframeIndex);
+		return this.movieChildren.h[key.__id__];
+	}
+	,getChildMovie: function(layerId,keyframeIndex) {
+		if(keyframeIndex == null) keyframeIndex = 0;
+		var child = this.getChildDisplayObject(layerId,keyframeIndex);
+		if(js_Boot.__instanceof(child,pixi_display_FlumpMovie) == false) throw new js__$Boot_HaxeError("Child on layer " + layerId + " at keyframeIndex " + Std.string(_$UInt_UInt_$Impl_$.toFloat(keyframeIndex)) + " is not of type FlumpMovie!");
+		return child;
+	}
+	,get_symbolId: function() {
 		return this.symbol.name;
 	}
 	,set_loop: function(value) {
+		if(value && this.player.get_playing()) this.player.loop(); else if(value == false && this.player.get_looping()) this.player.play();
 		return this.loop = value;
 	}
 	,set_onComplete: function(value) {
-		return null;
+		return this.onComplete = value;
 	}
 	,set_currentFrame: function(value) {
 		this.player.set_currentFrame(value);
 		return value;
 	}
+	,get_currentFrame: function() {
+		return this.player.get_currentFrame();
+	}
 	,get_playing: function() {
-		return this.player.get_playing();
+		return this.player.get_playing() || this.player.get_looping();
+	}
+	,get_independantTimeline: function() {
+		return this.player.independantTimeline;
+	}
+	,set_independantTimeline: function(value) {
+		this.player.independantTimeline = value;
+		return value;
+	}
+	,get_independantControl: function() {
+		return this.player.independantControl;
+	}
+	,set_independantControl: function(value) {
+		this.player.independantControl = value;
+		return value;
 	}
 	,get_totalFrames: function() {
 		return this.player.get_totalFrames();
@@ -1634,21 +1756,35 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 		if(this.loop) this.player.loop(); else this.player.play();
 	}
 	,gotoAndStop: function(frameNumber) {
+		if(!this.loop) {
+			if(_$UInt_UInt_$Impl_$.gt(frameNumber,(function($this) {
+				var $r;
+				var a = $this.player.get_totalFrames();
+				$r = a - 1;
+				return $r;
+			}(this)))) {
+				var a1 = this.player.get_totalFrames();
+				frameNumber = a1 - 1;
+			} else if(frameNumber < 0) frameNumber = 0;
+		}
 		this.player.goToFrame(frameNumber).stop();
 	}
 	,gotoAndPlay: function(frameNumber) {
-		if(this.loop) this.player.goToFrame(frameNumber).play(); else this.player.goToFrame(frameNumber).stop();
+		if(!this.loop) {
+			if(_$UInt_UInt_$Impl_$.gt(frameNumber,(function($this) {
+				var $r;
+				var a = $this.player.get_totalFrames();
+				$r = a - 1;
+				return $r;
+			}(this)))) {
+				var a1 = this.player.get_totalFrames();
+				frameNumber = a1 - 1;
+			} else if(frameNumber < 0) frameNumber = 0;
+		}
+		if(this.loop) this.player.goToFrame(frameNumber).loop(); else this.player.goToFrame(frameNumber).play();
 	}
-	,getLayer: function(name) {
-		return this.layerLookup.get(name);
-	}
-	,onLabelEnter: function(label,callback) {
-		if(!this.player.labelExists(label)) throw new js__$Boot_HaxeError("Label " + label + "does not exist for movie " + this.symbol.name);
-		this.on("enter_" + label,callback);
-	}
-	,onLabelExit: function(label,callback) {
-		if(!this.player.labelExists(label)) throw new js__$Boot_HaxeError("Label " + label + "does not exist for movie " + this.symbol.name);
-		this.on("exit_" + label,callback);
+	,getLabelFrame: function(label) {
+		return this.player.getLabelFrame(label);
 	}
 	,tick: function() {
 		this.player.advanceTime(this.ticker.elapsedMS * this.animationSpeed);
@@ -1687,6 +1823,9 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 		var layer1 = this.layers.h[layer.__id__];
 		layer1.addChild(this.movieChildren.h[displayKey.__id__]);
 	}
+	,onAnimationComplete: function() {
+		if(this.onComplete != null) this.onComplete();
+	}
 	,renderFrame: function(keyframe,x,y,scaleX,scaleY,skewX,skewY) {
 		var layer = this.layers.h[keyframe.layer.__id__];
 		layer.x = x;
@@ -1698,11 +1837,8 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 		layer.pivot.x = keyframe.pivot.x;
 		layer.pivot.y = keyframe.pivot.y;
 	}
-	,labelEnter: function(label) {
-		this.emit("enter_" + Std.string(label),this);
-	}
-	,labelExit: function(label) {
-		this.emit("exit_" + Std.string(label),this);
+	,labelPassed: function(label) {
+		this.emit("labelPassed",label.name);
 	}
 	,__class__: pixi_display_FlumpMovie
 });

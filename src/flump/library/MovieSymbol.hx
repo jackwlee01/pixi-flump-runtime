@@ -11,11 +11,18 @@ class MovieSymbol extends Symbol{
 
 	public var duration:Float;
 	public var totalFrames:UInt;
-	public var fistLabel:Label;
+	public var firstLabel:Label;
 	public var lastLabel:Label;
+
 
 	public function new(){
 		super();
+	}
+
+
+	public function getLayer(name:String):Layer{
+		for(layer in layers) if(layer.name == name) return layer;
+		return null;
 	}
 
 

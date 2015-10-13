@@ -32,6 +32,7 @@ class FlumpMovie extends Container implements IFlumpMovie{
 		factory = flumpFactory;
 		this.master = master;
 		player = new MoviePlayer(symbol, this);	
+		this.loop = true;
 
 		if(master) once("added", onAdded);
 	}
@@ -46,6 +47,25 @@ class FlumpMovie extends Container implements IFlumpMovie{
 
 	public var animationSpeed(default, default):Float = 1.0;
 
+	public function getLayer(layerId:String):Container{
+		if(layerLookup.exists(layerId) == false) throw("Layer " + layerId + "does not exist");
+		return layerLookup[layerId];
+	}
+
+
+	public function getChildDisplayObject(layerId:String, keyframeIndex:UInt = 0):DisplayObject{
+		var key = player.getDisplayKey(layerId, keyframeIndex);
+		return movieChildren[key];
+	}
+
+
+	public function getChildMovie(layerId, keyframeIndex:UInt = 0):FlumpMovie{
+		var child = getChildDisplayObject(layerId, keyframeIndex);
+		if(Std.is(child, FlumpMovie) == false) throw("Child on layer " + layerId + " at keyframeIndex " + keyframeIndex + " is not of type FlumpMovie!");
+		return cast child;
+	}
+
+
 	public var symbolId(get, null):String;
 	private function get_symbolId(){
 		return symbol.name;
@@ -53,7 +73,6 @@ class FlumpMovie extends Container implements IFlumpMovie{
 
 	public var loop(default, set):Bool;
 	private function set_loop(value){
-		trace(player.looping, player.playing);
 		if(value && player.playing) player.loop();
 		else if(value == false && player.looping) player.play();
 		return loop = value;
@@ -78,7 +97,27 @@ class FlumpMovie extends Container implements IFlumpMovie{
 	private function get_playing(){
 		return player.playing || player.looping;
 	}
-	
+
+
+	public var independantTimeline(get, set):Bool;
+	private function get_independantTimeline(){
+		return player.independantTimeline;
+	}
+	private function set_independantTimeline(value:Bool){
+		player.independantTimeline = value;
+		return value;
+	}
+
+
+	public var independantControl(get, set):Bool;
+	private function get_independantControl(){
+		return player.independantControl;
+	}
+	private function set_independantControl(value:Bool){
+		player.independantControl = value;
+		return value;
+	}
+
 
 	public var totalFrames(get, null):Int;
 	private function get_totalFrames(){
@@ -116,28 +155,9 @@ class FlumpMovie extends Container implements IFlumpMovie{
 	}
 
 
-	public function getLayer(name:String):Container{
-		return layerLookup[name];
-	}
-
-
 	public function getLabelFrame(label:String):UInt{
 		return player.getLabelFrame(label);
 	}
-
-	/*
-	public function onLabelEnter(label:String, callback:Void->Void){
-		if(!player.labelExists(label)) throw("Label " + label + "does not exist for movie " + symbol.name); 
-		this.on("enter_" + label, callback);
-	}
-
-
-	public function onLabelExit(label:String, callback:Void->Void){
-		if(!player.labelExists(label)) throw("Label " + label + "does not exist for movie " + symbol.name); 
-		this.on("exit_" + label, callback);
-	}
-	*/
-
 
 
 	/////////////////////////////////////////////////////
@@ -220,13 +240,9 @@ class FlumpMovie extends Container implements IFlumpMovie{
 	}
 
 
-	private function labelEnter(label:Label){
-		this.emit("enter_" + label, this);
+	private function labelPassed(label:Label){
+		emit("labelPassed", label.name);
 	}
 
-
-	private function labelExit(label:Label){
-		this.emit("exit_" + label, this);
-	}
 
 }

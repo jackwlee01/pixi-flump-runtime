@@ -16,8 +16,7 @@ interface IFlumpMovie{
 
 	private function onAnimationComplete():Void;
 	
-	private function labelEnter(label:Label):Void;
-	private function labelExit(label:Label):Void;
+	private function labelPassed(label:Label):Void;
 
 }
 

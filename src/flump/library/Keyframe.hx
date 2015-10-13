@@ -31,17 +31,35 @@ class Keyframe{
 
 	public function new(){}
 
-
-	public function timeInside(time:Float){
+	// Does the time fall inside of the the keyframe frames
+	public function timeInside(time:Float):Bool{
 		return (this.time <= time) && (this.time + duration) > time;
 	}
 
-	public function rangeInside(from:Float, to:Float){
+	// Does the range fit inside of the keyframe frames
+	public function rangeInside(from:Float, to:Float):Bool{
 		return timeInside(from) && timeInside(to);
 	}
 
-	public function rangeIntersect(from:Float, to:Float){
+	// Does the range intersect with the keyframe frames
+	public function rangeIntersect(from:Float, to:Float):Bool{
 		return timeInside(from) || timeInside(to);
+	}
+
+	// Does the start of the keyframe frames fall inside the range. (Checks for a range that wraps around)
+	public function insideRangeStart(from:Float, to:Float):Bool{
+		if(from == to && to == time) return true;
+		return from <= to 
+			? time > from && time <= to
+			: time > from || time <= to;
+	}
+
+	// Does the end of the keyframe frames fall inside the range. (Checks for a range that wraps around, and assuming backward playback);
+	public function insideRangeEnd(from:Float, to:Float):Bool{
+		if(from == to && to == time + duration) return true;
+		return from > to
+			? to <= time + duration && from > time + duration
+			: to <= time + duration || from > time + duration;
 	}
 
 }

@@ -2,7 +2,7 @@
   "name": "flump-pixi-runtime",
   "url" : "https://github.com/jackwlee01/flump-pixi-runtime",
   "license": "MIT",
-  "tags": ["flump", "animation", "flash", "timeline"],
+  "tags": ["flump", "animation", "flash", "timeline", "pixi"],
   "description": "Currently a work in progress.",
   "version": "0.0.2",
   "releasenote": "Do not use yet",

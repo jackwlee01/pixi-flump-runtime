@@ -31,6 +31,10 @@ class MoviePlayer{
 	private var createdChildren = new Map<DisplayObjectKey, Bool>();
 	private var childPlayers = new Map<DisplayObjectKey, MoviePlayer>();
 
+	private var labelsToFire = new Array<Label>();
+	private var dirty:Bool = false;
+	private var fullyGenerated:Bool = false;
+
 
 	public function new(symbol:MovieSymbol, movie:IFlumpMovie){
 		this.symbol = symbol;
@@ -41,6 +45,16 @@ class MoviePlayer{
 		}
 
 		state = STATE_LOOPING;
+	}
+
+
+	public function getDisplayKey(layerId:String, keyframeIndex:UInt = 0):DisplayObjectKey{
+		var layer = symbol.getLayer(layerId);
+		if(layer == null) throw("Layer " + layerId + " does not exist.");
+		var keyframe = layer.getKeyframeForFrame(keyframeIndex);
+		if(keyframe == null) throw("Keyframe does not exist at index " + keyframeIndex);
+		createChildIfNessessary(keyframe);
+		return keyframe.displayKey;
 	}
 
 
@@ -96,6 +110,8 @@ class MoviePlayer{
 	public function goToPosition(time:Float){
 		elapsed = time;
 		previousElapsed = time;
+		clearLabels();
+		fireLabels();
 		return this;
 	}
 
@@ -140,10 +156,71 @@ class MoviePlayer{
 
 
 	public function advanceTime(ms:Float):Void{
-		if(state != STATE_STOPPED) elapsed += ms;
+		if(state != STATE_STOPPED){
+			elapsed += ms;
+			while(elapsed < 0){
+				elapsed += symbol.duration;
+				previousElapsed += symbol.duration;
+			}
+		}
 		advanced += ms;
+
+		if(state != STATE_STOPPED) fireLabels();
 		render();
 	}
+
+
+	private function clearLabels(){
+		while(labelsToFire.length > 0) labelsToFire.pop();
+	}
+
+
+	private function fireLabels(){
+		if(symbol.firstLabel == null) return;
+		if(previousElapsed > elapsed) return;
+		
+		
+		var label:Label = previousElapsed <= elapsed
+			? symbol.firstLabel
+			: symbol.lastLabel;
+		
+		var checking = true;
+		while(checking){
+			if(label.keyframe.time > previousElapsed%symbol.duration){
+				checking = false;
+				//trace(label.keyframe.index);
+				//label = label.prev;
+			}else if(label.next.keyframe.index <= label.keyframe.index){
+				checking = false;
+				label = label.next;
+			}else{
+				label = label.next;
+			}
+		}
+		
+
+
+		var firstChecked = label;
+
+		while(label != null){
+			var checkFrom = previousElapsed % symbol.duration;
+			var checkTo = elapsed % symbol.duration;
+			if(label.keyframe.insideRangeStart(checkFrom, checkTo)){
+				labelsToFire.push(label);
+				//trace("pushed: " + label.keyframe.index + " || " + (checkFrom/symbol.library.frameTime) + " : " + (checkTo/symbol.library.frameTime));
+			}
+
+			label = label.next;
+			if(label == firstChecked) label = null;
+		}
+		
+
+		while(labelsToFire.length > 0){
+			movie.labelPassed(labelsToFire.shift());
+		}
+
+	}
+
 
 
 	private function render():Void{
