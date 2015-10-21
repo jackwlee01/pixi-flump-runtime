@@ -17,6 +17,12 @@ class Layer{
 	}
 
 
+	public function getKeyframeForFrame(index:UInt):Keyframe{
+		for(keyframe in keyframes) if(keyframe.index == index) return keyframe;
+		return null;
+	}
+
+
 	public function getKeyframeForTime(time:Float){
 		var keyframe = lastKeyframe;
 		while(keyframe.time > time % movie.duration) keyframe = keyframe.prev;

@@ -32,6 +32,7 @@ class FlumpMovie extends Container implements IFlumpMovie{
 		factory = flumpFactory;
 		this.master = master;
 		player = new MoviePlayer(symbol, this);	
+		this.loop = true;
 
 		if(master) once("added", onAdded);
 	}
@@ -44,8 +45,26 @@ class FlumpMovie extends Container implements IFlumpMovie{
 	//
 	/////////////////////////////////////////////////////
 
-
 	public var animationSpeed(default, default):Float = 1.0;
+
+	public function getLayer(layerId:String):Container{
+		if(layerLookup.exists(layerId) == false) throw("Layer " + layerId + "does not exist");
+		return layerLookup[layerId];
+	}
+
+
+	public function getChildDisplayObject(layerId:String, keyframeIndex:UInt = 0):DisplayObject{
+		var key = player.getDisplayKey(layerId, keyframeIndex);
+		return movieChildren[key];
+	}
+
+
+	public function getChildMovie(layerId, keyframeIndex:UInt = 0):FlumpMovie{
+		var child = getChildDisplayObject(layerId, keyframeIndex);
+		if(Std.is(child, FlumpMovie) == false) throw("Child on layer " + layerId + " at keyframeIndex " + keyframeIndex + " is not of type FlumpMovie!");
+		return cast child;
+	}
+
 
 	public var symbolId(get, null):String;
 	private function get_symbolId(){
@@ -54,13 +73,15 @@ class FlumpMovie extends Container implements IFlumpMovie{
 
 	public var loop(default, set):Bool;
 	private function set_loop(value){
+		if(value && player.playing) player.loop();
+		else if(value == false && player.looping) player.play();
 		return loop = value;
 	}
 
 
 	public var onComplete(default, set):Void -> Void;
 	private function set_onComplete(value){
-		return null;
+		return onComplete = value;
 	}
 
 	public var currentFrame(get, set):Int;
@@ -68,16 +89,35 @@ class FlumpMovie extends Container implements IFlumpMovie{
 		player.currentFrame = value;
 		return value;
 	}
-	
-	private function get_currentFrame() {
+	private function get_currentFrame():Int{
 		return player.currentFrame;
 	}
 
 	public var playing(get, null):Bool;
 	private function get_playing(){
-		return player.playing;
+		return player.playing || player.looping;
 	}
-	
+
+
+	public var independantTimeline(get, set):Bool;
+	private function get_independantTimeline(){
+		return player.independantTimeline;
+	}
+	private function set_independantTimeline(value:Bool){
+		player.independantTimeline = value;
+		return value;
+	}
+
+
+	public var independantControl(get, set):Bool;
+	private function get_independantControl(){
+		return player.independantControl;
+	}
+	private function set_independantControl(value:Bool){
+		player.independantControl = value;
+		return value;
+	}
+
 
 	public var totalFrames(get, null):Int;
 	private function get_totalFrames(){
@@ -97,30 +137,26 @@ class FlumpMovie extends Container implements IFlumpMovie{
 
 
 	public function gotoAndStop(frameNumber:Int):Void{
+		if(!loop){
+			if(frameNumber > player.totalFrames-1) frameNumber = player.totalFrames - 1;
+			else if(frameNumber < 0) frameNumber = 0;
+		}
 		player.goToFrame(frameNumber).stop();
 	}
 
 
 	public function gotoAndPlay(frameNumber:Int):Void{
-		if(loop) player.goToFrame(frameNumber).play();
-		else player.goToFrame(frameNumber).stop();
+		if(!loop){
+			if(frameNumber > player.totalFrames-1) frameNumber = player.totalFrames - 1;
+			else if(frameNumber < 0) frameNumber = 0;
+		}
+		if(loop) player.goToFrame(frameNumber).loop();
+		else player.goToFrame(frameNumber).play();
 	}
 
 
-	public function getLayer(name:String){
-		return layerLookup[name];
-	}
-
-
-	public function onLabelEnter(label:String, callback:Void->Void){
-		if(!player.labelExists(label)) throw("Label " + label + "does not exist for movie " + symbol.name); 
-		this.on("enter_" + label, callback);
-	}
-
-
-	public function onLabelExit(label:String, callback:Void->Void){
-		if(!player.labelExists(label)) throw("Label " + label + "does not exist for movie " + symbol.name); 
-		this.on("exit_" + label, callback);
+	public function getLabelFrame(label:String):UInt{
+		return player.getLabelFrame(label);
 	}
 
 
@@ -186,6 +222,11 @@ class FlumpMovie extends Container implements IFlumpMovie{
 	}
 
 
+	private function onAnimationComplete():Void{
+		if(onComplete != null) onComplete();
+	}
+
+
 	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):Void{
 		var layer = layers[keyframe.layer];
 		layer.x = x;
@@ -199,13 +240,9 @@ class FlumpMovie extends Container implements IFlumpMovie{
 	}
 
 
-	private function labelEnter(label:Label){
-		this.emit("enter_" + label, this);
+	private function labelPassed(label:Label){
+		emit("labelPassed", label.name);
 	}
 
-
-	private function labelExit(label:Label){
-		this.emit("exit_" + label, this);
-	}
 
 }

@@ -174,7 +174,7 @@ class FlumpLibrary{
 				label.next = nextLabel;
 				nextLabel.prev = label;
 			}
-			symbol.fistLabel = labels[0];
+			symbol.firstLabel = labels[0];
 			symbol.lastLabel = labels[labels.length-1];
 			
 			movieSymbols[symbol.name] = symbol;			
