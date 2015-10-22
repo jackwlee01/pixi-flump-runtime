@@ -3,5 +3,4 @@
 -js dist/bundle.js
 -main Main
 -lib pixijs
--lib msignal
 -debug

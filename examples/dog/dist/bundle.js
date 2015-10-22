@@ -11,11 +11,8 @@ var EReg = function(r,opt) {
 };
 EReg.__name__ = true;
 EReg.prototype = {
-	match: function(s) {
-		if(this.r.global) this.r.lastIndex = 0;
-		this.r.m = this.r.exec(s);
-		this.r.s = s;
-		return this.r.m != null;
+	replace: function(s,by) {
+		return s.replace(this.r,by);
 	}
 	,__class__: EReg
 };
@@ -61,32 +58,6 @@ Lambda.find = function(it,f) {
 		if(f(v)) return v;
 	}
 	return null;
-};
-var List = function() {
-	this.length = 0;
-};
-List.__name__ = true;
-List.prototype = {
-	iterator: function() {
-		return new _$List_ListIterator(this.h);
-	}
-	,__class__: List
-};
-var _$List_ListIterator = function(head) {
-	this.head = head;
-	this.val = null;
-};
-_$List_ListIterator.__name__ = true;
-_$List_ListIterator.prototype = {
-	hasNext: function() {
-		return this.head != null;
-	}
-	,next: function() {
-		this.val = this.head[0];
-		this.head = this.head[1];
-		return this.val;
-	}
-	,__class__: _$List_ListIterator
 };
 var pixi_plugins_app_Application = function() {
 	this._lastTime = new Date();
@@ -185,16 +156,14 @@ pixi_plugins_app_Application.prototype = {
 	,__class__: pixi_plugins_app_Application
 };
 var Main = function() {
-	this.pos = 0;
 	this.movies = [];
-	var _g = this;
 	pixi_plugins_app_Application.call(this);
 	pixi_plugins_app_Application.prototype.start.call(this);
-	this.onUpdate = $bind(this,this.tick);
-	pixi_display_FlumpLibraryLoader.load("./flump-assets/dog").addOnce($bind(this,this.onLibraryLoaded));
-	window.document.onmousemove = function(e) {
-		_g.pos = e.pageX * 3;
-	};
+	var loader = new PIXI.loaders.Loader();
+	loader.after(pixi_loaders_FlumpParser.flumpParser);
+	loader.add("DogLibrary","./flump-assets/dog/library.json");
+	loader.once("complete",$bind(this,this.begin));
+	loader.load();
 };
 Main.__name__ = true;
 Main.main = function() {
@@ -202,16 +171,12 @@ Main.main = function() {
 };
 Main.__super__ = pixi_plugins_app_Application;
 Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
-	onLibraryLoaded: function(factory) {
+	begin: function() {
+		var factory = pixi_display_FlumpFactory.get("DogLibrary");
 		var movie = factory.createMovie("TestScene");
-		var onLabelPassed = function(label) {
-			console.log(label);
-			if(label == "forthFrame") movie.gotoAndPlay(37);
-		};
-		movie.animationSpeed = 40;
+		movie.animationSpeed = 1;
 		this.stage.addChild(movie);
 		this.movies.push(movie);
-		movie.on("labelPassed",onLabelPassed);
 		var dog = movie.getChildMovie("DogRunning");
 		var placeholder = movie.getLayer("Placeholder");
 		var graphics = new PIXI.Graphics();
@@ -220,21 +185,9 @@ Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
 		graphics.drawCircle(100,100,100);
 		placeholder.addChild(graphics);
 	}
-	,tick: function(t) {
-	}
 	,__class__: Main
 });
 Math.__name__ = true;
-var Reflect = function() { };
-Reflect.__name__ = true;
-Reflect.isFunction = function(f) {
-	return typeof(f) == "function" && !(f.__name__ || f.__ename__);
-};
-Reflect.compareMethods = function(f1,f2) {
-	if(f1 == f2) return true;
-	if(!Reflect.isFunction(f1) || !Reflect.isFunction(f2)) return false;
-	return f1.scope == f2.scope && f1.method == f2.method && f1.method != null;
-};
 var Std = function() { };
 Std.__name__ = true;
 Std.string = function(s) {
@@ -535,8 +488,8 @@ var flump_library_FlumpLibrary = function() {
 	this.movies = new haxe_ds_StringMap();
 };
 flump_library_FlumpLibrary.__name__ = true;
-flump_library_FlumpLibrary.parseJSON = function(raw) {
-	var lib = JSON.parse(raw);
+flump_library_FlumpLibrary.create = function(flumpData) {
+	var lib = flumpData;
 	var spriteSymbols = new haxe_ds_StringMap();
 	var movieSymbols = new haxe_ds_StringMap();
 	var flumpLibrary = new flump_library_FlumpLibrary();
@@ -902,113 +855,6 @@ flump_library_SpriteSymbol.prototype = $extend(flump_library_Symbol.prototype,{
 });
 var haxe_IMap = function() { };
 haxe_IMap.__name__ = true;
-var haxe_Http = function(url) {
-	this.url = url;
-	this.headers = new List();
-	this.params = new List();
-	this.async = true;
-};
-haxe_Http.__name__ = true;
-haxe_Http.prototype = {
-	request: function(post) {
-		var me = this;
-		me.responseData = null;
-		var r = this.req = js_Browser.createXMLHttpRequest();
-		var onreadystatechange = function(_) {
-			if(r.readyState != 4) return;
-			var s;
-			try {
-				s = r.status;
-			} catch( e ) {
-				if (e instanceof js__$Boot_HaxeError) e = e.val;
-				s = null;
-			}
-			if(s != null) {
-				var protocol = window.location.protocol.toLowerCase();
-				var rlocalProtocol = new EReg("^(?:about|app|app-storage|.+-extension|file|res|widget):$","");
-				var isLocal = rlocalProtocol.match(protocol);
-				if(isLocal) if(r.responseText != null) s = 200; else s = 404;
-			}
-			if(s == undefined) s = null;
-			if(s != null) me.onStatus(s);
-			if(s != null && s >= 200 && s < 400) {
-				me.req = null;
-				me.onData(me.responseData = r.responseText);
-			} else if(s == null) {
-				me.req = null;
-				me.onError("Failed to connect or resolve host");
-			} else switch(s) {
-			case 12029:
-				me.req = null;
-				me.onError("Failed to connect to host");
-				break;
-			case 12007:
-				me.req = null;
-				me.onError("Unknown host");
-				break;
-			default:
-				me.req = null;
-				me.responseData = r.responseText;
-				me.onError("Http Error #" + r.status);
-			}
-		};
-		if(this.async) r.onreadystatechange = onreadystatechange;
-		var uri = this.postData;
-		if(uri != null) post = true; else {
-			var _g_head = this.params.h;
-			var _g_val = null;
-			while(_g_head != null) {
-				var p;
-				p = (function($this) {
-					var $r;
-					_g_val = _g_head[0];
-					_g_head = _g_head[1];
-					$r = _g_val;
-					return $r;
-				}(this));
-				if(uri == null) uri = ""; else uri += "&";
-				uri += encodeURIComponent(p.param) + "=" + encodeURIComponent(p.value);
-			}
-		}
-		try {
-			if(post) r.open("POST",this.url,this.async); else if(uri != null) {
-				var question = this.url.split("?").length <= 1;
-				r.open("GET",this.url + (question?"?":"&") + uri,this.async);
-				uri = null;
-			} else r.open("GET",this.url,this.async);
-		} catch( e1 ) {
-			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
-			me.req = null;
-			this.onError(e1.toString());
-			return;
-		}
-		if(!Lambda.exists(this.headers,function(h) {
-			return h.header == "Content-Type";
-		}) && post && this.postData == null) r.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-		var _g_head1 = this.headers.h;
-		var _g_val1 = null;
-		while(_g_head1 != null) {
-			var h1;
-			h1 = (function($this) {
-				var $r;
-				_g_val1 = _g_head1[0];
-				_g_head1 = _g_head1[1];
-				$r = _g_val1;
-				return $r;
-			}(this));
-			r.setRequestHeader(h1.header,h1.value);
-		}
-		r.send(uri);
-		if(!this.async) onreadystatechange(null);
-	}
-	,onData: function(data) {
-	}
-	,onError: function(msg) {
-	}
-	,onStatus: function(status) {
-	}
-	,__class__: haxe_Http
-};
 var haxe_ds_ArraySort = function() { };
 haxe_ds_ArraySort.__name__ = true;
 haxe_ds_ArraySort.sort = function(a,cmp) {
@@ -1321,300 +1167,15 @@ js_Boot.__isNativeObj = function(o) {
 js_Boot.__resolveNativeClass = function(name) {
 	return (Function("return typeof " + name + " != \"undefined\" ? " + name + " : null"))();
 };
-var js_Browser = function() { };
-js_Browser.__name__ = true;
-js_Browser.createXMLHttpRequest = function() {
-	if(typeof XMLHttpRequest != "undefined") return new XMLHttpRequest();
-	if(typeof ActiveXObject != "undefined") return new ActiveXObject("Microsoft.XMLHTTP");
-	throw new js__$Boot_HaxeError("Unable to create XMLHttpRequest object.");
-};
-var msignal_Signal = function(valueClasses) {
-	if(valueClasses == null) valueClasses = [];
-	this.valueClasses = valueClasses;
-	this.slots = msignal_SlotList.NIL;
-	this.priorityBased = false;
-};
-msignal_Signal.__name__ = true;
-msignal_Signal.prototype = {
-	add: function(listener) {
-		return this.registerListener(listener);
-	}
-	,addOnce: function(listener) {
-		return this.registerListener(listener,true);
-	}
-	,addWithPriority: function(listener,priority) {
-		if(priority == null) priority = 0;
-		return this.registerListener(listener,false,priority);
-	}
-	,addOnceWithPriority: function(listener,priority) {
-		if(priority == null) priority = 0;
-		return this.registerListener(listener,true,priority);
-	}
-	,remove: function(listener) {
-		var slot = this.slots.find(listener);
-		if(slot == null) return null;
-		this.slots = this.slots.filterNot(listener);
-		return slot;
-	}
-	,removeAll: function() {
-		this.slots = msignal_SlotList.NIL;
-	}
-	,registerListener: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		if(this.registrationPossible(listener,once)) {
-			var newSlot = this.createSlot(listener,once,priority);
-			if(!this.priorityBased && priority != 0) this.priorityBased = true;
-			if(!this.priorityBased && priority == 0) this.slots = this.slots.prepend(newSlot); else this.slots = this.slots.insertWithPriority(newSlot);
-			return newSlot;
-		}
-		return this.slots.find(listener);
-	}
-	,registrationPossible: function(listener,once) {
-		if(!this.slots.nonEmpty) return true;
-		var existingSlot = this.slots.find(listener);
-		if(existingSlot == null) return true;
-		if(existingSlot.once != once) throw new js__$Boot_HaxeError("You cannot addOnce() then add() the same listener without removing the relationship first.");
-		return false;
-	}
-	,createSlot: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		return null;
-	}
-	,get_numListeners: function() {
-		return this.slots.get_length();
-	}
-	,__class__: msignal_Signal
-};
-var msignal_Signal0 = function() {
-	msignal_Signal.call(this);
-};
-msignal_Signal0.__name__ = true;
-msignal_Signal0.__super__ = msignal_Signal;
-msignal_Signal0.prototype = $extend(msignal_Signal.prototype,{
-	dispatch: function() {
-		var slotsToProcess = this.slots;
-		while(slotsToProcess.nonEmpty) {
-			slotsToProcess.head.execute();
-			slotsToProcess = slotsToProcess.tail;
-		}
-	}
-	,createSlot: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		return new msignal_Slot0(this,listener,once,priority);
-	}
-	,__class__: msignal_Signal0
-});
-var msignal_Signal1 = function(type) {
-	msignal_Signal.call(this,[type]);
-};
-msignal_Signal1.__name__ = true;
-msignal_Signal1.__super__ = msignal_Signal;
-msignal_Signal1.prototype = $extend(msignal_Signal.prototype,{
-	dispatch: function(value) {
-		var slotsToProcess = this.slots;
-		while(slotsToProcess.nonEmpty) {
-			slotsToProcess.head.execute(value);
-			slotsToProcess = slotsToProcess.tail;
-		}
-	}
-	,createSlot: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		return new msignal_Slot1(this,listener,once,priority);
-	}
-	,__class__: msignal_Signal1
-});
-var msignal_Signal2 = function(type1,type2) {
-	msignal_Signal.call(this,[type1,type2]);
-};
-msignal_Signal2.__name__ = true;
-msignal_Signal2.__super__ = msignal_Signal;
-msignal_Signal2.prototype = $extend(msignal_Signal.prototype,{
-	dispatch: function(value1,value2) {
-		var slotsToProcess = this.slots;
-		while(slotsToProcess.nonEmpty) {
-			slotsToProcess.head.execute(value1,value2);
-			slotsToProcess = slotsToProcess.tail;
-		}
-	}
-	,createSlot: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		return new msignal_Slot2(this,listener,once,priority);
-	}
-	,__class__: msignal_Signal2
-});
-var msignal_Slot = function(signal,listener,once,priority) {
-	if(priority == null) priority = 0;
-	if(once == null) once = false;
-	this.signal = signal;
-	this.set_listener(listener);
-	this.once = once;
-	this.priority = priority;
-	this.enabled = true;
-};
-msignal_Slot.__name__ = true;
-msignal_Slot.prototype = {
-	remove: function() {
-		this.signal.remove(this.listener);
-	}
-	,set_listener: function(value) {
-		if(value == null) throw new js__$Boot_HaxeError("listener cannot be null");
-		return this.listener = value;
-	}
-	,__class__: msignal_Slot
-};
-var msignal_Slot0 = function(signal,listener,once,priority) {
-	if(priority == null) priority = 0;
-	if(once == null) once = false;
-	msignal_Slot.call(this,signal,listener,once,priority);
-};
-msignal_Slot0.__name__ = true;
-msignal_Slot0.__super__ = msignal_Slot;
-msignal_Slot0.prototype = $extend(msignal_Slot.prototype,{
-	execute: function() {
-		if(!this.enabled) return;
-		if(this.once) this.remove();
-		this.listener();
-	}
-	,__class__: msignal_Slot0
-});
-var msignal_Slot1 = function(signal,listener,once,priority) {
-	if(priority == null) priority = 0;
-	if(once == null) once = false;
-	msignal_Slot.call(this,signal,listener,once,priority);
-};
-msignal_Slot1.__name__ = true;
-msignal_Slot1.__super__ = msignal_Slot;
-msignal_Slot1.prototype = $extend(msignal_Slot.prototype,{
-	execute: function(value1) {
-		if(!this.enabled) return;
-		if(this.once) this.remove();
-		if(this.param != null) value1 = this.param;
-		this.listener(value1);
-	}
-	,__class__: msignal_Slot1
-});
-var msignal_Slot2 = function(signal,listener,once,priority) {
-	if(priority == null) priority = 0;
-	if(once == null) once = false;
-	msignal_Slot.call(this,signal,listener,once,priority);
-};
-msignal_Slot2.__name__ = true;
-msignal_Slot2.__super__ = msignal_Slot;
-msignal_Slot2.prototype = $extend(msignal_Slot.prototype,{
-	execute: function(value1,value2) {
-		if(!this.enabled) return;
-		if(this.once) this.remove();
-		if(this.param1 != null) value1 = this.param1;
-		if(this.param2 != null) value2 = this.param2;
-		this.listener(value1,value2);
-	}
-	,__class__: msignal_Slot2
-});
-var msignal_SlotList = function(head,tail) {
-	this.nonEmpty = false;
-	if(head == null && tail == null) {
-		if(msignal_SlotList.NIL != null) throw new js__$Boot_HaxeError("Parameters head and tail are null. Use the NIL element instead.");
-		this.nonEmpty = false;
-	} else if(head == null) throw new js__$Boot_HaxeError("Parameter head cannot be null."); else {
-		this.head = head;
-		if(tail == null) this.tail = msignal_SlotList.NIL; else this.tail = tail;
-		this.nonEmpty = true;
-	}
-};
-msignal_SlotList.__name__ = true;
-msignal_SlotList.prototype = {
-	get_length: function() {
-		if(!this.nonEmpty) return 0;
-		if(this.tail == msignal_SlotList.NIL) return 1;
-		var result = 0;
-		var p = this;
-		while(p.nonEmpty) {
-			++result;
-			p = p.tail;
-		}
-		return result;
-	}
-	,prepend: function(slot) {
-		return new msignal_SlotList(slot,this);
-	}
-	,append: function(slot) {
-		if(slot == null) return this;
-		if(!this.nonEmpty) return new msignal_SlotList(slot);
-		if(this.tail == msignal_SlotList.NIL) return new msignal_SlotList(slot).prepend(this.head);
-		var wholeClone = new msignal_SlotList(this.head);
-		var subClone = wholeClone;
-		var current = this.tail;
-		while(current.nonEmpty) {
-			subClone = subClone.tail = new msignal_SlotList(current.head);
-			current = current.tail;
-		}
-		subClone.tail = new msignal_SlotList(slot);
-		return wholeClone;
-	}
-	,insertWithPriority: function(slot) {
-		if(!this.nonEmpty) return new msignal_SlotList(slot);
-		var priority = slot.priority;
-		if(priority >= this.head.priority) return this.prepend(slot);
-		var wholeClone = new msignal_SlotList(this.head);
-		var subClone = wholeClone;
-		var current = this.tail;
-		while(current.nonEmpty) {
-			if(priority > current.head.priority) {
-				subClone.tail = current.prepend(slot);
-				return wholeClone;
-			}
-			subClone = subClone.tail = new msignal_SlotList(current.head);
-			current = current.tail;
-		}
-		subClone.tail = new msignal_SlotList(slot);
-		return wholeClone;
-	}
-	,filterNot: function(listener) {
-		if(!this.nonEmpty || listener == null) return this;
-		if(Reflect.compareMethods(this.head.listener,listener)) return this.tail;
-		var wholeClone = new msignal_SlotList(this.head);
-		var subClone = wholeClone;
-		var current = this.tail;
-		while(current.nonEmpty) {
-			if(Reflect.compareMethods(current.head.listener,listener)) {
-				subClone.tail = current.tail;
-				return wholeClone;
-			}
-			subClone = subClone.tail = new msignal_SlotList(current.head);
-			current = current.tail;
-		}
-		return this;
-	}
-	,contains: function(listener) {
-		if(!this.nonEmpty) return false;
-		var p = this;
-		while(p.nonEmpty) {
-			if(Reflect.compareMethods(p.head.listener,listener)) return true;
-			p = p.tail;
-		}
-		return false;
-	}
-	,find: function(listener) {
-		if(!this.nonEmpty) return null;
-		var p = this;
-		while(p.nonEmpty) {
-			if(Reflect.compareMethods(p.head.listener,listener)) return p.head;
-			p = p.tail;
-		}
-		return null;
-	}
-	,__class__: msignal_SlotList
-};
 var pixi_display_FlumpFactory = function(library,textures) {
 	this.library = library;
 	this.textures = textures;
 };
 pixi_display_FlumpFactory.__name__ = true;
+pixi_display_FlumpFactory.get = function(resourceName) {
+	if(!pixi_display_FlumpFactory.factories.exists(resourceName)) throw new js__$Boot_HaxeError("FlumpFactory for resource name: " + resourceName + " does not exist.");
+	return pixi_display_FlumpFactory.factories.get(resourceName);
+};
 pixi_display_FlumpFactory.prototype = {
 	createMovie: function(id) {
 		return new pixi_display_FlumpMovie(this.library.movies.get(id),this,true);
@@ -1634,49 +1195,6 @@ pixi_display_FlumpFactory.prototype = {
 		if(this.library.movies.exists(id)) return new pixi_display_FlumpMovie(this.library.movies.get(id),this,false); else return this.createSprite(id);
 	}
 	,__class__: pixi_display_FlumpFactory
-};
-var pixi_display_FlumpLibraryLoader = function() { };
-pixi_display_FlumpLibraryLoader.__name__ = true;
-pixi_display_FlumpLibraryLoader.load = function(path) {
-	var complete = new msignal_Signal1();
-	var h = new haxe_Http(path + "/library.json");
-	console.log(path + "/library.json");
-	h.onStatus = function(x) {
-	};
-	h.onData = function(data) {
-		var lib = flump_library_FlumpLibrary.parseJSON(data);
-		pixi_display_FlumpLibraryLoader.loadTextures(lib,path,complete);
-	};
-	h.request(false);
-	return complete;
-};
-pixi_display_FlumpLibraryLoader.loadTextures = function(lib,path,complete) {
-	var textures = new haxe_ds_StringMap();
-	var _g = 0;
-	var _g1 = lib.atlases;
-	while(_g < _g1.length) {
-		var atlas = _g1[_g];
-		++_g;
-		var image = new Image();
-		image.src = path + "/" + atlas.file;
-		var atlasTexture = new PIXI.BaseTexture(image);
-		var _g2 = 0;
-		var _g3 = atlas.textures;
-		while(_g2 < _g3.length) {
-			var textureSpec = _g3[_g2];
-			++_g2;
-			var frame = new PIXI.Rectangle(textureSpec.rect[0],textureSpec.rect[1],textureSpec.rect[2],textureSpec.rect[3]);
-			var origin = new PIXI.Point(textureSpec.origin[0],textureSpec.origin[1]);
-			origin.x = origin.x / frame.width;
-			origin.y = origin.y / frame.height;
-			var texture = new PIXI.Texture(atlasTexture,frame);
-			{
-				textures.set(textureSpec.symbol,texture);
-				texture;
-			}
-		}
-	}
-	complete.dispatch(new pixi_display_FlumpFactory(lib,textures));
 };
 var pixi_display_FlumpMovie = function(symbol,flumpFactory,master) {
 	this.animationSpeed = 1.0;
@@ -1941,6 +1459,50 @@ pixi_display_PixiLayer.prototype = $extend(PIXI.Container.prototype,{
 	}
 	,__class__: pixi_display_PixiLayer
 });
+var pixi_loaders_FlumpParser = function() { };
+pixi_loaders_FlumpParser.__name__ = true;
+pixi_loaders_FlumpParser.flumpParser = function(resource,next) {
+	if(resource.data == null || resource.isJson == false) return;
+	if(!Object.prototype.hasOwnProperty.call(resource.data,"md5") || !Object.prototype.hasOwnProperty.call(resource.data,"movies") || !Object.prototype.hasOwnProperty.call(resource.data,"textureGroups") || !Object.prototype.hasOwnProperty.call(resource.data,"frameRate")) return;
+	var lib = flump_library_FlumpLibrary.create(resource.data);
+	var textures = new haxe_ds_StringMap();
+	var atlasLoader = new PIXI.loaders.Loader();
+	atlasLoader.baseUrl = new EReg("/(.[^/]*)$","i").replace(resource.url,"");
+	var _g = 0;
+	var _g1 = lib.atlases;
+	while(_g < _g1.length) {
+		var atlasSpec = [_g1[_g]];
+		++_g;
+		atlasLoader.add(atlasSpec[0].file,null,(function(atlasSpec) {
+			return function(atlasResource) {
+				var atlasTexture = new PIXI.BaseTexture(atlasResource.data);
+				var _g2 = 0;
+				var _g3 = atlasSpec[0].textures;
+				while(_g2 < _g3.length) {
+					var textureSpec = _g3[_g2];
+					++_g2;
+					var frame = new PIXI.Rectangle(textureSpec.rect[0],textureSpec.rect[1],textureSpec.rect[2],textureSpec.rect[3]);
+					var origin = new PIXI.Point(textureSpec.origin[0],textureSpec.origin[1]);
+					origin.x = origin.x / frame.width;
+					origin.y = origin.y / frame.height;
+					var v = new PIXI.Texture(atlasTexture,frame);
+					textures.set(textureSpec.symbol,v);
+					v;
+				}
+			};
+		})(atlasSpec));
+	}
+	atlasLoader.once("complete",function(loader) {
+		var factory = new pixi_display_FlumpFactory(lib,textures);
+		if(resource.name != null) {
+			pixi_display_FlumpFactory.factories.set(resource.name,factory);
+			factory;
+		}
+		resource.data = factory;
+		next();
+	});
+	atlasLoader.load();
+};
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
@@ -1958,7 +1520,6 @@ Bool.__ename__ = ["Bool"];
 var Class = { __name__ : ["Class"]};
 var Enum = { };
 var __map_reserved = {}
-msignal_SlotList.NIL = new msignal_SlotList(null,null);
 pixi_plugins_app_Application.AUTO = "auto";
 pixi_plugins_app_Application.RECOMMENDED = "recommended";
 pixi_plugins_app_Application.CANVAS = "canvas";
@@ -1968,5 +1529,8 @@ flump_library_Label.LABEL_EXIT = "labelExit";
 flump_library_Label.LABEL_UPDATE = "labelUpdate";
 haxe_ds_ObjectMap.count = 0;
 js_Boot.__toStr = {}.toString;
+pixi_display_FlumpFactory.factories = new haxe_ds_StringMap();
 Main.main();
 })(typeof console != "undefined" ? console : {log:function(){}});
+
+//# sourceMappingURL=bundle.js.map

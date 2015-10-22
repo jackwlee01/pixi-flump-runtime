@@ -11,11 +11,8 @@ var EReg = function(r,opt) {
 };
 EReg.__name__ = true;
 EReg.prototype = {
-	match: function(s) {
-		if(this.r.global) this.r.lastIndex = 0;
-		this.r.m = this.r.exec(s);
-		this.r.s = s;
-		return this.r.m != null;
+	replace: function(s,by) {
+		return s.replace(this.r,by);
 	}
 	,__class__: EReg
 };
@@ -61,32 +58,6 @@ Lambda.find = function(it,f) {
 		if(f(v)) return v;
 	}
 	return null;
-};
-var List = function() {
-	this.length = 0;
-};
-List.__name__ = true;
-List.prototype = {
-	iterator: function() {
-		return new _$List_ListIterator(this.h);
-	}
-	,__class__: List
-};
-var _$List_ListIterator = function(head) {
-	this.head = head;
-	this.val = null;
-};
-_$List_ListIterator.__name__ = true;
-_$List_ListIterator.prototype = {
-	hasNext: function() {
-		return this.head != null;
-	}
-	,next: function() {
-		this.val = this.head[0];
-		this.head = this.head[1];
-		return this.val;
-	}
-	,__class__: _$List_ListIterator
 };
 var pixi_plugins_app_Application = function() {
 	this._lastTime = new Date();
@@ -188,7 +159,11 @@ var Main = function() {
 	this.movies = [];
 	pixi_plugins_app_Application.call(this);
 	pixi_plugins_app_Application.prototype.start.call(this);
-	pixi_display_FlumpLibraryLoader.load("./flump-assets").addOnce($bind(this,this.onLibraryLoaded));
+	var loader = new PIXI.loaders.Loader();
+	loader.after(pixi_loaders_FlumpParser.flumpParser);
+	loader.add("MonsterLibrary","./flump-assets/library.json");
+	loader.once("complete",$bind(this,this.begin));
+	loader.load();
 };
 Main.__name__ = true;
 Main.main = function() {
@@ -196,8 +171,9 @@ Main.main = function() {
 };
 Main.__super__ = pixi_plugins_app_Application;
 Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
-	onLibraryLoaded: function(factory) {
-		var monster = factory.createMovie("walk");
+	begin: function(factory) {
+		var factory1 = pixi_display_FlumpFactory.get("MonsterLibrary");
+		var monster = factory1.createMovie("walk");
 		this.stage.addChild(monster);
 		monster.x = 200;
 		monster.y = 200;
@@ -231,6 +207,11 @@ _$UInt_UInt_$Impl_$.gt = function(a,b) {
 	var bNeg = b < 0;
 	if(aNeg != bNeg) return aNeg; else return a > b;
 };
+_$UInt_UInt_$Impl_$.gte = function(a,b) {
+	var aNeg = a < 0;
+	var bNeg = b < 0;
+	if(aNeg != bNeg) return aNeg; else return a >= b;
+};
 _$UInt_UInt_$Impl_$.toFloat = function(this1) {
 	var $int = this1;
 	if($int < 0) return 4294967296.0 + $int; else return $int + 0.0;
@@ -249,6 +230,9 @@ flump_IFlumpMovie.prototype = {
 };
 var flump_MoviePlayer = function(symbol,movie) {
 	this.position = 0.0;
+	this.fullyGenerated = false;
+	this.dirty = false;
+	this.labelsToFire = [];
 	this.childPlayers = new haxe_ds_ObjectMap();
 	this.createdChildren = new haxe_ds_ObjectMap();
 	this.currentChildrenKey = new haxe_ds_ObjectMap();
@@ -273,7 +257,16 @@ var flump_MoviePlayer = function(symbol,movie) {
 };
 flump_MoviePlayer.__name__ = true;
 flump_MoviePlayer.prototype = {
-	reset: function() {
+	getDisplayKey: function(layerId,keyframeIndex) {
+		if(keyframeIndex == null) keyframeIndex = 0;
+		var layer = this.symbol.getLayer(layerId);
+		if(layer == null) throw new js__$Boot_HaxeError("Layer " + layerId + " does not exist.");
+		var keyframe = layer.getKeyframeForFrame(keyframeIndex);
+		if(keyframe == null) throw new js__$Boot_HaxeError("Keyframe does not exist at index " + Std.string(_$UInt_UInt_$Impl_$.toFloat(keyframeIndex)));
+		this.createChildIfNessessary(keyframe);
+		return keyframe.displayKey;
+	}
+	,reset: function() {
 		this.elapsed = 0;
 		this.previousElapsed = 0;
 	}
@@ -307,6 +300,8 @@ flump_MoviePlayer.prototype = {
 	,goToPosition: function(time) {
 		this.elapsed = time;
 		this.previousElapsed = time;
+		this.clearLabels();
+		this.fireLabels();
 		return this;
 	}
 	,get_playing: function() {
@@ -333,18 +328,50 @@ flump_MoviePlayer.prototype = {
 		return this.symbol.labels.exists("label");
 	}
 	,advanceTime: function(ms) {
-		if(this.state != this.STATE_STOPPED) this.elapsed += ms;
+		if(this.state != this.STATE_STOPPED) {
+			this.elapsed += ms;
+			while(this.elapsed < 0) {
+				this.elapsed += this.symbol.duration;
+				this.previousElapsed += this.symbol.duration;
+			}
+		}
 		this.advanced += ms;
+		if(this.state != this.STATE_STOPPED) this.fireLabels();
 		this.render();
+	}
+	,clearLabels: function() {
+		while(this.labelsToFire.length > 0) this.labelsToFire.pop();
+	}
+	,fireLabels: function() {
+		if(this.symbol.firstLabel == null) return;
+		if(this.previousElapsed > this.elapsed) return;
+		var label;
+		if(this.previousElapsed <= this.elapsed) label = this.symbol.firstLabel; else label = this.symbol.lastLabel;
+		var checking = true;
+		while(checking) if(label.keyframe.time > this.previousElapsed % this.symbol.duration) checking = false; else if(_$UInt_UInt_$Impl_$.gte(label.keyframe.index,label.next.keyframe.index)) {
+			checking = false;
+			label = label.next;
+		} else label = label.next;
+		var firstChecked = label;
+		while(label != null) {
+			var checkFrom = this.previousElapsed % this.symbol.duration;
+			var checkTo = this.elapsed % this.symbol.duration;
+			if(label.keyframe.insideRangeStart(checkFrom,checkTo)) this.labelsToFire.push(label);
+			label = label.next;
+			if(label == firstChecked) label = null;
+		}
+		while(this.labelsToFire.length > 0) this.movie.labelPassed(this.labelsToFire.shift());
 	}
 	,render: function() {
 		if(this.state == this.STATE_PLAYING) {
 			if(this.get_position() < 0) {
 				this.elapsed = 0;
 				this.stop();
+				this.movie.onAnimationComplete();
 			} else if(this.get_position() > this.symbol.duration - this.symbol.library.frameTime) {
 				this.elapsed = this.symbol.duration - this.symbol.library.frameTime;
 				this.stop();
+				this.movie.onAnimationComplete();
 			}
 		}
 		while(this.get_position() < 0) this.position += this.symbol.duration;
@@ -465,8 +492,8 @@ var flump_library_FlumpLibrary = function() {
 	this.movies = new haxe_ds_StringMap();
 };
 flump_library_FlumpLibrary.__name__ = true;
-flump_library_FlumpLibrary.parseJSON = function(raw) {
-	var lib = JSON.parse(raw);
+flump_library_FlumpLibrary.create = function(flumpData) {
+	var lib = flumpData;
 	var spriteSymbols = new haxe_ds_StringMap();
 	var movieSymbols = new haxe_ds_StringMap();
 	var flumpLibrary = new flump_library_FlumpLibrary();
@@ -649,7 +676,7 @@ flump_library_FlumpLibrary.parseJSON = function(raw) {
 			label.next = nextLabel;
 			nextLabel.prev = label;
 		}
-		symbol1.fistLabel = labels[0];
+		symbol1.firstLabel = labels[0];
 		symbol1.lastLabel = labels[labels.length - 1];
 		{
 			movieSymbols.set(symbol1.name,symbol1);
@@ -684,6 +711,14 @@ flump_library_Keyframe.prototype = {
 	,rangeIntersect: function(from,to) {
 		return this.timeInside(from) || this.timeInside(to);
 	}
+	,insideRangeStart: function(from,to) {
+		if(from == to && to == this.time) return true;
+		if(from <= to) return this.time > from && this.time <= to; else return this.time > from || this.time <= to;
+	}
+	,insideRangeEnd: function(from,to) {
+		if(from == to && to == this.time + this.duration) return true;
+		if(from > to) return to <= this.time + this.duration && from > this.time + this.duration; else return to <= this.time + this.duration || from > this.time + this.duration;
+	}
 	,__class__: flump_library_Keyframe
 };
 var flump_library_Label = function() {
@@ -698,7 +733,17 @@ var flump_library_Layer = function(name) {
 };
 flump_library_Layer.__name__ = true;
 flump_library_Layer.prototype = {
-	getKeyframeForTime: function(time) {
+	getKeyframeForFrame: function(index) {
+		var _g = 0;
+		var _g1 = this.keyframes;
+		while(_g < _g1.length) {
+			var keyframe = _g1[_g];
+			++_g;
+			if(keyframe.index == index) return keyframe;
+		}
+		return null;
+	}
+	,getKeyframeForTime: function(time) {
 		var keyframe = this.lastKeyframe;
 		while(keyframe.time > time % this.movie.duration) keyframe = keyframe.prev;
 		return keyframe;
@@ -719,7 +764,17 @@ var flump_library_MovieSymbol = function() {
 flump_library_MovieSymbol.__name__ = true;
 flump_library_MovieSymbol.__super__ = flump_library_Symbol;
 flump_library_MovieSymbol.prototype = $extend(flump_library_Symbol.prototype,{
-	debug: function() {
+	getLayer: function(name) {
+		var _g = 0;
+		var _g1 = this.layers;
+		while(_g < _g1.length) {
+			var layer = _g1[_g];
+			++_g;
+			if(layer.name == name) return layer;
+		}
+		return null;
+	}
+	,debug: function() {
 		var largestLayerChars = Lambda.fold(this.layers,function(layer,result) {
 			if(layer.name.length > result) return layer.name.length; else return result;
 		},0);
@@ -804,113 +859,6 @@ flump_library_SpriteSymbol.prototype = $extend(flump_library_Symbol.prototype,{
 });
 var haxe_IMap = function() { };
 haxe_IMap.__name__ = true;
-var haxe_Http = function(url) {
-	this.url = url;
-	this.headers = new List();
-	this.params = new List();
-	this.async = true;
-};
-haxe_Http.__name__ = true;
-haxe_Http.prototype = {
-	request: function(post) {
-		var me = this;
-		me.responseData = null;
-		var r = this.req = js_Browser.createXMLHttpRequest();
-		var onreadystatechange = function(_) {
-			if(r.readyState != 4) return;
-			var s;
-			try {
-				s = r.status;
-			} catch( e ) {
-				if (e instanceof js__$Boot_HaxeError) e = e.val;
-				s = null;
-			}
-			if(s != null) {
-				var protocol = window.location.protocol.toLowerCase();
-				var rlocalProtocol = new EReg("^(?:about|app|app-storage|.+-extension|file|res|widget):$","");
-				var isLocal = rlocalProtocol.match(protocol);
-				if(isLocal) if(r.responseText != null) s = 200; else s = 404;
-			}
-			if(s == undefined) s = null;
-			if(s != null) me.onStatus(s);
-			if(s != null && s >= 200 && s < 400) {
-				me.req = null;
-				me.onData(me.responseData = r.responseText);
-			} else if(s == null) {
-				me.req = null;
-				me.onError("Failed to connect or resolve host");
-			} else switch(s) {
-			case 12029:
-				me.req = null;
-				me.onError("Failed to connect to host");
-				break;
-			case 12007:
-				me.req = null;
-				me.onError("Unknown host");
-				break;
-			default:
-				me.req = null;
-				me.responseData = r.responseText;
-				me.onError("Http Error #" + r.status);
-			}
-		};
-		if(this.async) r.onreadystatechange = onreadystatechange;
-		var uri = this.postData;
-		if(uri != null) post = true; else {
-			var _g_head = this.params.h;
-			var _g_val = null;
-			while(_g_head != null) {
-				var p;
-				p = (function($this) {
-					var $r;
-					_g_val = _g_head[0];
-					_g_head = _g_head[1];
-					$r = _g_val;
-					return $r;
-				}(this));
-				if(uri == null) uri = ""; else uri += "&";
-				uri += encodeURIComponent(p.param) + "=" + encodeURIComponent(p.value);
-			}
-		}
-		try {
-			if(post) r.open("POST",this.url,this.async); else if(uri != null) {
-				var question = this.url.split("?").length <= 1;
-				r.open("GET",this.url + (question?"?":"&") + uri,this.async);
-				uri = null;
-			} else r.open("GET",this.url,this.async);
-		} catch( e1 ) {
-			if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
-			me.req = null;
-			this.onError(e1.toString());
-			return;
-		}
-		if(!Lambda.exists(this.headers,function(h) {
-			return h.header == "Content-Type";
-		}) && post && this.postData == null) r.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-		var _g_head1 = this.headers.h;
-		var _g_val1 = null;
-		while(_g_head1 != null) {
-			var h1;
-			h1 = (function($this) {
-				var $r;
-				_g_val1 = _g_head1[0];
-				_g_head1 = _g_head1[1];
-				$r = _g_val1;
-				return $r;
-			}(this));
-			r.setRequestHeader(h1.header,h1.value);
-		}
-		r.send(uri);
-		if(!this.async) onreadystatechange(null);
-	}
-	,onData: function(data) {
-	}
-	,onError: function(msg) {
-	}
-	,onStatus: function(status) {
-	}
-	,__class__: haxe_Http
-};
 var haxe_ds_ArraySort = function() { };
 haxe_ds_ArraySort.__name__ = true;
 haxe_ds_ArraySort.sort = function(a,cmp) {
@@ -1223,13 +1171,6 @@ js_Boot.__isNativeObj = function(o) {
 js_Boot.__resolveNativeClass = function(name) {
 	return (Function("return typeof " + name + " != \"undefined\" ? " + name + " : null"))();
 };
-var js_Browser = function() { };
-js_Browser.__name__ = true;
-js_Browser.createXMLHttpRequest = function() {
-	if(typeof XMLHttpRequest != "undefined") return new XMLHttpRequest();
-	if(typeof ActiveXObject != "undefined") return new ActiveXObject("Microsoft.XMLHTTP");
-	throw new js__$Boot_HaxeError("Unable to create XMLHttpRequest object.");
-};
 var msignal_Signal = function(valueClasses) {
 	if(valueClasses == null) valueClasses = [];
 	this.valueClasses = valueClasses;
@@ -1517,6 +1458,10 @@ var pixi_display_FlumpFactory = function(library,textures) {
 	this.textures = textures;
 };
 pixi_display_FlumpFactory.__name__ = true;
+pixi_display_FlumpFactory.get = function(url) {
+	if(!pixi_display_FlumpFactory.factories.exists(url)) throw new js__$Boot_HaxeError("FlumpFactor for url: " + url + " does not exist.");
+	return pixi_display_FlumpFactory.factories.get(url);
+};
 pixi_display_FlumpFactory.prototype = {
 	createMovie: function(id) {
 		return new pixi_display_FlumpMovie(this.library.movies.get(id),this,true);
@@ -1537,49 +1482,6 @@ pixi_display_FlumpFactory.prototype = {
 	}
 	,__class__: pixi_display_FlumpFactory
 };
-var pixi_display_FlumpLibraryLoader = function() { };
-pixi_display_FlumpLibraryLoader.__name__ = true;
-pixi_display_FlumpLibraryLoader.load = function(path) {
-	var complete = new msignal_Signal1();
-	var h = new haxe_Http(path + "/library.json");
-	console.log(path + "/library.json");
-	h.onStatus = function(x) {
-	};
-	h.onData = function(data) {
-		var lib = flump_library_FlumpLibrary.parseJSON(data);
-		pixi_display_FlumpLibraryLoader.loadTextures(lib,path,complete);
-	};
-	h.request(false);
-	return complete;
-};
-pixi_display_FlumpLibraryLoader.loadTextures = function(lib,path,complete) {
-	var textures = new haxe_ds_StringMap();
-	var _g = 0;
-	var _g1 = lib.atlases;
-	while(_g < _g1.length) {
-		var atlas = _g1[_g];
-		++_g;
-		var image = new Image();
-		image.src = path + "/" + atlas.file;
-		var atlasTexture = new PIXI.BaseTexture(image);
-		var _g2 = 0;
-		var _g3 = atlas.textures;
-		while(_g2 < _g3.length) {
-			var textureSpec = _g3[_g2];
-			++_g2;
-			var frame = new PIXI.Rectangle(textureSpec.rect[0],textureSpec.rect[1],textureSpec.rect[2],textureSpec.rect[3]);
-			var origin = new PIXI.Point(textureSpec.origin[0],textureSpec.origin[1]);
-			origin.x = origin.x / frame.width;
-			origin.y = origin.y / frame.height;
-			var texture = new PIXI.Texture(atlasTexture,frame);
-			{
-				textures.set(textureSpec.symbol,texture);
-				texture;
-			}
-		}
-	}
-	complete.dispatch(new pixi_display_FlumpFactory(lib,textures));
-};
 var pixi_display_FlumpMovie = function(symbol,flumpFactory,master) {
 	this.animationSpeed = 1.0;
 	this.ticker = PIXI.ticker.shared;
@@ -1592,27 +1494,61 @@ var pixi_display_FlumpMovie = function(symbol,flumpFactory,master) {
 	this.factory = flumpFactory;
 	this.master = master;
 	this.player = new flump_MoviePlayer(symbol,this);
+	this.set_loop(true);
 	if(master) this.once("added",$bind(this,this.onAdded));
 };
 pixi_display_FlumpMovie.__name__ = true;
 pixi_display_FlumpMovie.__interfaces__ = [flump_IFlumpMovie];
 pixi_display_FlumpMovie.__super__ = PIXI.Container;
 pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
-	get_symbolId: function() {
+	getLayer: function(layerId) {
+		if(this.layerLookup.exists(layerId) == false) throw new js__$Boot_HaxeError("Layer " + layerId + "does not exist");
+		return this.layerLookup.get(layerId);
+	}
+	,getChildDisplayObject: function(layerId,keyframeIndex) {
+		if(keyframeIndex == null) keyframeIndex = 0;
+		var key = this.player.getDisplayKey(layerId,keyframeIndex);
+		return this.movieChildren.h[key.__id__];
+	}
+	,getChildMovie: function(layerId,keyframeIndex) {
+		if(keyframeIndex == null) keyframeIndex = 0;
+		var child = this.getChildDisplayObject(layerId,keyframeIndex);
+		if(js_Boot.__instanceof(child,pixi_display_FlumpMovie) == false) throw new js__$Boot_HaxeError("Child on layer " + layerId + " at keyframeIndex " + Std.string(_$UInt_UInt_$Impl_$.toFloat(keyframeIndex)) + " is not of type FlumpMovie!");
+		return child;
+	}
+	,get_symbolId: function() {
 		return this.symbol.name;
 	}
 	,set_loop: function(value) {
+		if(value && this.player.get_playing()) this.player.loop(); else if(value == false && this.player.get_looping()) this.player.play();
 		return this.loop = value;
 	}
 	,set_onComplete: function(value) {
-		return null;
+		return this.onComplete = value;
 	}
 	,set_currentFrame: function(value) {
 		this.player.set_currentFrame(value);
 		return value;
 	}
+	,get_currentFrame: function() {
+		return this.player.get_currentFrame();
+	}
 	,get_playing: function() {
-		return this.player.get_playing();
+		return this.player.get_playing() || this.player.get_looping();
+	}
+	,get_independantTimeline: function() {
+		return this.player.independantTimeline;
+	}
+	,set_independantTimeline: function(value) {
+		this.player.independantTimeline = value;
+		return value;
+	}
+	,get_independantControl: function() {
+		return this.player.independantControl;
+	}
+	,set_independantControl: function(value) {
+		this.player.independantControl = value;
+		return value;
 	}
 	,get_totalFrames: function() {
 		return this.player.get_totalFrames();
@@ -1624,21 +1560,35 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 		if(this.loop) this.player.loop(); else this.player.play();
 	}
 	,gotoAndStop: function(frameNumber) {
+		if(!this.loop) {
+			if(_$UInt_UInt_$Impl_$.gt(frameNumber,(function($this) {
+				var $r;
+				var a = $this.player.get_totalFrames();
+				$r = a - 1;
+				return $r;
+			}(this)))) {
+				var a1 = this.player.get_totalFrames();
+				frameNumber = a1 - 1;
+			} else if(frameNumber < 0) frameNumber = 0;
+		}
 		this.player.goToFrame(frameNumber).stop();
 	}
 	,gotoAndPlay: function(frameNumber) {
-		if(this.loop) this.player.goToFrame(frameNumber).play(); else this.player.goToFrame(frameNumber).stop();
+		if(!this.loop) {
+			if(_$UInt_UInt_$Impl_$.gt(frameNumber,(function($this) {
+				var $r;
+				var a = $this.player.get_totalFrames();
+				$r = a - 1;
+				return $r;
+			}(this)))) {
+				var a1 = this.player.get_totalFrames();
+				frameNumber = a1 - 1;
+			} else if(frameNumber < 0) frameNumber = 0;
+		}
+		if(this.loop) this.player.goToFrame(frameNumber).loop(); else this.player.goToFrame(frameNumber).play();
 	}
-	,getLayer: function(name) {
-		return this.layerLookup.get(name);
-	}
-	,onLabelEnter: function(label,callback) {
-		if(!this.player.labelExists(label)) throw new js__$Boot_HaxeError("Label " + label + "does not exist for movie " + this.symbol.name);
-		this.on("enter_" + label,callback);
-	}
-	,onLabelExit: function(label,callback) {
-		if(!this.player.labelExists(label)) throw new js__$Boot_HaxeError("Label " + label + "does not exist for movie " + this.symbol.name);
-		this.on("exit_" + label,callback);
+	,getLabelFrame: function(label) {
+		return this.player.getLabelFrame(label);
 	}
 	,tick: function() {
 		this.player.advanceTime(this.ticker.elapsedMS * this.animationSpeed);
@@ -1677,6 +1627,9 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 		var layer1 = this.layers.h[layer.__id__];
 		layer1.addChild(this.movieChildren.h[displayKey.__id__]);
 	}
+	,onAnimationComplete: function() {
+		if(this.onComplete != null) this.onComplete();
+	}
 	,renderFrame: function(keyframe,x,y,scaleX,scaleY,skewX,skewY) {
 		var layer = this.layers.h[keyframe.layer.__id__];
 		layer.x = x;
@@ -1688,11 +1641,8 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 		layer.pivot.x = keyframe.pivot.x;
 		layer.pivot.y = keyframe.pivot.y;
 	}
-	,labelEnter: function(label) {
-		this.emit("enter_" + Std.string(label),this);
-	}
-	,labelExit: function(label) {
-		this.emit("exit_" + Std.string(label),this);
+	,labelPassed: function(label) {
+		this.emit("labelPassed",label.name);
 	}
 	,__class__: pixi_display_FlumpMovie
 });
@@ -1795,6 +1745,50 @@ pixi_display_PixiLayer.prototype = $extend(PIXI.Container.prototype,{
 	}
 	,__class__: pixi_display_PixiLayer
 });
+var pixi_loaders_FlumpParser = function() { };
+pixi_loaders_FlumpParser.__name__ = true;
+pixi_loaders_FlumpParser.flumpParser = function(resource,next) {
+	if(resource.data == null || resource.isJson == false) return;
+	if(!Object.prototype.hasOwnProperty.call(resource.data,"md5") || !Object.prototype.hasOwnProperty.call(resource.data,"movies") || !Object.prototype.hasOwnProperty.call(resource.data,"textureGroups") || !Object.prototype.hasOwnProperty.call(resource.data,"frameRate")) return;
+	var lib = flump_library_FlumpLibrary.create(resource.data);
+	var textures = new haxe_ds_StringMap();
+	var atlasLoader = new PIXI.loaders.Loader();
+	atlasLoader.baseUrl = new EReg("/(.[^/]*)$","i").replace(resource.url,"");
+	var _g = 0;
+	var _g1 = lib.atlases;
+	while(_g < _g1.length) {
+		var atlasSpec = [_g1[_g]];
+		++_g;
+		atlasLoader.add(atlasSpec[0].file,null,(function(atlasSpec) {
+			return function(atlasResource) {
+				var atlasTexture = new PIXI.BaseTexture(atlasResource.data);
+				var _g2 = 0;
+				var _g3 = atlasSpec[0].textures;
+				while(_g2 < _g3.length) {
+					var textureSpec = _g3[_g2];
+					++_g2;
+					var frame = new PIXI.Rectangle(textureSpec.rect[0],textureSpec.rect[1],textureSpec.rect[2],textureSpec.rect[3]);
+					var origin = new PIXI.Point(textureSpec.origin[0],textureSpec.origin[1]);
+					origin.x = origin.x / frame.width;
+					origin.y = origin.y / frame.height;
+					var v = new PIXI.Texture(atlasTexture,frame);
+					textures.set(textureSpec.symbol,v);
+					v;
+				}
+			};
+		})(atlasSpec));
+	}
+	atlasLoader.once("complete",function(loader) {
+		var factory = new pixi_display_FlumpFactory(lib,textures);
+		if(resource.name != null) {
+			pixi_display_FlumpFactory.factories.set(resource.name,factory);
+			factory;
+		}
+		resource.data = factory;
+		next();
+	});
+	atlasLoader.load();
+};
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
@@ -1822,6 +1816,7 @@ flump_library_Label.LABEL_EXIT = "labelExit";
 flump_library_Label.LABEL_UPDATE = "labelUpdate";
 haxe_ds_ObjectMap.count = 0;
 js_Boot.__toStr = {}.toString;
+pixi_display_FlumpFactory.factories = new haxe_ds_StringMap();
 Main.main();
 })(typeof console != "undefined" ? console : {log:function(){}});
 

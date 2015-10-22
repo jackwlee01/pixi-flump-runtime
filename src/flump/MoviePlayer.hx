@@ -6,7 +6,6 @@ import flump.library.MovieSymbol;
 import flump.library.Layer;
 import flump.library.Keyframe;
 import flump.library.Label;
-import msignal.Signal;
 using Std;
 
 
