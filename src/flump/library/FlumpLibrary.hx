@@ -18,8 +18,8 @@ class FlumpLibrary{
 	function new(){}
 
 
-	public static function parseJSON(raw:String):FlumpLibrary{
-		var lib:FlumpJSON = haxe.Json.parse(raw);
+	public static function create(flumpData:Dynamic):FlumpLibrary{
+		var lib:FlumpJSON = cast flumpData;
 		
 		var spriteSymbols = new Map<String, SpriteSymbol>();
 		var movieSymbols = new Map<String, MovieSymbol>();

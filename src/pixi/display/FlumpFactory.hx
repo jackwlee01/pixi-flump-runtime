@@ -15,8 +15,16 @@ class FlumpFactory{
 	private var library:FlumpLibrary;
 	private var textures:Map<String, Texture>;
 
+	private static var factories = new Map<String, FlumpFactory>();
 
-	public function new(library:FlumpLibrary, textures:Map<String, Texture>){
+
+	public static function get(resourceName:String){
+		if(!factories.exists(resourceName)) throw("FlumpFactory for resource name: " + resourceName + " does not exist.");
+		return factories[resourceName];
+	}
+
+
+	private function new(library:FlumpLibrary, textures:Map<String, Texture>){
 		this.library = library;
 		this.textures = textures;
 	}

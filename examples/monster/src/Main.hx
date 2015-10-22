@@ -4,7 +4,8 @@ import flump.library.FlumpLibrary;
 import pixi.display.FlumpFactory;
 import pixi.display.FlumpMovie;
 import pixi.plugins.app.Application;
-import pixi.display.FlumpLibraryLoader;
+import pixi.loaders.Loader;
+import pixi.loaders.FlumpParser;
 
 
 class Main extends Application{
@@ -21,11 +22,16 @@ class Main extends Application{
 		super();
 		super.start();
 
-		FlumpLibraryLoader.load("./flump-assets").addOnce( onLibraryLoaded );	
+		var loader = new Loader();
+		loader.after(FlumpParser.flumpParser);
+		loader.add("MonsterLibrary", "./flump-assets/library.json");
+		loader.once("complete", begin);
+		loader.load();
 	}
 
 
-	public function onLibraryLoaded(factory:FlumpFactory){
+	public function begin(factory:FlumpFactory){
+		var factory = FlumpFactory.get("MonsterLibrary");
 		var monster = factory.createMovie("walk");
 		stage.addChild(monster);
 		monster.x = 200;
