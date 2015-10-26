@@ -42,12 +42,14 @@ class Main extends Application{
 		
 		var dog = movie.getChildMovie("DogRunning");
 		
+		/*
 		var placeholder = movie.getLayer("Placeholder");
 		var graphics = new Graphics();
 		graphics.lineColor = 0x990000;
 		graphics.beginFill(0x009900);
 		graphics.drawCircle(100, 100, 100);
 		placeholder.addChild(graphics);
+		*/
 	}
 
 

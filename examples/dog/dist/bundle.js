@@ -178,12 +178,6 @@ Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
 		this.stage.addChild(movie);
 		this.movies.push(movie);
 		var dog = movie.getChildMovie("DogRunning");
-		var placeholder = movie.getLayer("Placeholder");
-		var graphics = new PIXI.Graphics();
-		graphics.lineColor = 10027008;
-		graphics.beginFill(39168);
-		graphics.drawCircle(100,100,100);
-		placeholder.addChild(graphics);
 	}
 	,__class__: Main
 });
