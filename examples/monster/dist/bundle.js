@@ -171,9 +171,8 @@ Main.main = function() {
 };
 Main.__super__ = pixi_plugins_app_Application;
 Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
-	begin: function(factory) {
-		var factory1 = pixi_display_FlumpFactory.get("MonsterLibrary");
-		var monster = factory1.createMovie("walk");
+	begin: function() {
+		var monster = new pixi_display_FlumpMovie("walk");
 		this.stage.addChild(monster);
 		monster.x = 200;
 		monster.y = 200;
@@ -182,16 +181,6 @@ Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
 	,__class__: Main
 });
 Math.__name__ = true;
-var Reflect = function() { };
-Reflect.__name__ = true;
-Reflect.isFunction = function(f) {
-	return typeof(f) == "function" && !(f.__name__ || f.__ename__);
-};
-Reflect.compareMethods = function(f1,f2) {
-	if(f1 == f2) return true;
-	if(!Reflect.isFunction(f1) || !Reflect.isFunction(f2)) return false;
-	return f1.scope == f2.scope && f1.method == f2.method && f1.method != null;
-};
 var Std = function() { };
 Std.__name__ = true;
 Std.string = function(s) {
@@ -994,7 +983,31 @@ haxe_ds_ObjectMap.prototype = {
 		}
 		return HxOverrides.iter(a);
 	}
+	,iterator: function() {
+		return { ref : this.h, it : this.keys(), hasNext : function() {
+			return this.it.hasNext();
+		}, next : function() {
+			var i = this.it.next();
+			return this.ref[i.__id__];
+		}};
+	}
 	,__class__: haxe_ds_ObjectMap
+};
+var haxe_ds__$StringMap_StringMapIterator = function(map,keys) {
+	this.map = map;
+	this.keys = keys;
+	this.index = 0;
+	this.count = keys.length;
+};
+haxe_ds__$StringMap_StringMapIterator.__name__ = true;
+haxe_ds__$StringMap_StringMapIterator.prototype = {
+	hasNext: function() {
+		return this.index < this.count;
+	}
+	,next: function() {
+		return this.map.get(this.keys[this.index++]);
+	}
+	,__class__: haxe_ds__$StringMap_StringMapIterator
 };
 var haxe_ds_StringMap = function() {
 	this.h = { };
@@ -1023,6 +1036,33 @@ haxe_ds_StringMap.prototype = {
 	,existsReserved: function(key) {
 		if(this.rh == null) return false;
 		return this.rh.hasOwnProperty("$" + key);
+	}
+	,remove: function(key) {
+		if(__map_reserved[key] != null) {
+			key = "$" + key;
+			if(this.rh == null || !this.rh.hasOwnProperty(key)) return false;
+			delete(this.rh[key]);
+			return true;
+		} else {
+			if(!this.h.hasOwnProperty(key)) return false;
+			delete(this.h[key]);
+			return true;
+		}
+	}
+	,arrayKeys: function() {
+		var out = [];
+		for( var key in this.h ) {
+		if(this.h.hasOwnProperty(key)) out.push(key);
+		}
+		if(this.rh != null) {
+			for( var key in this.rh ) {
+			if(key.charCodeAt(0) == 36) out.push(key.substr(1));
+			}
+		}
+		return out;
+	}
+	,iterator: function() {
+		return new haxe_ds__$StringMap_StringMapIterator(this,this.arrayKeys());
 	}
 	,__class__: haxe_ds_StringMap
 };
@@ -1171,318 +1211,7 @@ js_Boot.__isNativeObj = function(o) {
 js_Boot.__resolveNativeClass = function(name) {
 	return (Function("return typeof " + name + " != \"undefined\" ? " + name + " : null"))();
 };
-var msignal_Signal = function(valueClasses) {
-	if(valueClasses == null) valueClasses = [];
-	this.valueClasses = valueClasses;
-	this.slots = msignal_SlotList.NIL;
-	this.priorityBased = false;
-};
-msignal_Signal.__name__ = true;
-msignal_Signal.prototype = {
-	add: function(listener) {
-		return this.registerListener(listener);
-	}
-	,addOnce: function(listener) {
-		return this.registerListener(listener,true);
-	}
-	,addWithPriority: function(listener,priority) {
-		if(priority == null) priority = 0;
-		return this.registerListener(listener,false,priority);
-	}
-	,addOnceWithPriority: function(listener,priority) {
-		if(priority == null) priority = 0;
-		return this.registerListener(listener,true,priority);
-	}
-	,remove: function(listener) {
-		var slot = this.slots.find(listener);
-		if(slot == null) return null;
-		this.slots = this.slots.filterNot(listener);
-		return slot;
-	}
-	,removeAll: function() {
-		this.slots = msignal_SlotList.NIL;
-	}
-	,registerListener: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		if(this.registrationPossible(listener,once)) {
-			var newSlot = this.createSlot(listener,once,priority);
-			if(!this.priorityBased && priority != 0) this.priorityBased = true;
-			if(!this.priorityBased && priority == 0) this.slots = this.slots.prepend(newSlot); else this.slots = this.slots.insertWithPriority(newSlot);
-			return newSlot;
-		}
-		return this.slots.find(listener);
-	}
-	,registrationPossible: function(listener,once) {
-		if(!this.slots.nonEmpty) return true;
-		var existingSlot = this.slots.find(listener);
-		if(existingSlot == null) return true;
-		if(existingSlot.once != once) throw new js__$Boot_HaxeError("You cannot addOnce() then add() the same listener without removing the relationship first.");
-		return false;
-	}
-	,createSlot: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		return null;
-	}
-	,get_numListeners: function() {
-		return this.slots.get_length();
-	}
-	,__class__: msignal_Signal
-};
-var msignal_Signal0 = function() {
-	msignal_Signal.call(this);
-};
-msignal_Signal0.__name__ = true;
-msignal_Signal0.__super__ = msignal_Signal;
-msignal_Signal0.prototype = $extend(msignal_Signal.prototype,{
-	dispatch: function() {
-		var slotsToProcess = this.slots;
-		while(slotsToProcess.nonEmpty) {
-			slotsToProcess.head.execute();
-			slotsToProcess = slotsToProcess.tail;
-		}
-	}
-	,createSlot: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		return new msignal_Slot0(this,listener,once,priority);
-	}
-	,__class__: msignal_Signal0
-});
-var msignal_Signal1 = function(type) {
-	msignal_Signal.call(this,[type]);
-};
-msignal_Signal1.__name__ = true;
-msignal_Signal1.__super__ = msignal_Signal;
-msignal_Signal1.prototype = $extend(msignal_Signal.prototype,{
-	dispatch: function(value) {
-		var slotsToProcess = this.slots;
-		while(slotsToProcess.nonEmpty) {
-			slotsToProcess.head.execute(value);
-			slotsToProcess = slotsToProcess.tail;
-		}
-	}
-	,createSlot: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		return new msignal_Slot1(this,listener,once,priority);
-	}
-	,__class__: msignal_Signal1
-});
-var msignal_Signal2 = function(type1,type2) {
-	msignal_Signal.call(this,[type1,type2]);
-};
-msignal_Signal2.__name__ = true;
-msignal_Signal2.__super__ = msignal_Signal;
-msignal_Signal2.prototype = $extend(msignal_Signal.prototype,{
-	dispatch: function(value1,value2) {
-		var slotsToProcess = this.slots;
-		while(slotsToProcess.nonEmpty) {
-			slotsToProcess.head.execute(value1,value2);
-			slotsToProcess = slotsToProcess.tail;
-		}
-	}
-	,createSlot: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		return new msignal_Slot2(this,listener,once,priority);
-	}
-	,__class__: msignal_Signal2
-});
-var msignal_Slot = function(signal,listener,once,priority) {
-	if(priority == null) priority = 0;
-	if(once == null) once = false;
-	this.signal = signal;
-	this.set_listener(listener);
-	this.once = once;
-	this.priority = priority;
-	this.enabled = true;
-};
-msignal_Slot.__name__ = true;
-msignal_Slot.prototype = {
-	remove: function() {
-		this.signal.remove(this.listener);
-	}
-	,set_listener: function(value) {
-		if(value == null) throw new js__$Boot_HaxeError("listener cannot be null");
-		return this.listener = value;
-	}
-	,__class__: msignal_Slot
-};
-var msignal_Slot0 = function(signal,listener,once,priority) {
-	if(priority == null) priority = 0;
-	if(once == null) once = false;
-	msignal_Slot.call(this,signal,listener,once,priority);
-};
-msignal_Slot0.__name__ = true;
-msignal_Slot0.__super__ = msignal_Slot;
-msignal_Slot0.prototype = $extend(msignal_Slot.prototype,{
-	execute: function() {
-		if(!this.enabled) return;
-		if(this.once) this.remove();
-		this.listener();
-	}
-	,__class__: msignal_Slot0
-});
-var msignal_Slot1 = function(signal,listener,once,priority) {
-	if(priority == null) priority = 0;
-	if(once == null) once = false;
-	msignal_Slot.call(this,signal,listener,once,priority);
-};
-msignal_Slot1.__name__ = true;
-msignal_Slot1.__super__ = msignal_Slot;
-msignal_Slot1.prototype = $extend(msignal_Slot.prototype,{
-	execute: function(value1) {
-		if(!this.enabled) return;
-		if(this.once) this.remove();
-		if(this.param != null) value1 = this.param;
-		this.listener(value1);
-	}
-	,__class__: msignal_Slot1
-});
-var msignal_Slot2 = function(signal,listener,once,priority) {
-	if(priority == null) priority = 0;
-	if(once == null) once = false;
-	msignal_Slot.call(this,signal,listener,once,priority);
-};
-msignal_Slot2.__name__ = true;
-msignal_Slot2.__super__ = msignal_Slot;
-msignal_Slot2.prototype = $extend(msignal_Slot.prototype,{
-	execute: function(value1,value2) {
-		if(!this.enabled) return;
-		if(this.once) this.remove();
-		if(this.param1 != null) value1 = this.param1;
-		if(this.param2 != null) value2 = this.param2;
-		this.listener(value1,value2);
-	}
-	,__class__: msignal_Slot2
-});
-var msignal_SlotList = function(head,tail) {
-	this.nonEmpty = false;
-	if(head == null && tail == null) {
-		if(msignal_SlotList.NIL != null) throw new js__$Boot_HaxeError("Parameters head and tail are null. Use the NIL element instead.");
-		this.nonEmpty = false;
-	} else if(head == null) throw new js__$Boot_HaxeError("Parameter head cannot be null."); else {
-		this.head = head;
-		if(tail == null) this.tail = msignal_SlotList.NIL; else this.tail = tail;
-		this.nonEmpty = true;
-	}
-};
-msignal_SlotList.__name__ = true;
-msignal_SlotList.prototype = {
-	get_length: function() {
-		if(!this.nonEmpty) return 0;
-		if(this.tail == msignal_SlotList.NIL) return 1;
-		var result = 0;
-		var p = this;
-		while(p.nonEmpty) {
-			++result;
-			p = p.tail;
-		}
-		return result;
-	}
-	,prepend: function(slot) {
-		return new msignal_SlotList(slot,this);
-	}
-	,append: function(slot) {
-		if(slot == null) return this;
-		if(!this.nonEmpty) return new msignal_SlotList(slot);
-		if(this.tail == msignal_SlotList.NIL) return new msignal_SlotList(slot).prepend(this.head);
-		var wholeClone = new msignal_SlotList(this.head);
-		var subClone = wholeClone;
-		var current = this.tail;
-		while(current.nonEmpty) {
-			subClone = subClone.tail = new msignal_SlotList(current.head);
-			current = current.tail;
-		}
-		subClone.tail = new msignal_SlotList(slot);
-		return wholeClone;
-	}
-	,insertWithPriority: function(slot) {
-		if(!this.nonEmpty) return new msignal_SlotList(slot);
-		var priority = slot.priority;
-		if(priority >= this.head.priority) return this.prepend(slot);
-		var wholeClone = new msignal_SlotList(this.head);
-		var subClone = wholeClone;
-		var current = this.tail;
-		while(current.nonEmpty) {
-			if(priority > current.head.priority) {
-				subClone.tail = current.prepend(slot);
-				return wholeClone;
-			}
-			subClone = subClone.tail = new msignal_SlotList(current.head);
-			current = current.tail;
-		}
-		subClone.tail = new msignal_SlotList(slot);
-		return wholeClone;
-	}
-	,filterNot: function(listener) {
-		if(!this.nonEmpty || listener == null) return this;
-		if(Reflect.compareMethods(this.head.listener,listener)) return this.tail;
-		var wholeClone = new msignal_SlotList(this.head);
-		var subClone = wholeClone;
-		var current = this.tail;
-		while(current.nonEmpty) {
-			if(Reflect.compareMethods(current.head.listener,listener)) {
-				subClone.tail = current.tail;
-				return wholeClone;
-			}
-			subClone = subClone.tail = new msignal_SlotList(current.head);
-			current = current.tail;
-		}
-		return this;
-	}
-	,contains: function(listener) {
-		if(!this.nonEmpty) return false;
-		var p = this;
-		while(p.nonEmpty) {
-			if(Reflect.compareMethods(p.head.listener,listener)) return true;
-			p = p.tail;
-		}
-		return false;
-	}
-	,find: function(listener) {
-		if(!this.nonEmpty) return null;
-		var p = this;
-		while(p.nonEmpty) {
-			if(Reflect.compareMethods(p.head.listener,listener)) return p.head;
-			p = p.tail;
-		}
-		return null;
-	}
-	,__class__: msignal_SlotList
-};
-var pixi_display_FlumpFactory = function(library,textures) {
-	this.library = library;
-	this.textures = textures;
-};
-pixi_display_FlumpFactory.__name__ = true;
-pixi_display_FlumpFactory.get = function(url) {
-	if(!pixi_display_FlumpFactory.factories.exists(url)) throw new js__$Boot_HaxeError("FlumpFactor for url: " + url + " does not exist.");
-	return pixi_display_FlumpFactory.factories.get(url);
-};
-pixi_display_FlumpFactory.prototype = {
-	createMovie: function(id) {
-		return new pixi_display_FlumpMovie(this.library.movies.get(id),this,true);
-	}
-	,createSprite: function(id) {
-		var symbol = this.library.sprites.get(id);
-		var texture = this.textures.get(symbol.texture);
-		var sprite = new PIXI.Sprite(texture);
-		sprite.pivot.x = symbol.origin.x;
-		sprite.pivot.y = symbol.origin.y;
-		return sprite;
-	}
-	,createDisplayObject: function(id) {
-		if(this.library.movies.exists(id)) return this.createMovie(id); else return this.createSprite(id);
-	}
-	,createChildDisplayObject: function(id) {
-		if(this.library.movies.exists(id)) return new pixi_display_FlumpMovie(this.library.movies.get(id),this,false); else return this.createSprite(id);
-	}
-	,__class__: pixi_display_FlumpFactory
-};
-var pixi_display_FlumpMovie = function(symbol,flumpFactory,master) {
+var pixi_display_FlumpMovie = function(symbolId,resourceId) {
 	this.animationSpeed = 1.0;
 	this.ticker = PIXI.ticker.shared;
 	this.displaying = new haxe_ds_ObjectMap();
@@ -1490,18 +1219,29 @@ var pixi_display_FlumpMovie = function(symbol,flumpFactory,master) {
 	this.layerLookup = new haxe_ds_StringMap();
 	this.layers = new haxe_ds_ObjectMap();
 	PIXI.Container.call(this);
-	this.symbol = symbol;
-	this.factory = flumpFactory;
-	this.master = master;
-	this.player = new flump_MoviePlayer(symbol,this);
+	this.resourceId = resourceId;
+	if(resourceId == null) {
+		this.resource = pixi_display_FlumpResource.getResourceForMovie(symbolId);
+		if(this.resource == null) throw new js__$Boot_HaxeError("Flump movie does not exist: " + symbolId);
+	} else {
+		this.resource = pixi_display_FlumpResource.get(resourceId);
+		if(this.resource == null) throw new js__$Boot_HaxeError("Flump resource does not exist: " + resourceId);
+	}
+	this.symbol = this.resource.library.movies.get(symbolId);
+	this.player = new flump_MoviePlayer(this.symbol,this);
 	this.set_loop(true);
-	if(master) this.once("added",$bind(this,this.onAdded));
+	this.master = true;
+	this.once("added",$bind(this,this.onAdded));
 };
 pixi_display_FlumpMovie.__name__ = true;
 pixi_display_FlumpMovie.__interfaces__ = [flump_IFlumpMovie];
 pixi_display_FlumpMovie.__super__ = PIXI.Container;
 pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
-	getLayer: function(layerId) {
+	disableAsMaster: function() {
+		this.master = false;
+		this.off("added",$bind(this,this.onAdded));
+	}
+	,getLayer: function(layerId) {
 		if(this.layerLookup.exists(layerId) == false) throw new js__$Boot_HaxeError("Layer " + layerId + "does not exist");
 		return this.layerLookup.get(layerId);
 	}
@@ -1615,7 +1355,7 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 		return movie.player;
 	}
 	,createFlumpChild: function(displayKey) {
-		var v = this.factory.createChildDisplayObject(displayKey.symbolId);
+		var v = this.resource.createDisplayObject(displayKey.symbolId);
 		this.movieChildren.set(displayKey,v);
 		v;
 	}
@@ -1644,7 +1384,92 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 	,labelPassed: function(label) {
 		this.emit("labelPassed",label.name);
 	}
+	,destroy: function() {
+		this.stop();
+		this.set_onComplete(null);
+		var $it0 = this.layers.iterator();
+		while( $it0.hasNext() ) {
+			var layer = $it0.next();
+			layer.removeChildren();
+		}
+		this.symbol = null;
+		this.player = null;
+		PIXI.Container.prototype.destroy.call(this,true);
+	}
 	,__class__: pixi_display_FlumpMovie
+});
+var pixi_display_FlumpResource = function(library,textures,resourceId) {
+	this.library = library;
+	this.textures = textures;
+	this.resourceId = resourceId;
+};
+pixi_display_FlumpResource.__name__ = true;
+pixi_display_FlumpResource.exists = function(resourceName) {
+	return pixi_display_FlumpResource.resources.exists(resourceName);
+};
+pixi_display_FlumpResource.destroy = function(resourceName) {
+	if(pixi_display_FlumpResource.resources.exists(resourceName) == false) throw new js__$Boot_HaxeError("Cannot destroy FlumpResource: " + resourceName + " as it does not exist.");
+	var resource = pixi_display_FlumpResource.resources.get(resourceName);
+	var $it0 = resource.textures.iterator();
+	while( $it0.hasNext() ) {
+		var texture = $it0.next();
+		texture.destroy();
+	}
+	resource.library = null;
+	pixi_display_FlumpResource.resources.remove(resourceName);
+};
+pixi_display_FlumpResource.get = function(resourceName) {
+	if(!pixi_display_FlumpResource.resources.exists(resourceName)) throw new js__$Boot_HaxeError("Flump resource: " + resourceName + " does not exist.");
+	return pixi_display_FlumpResource.resources.get(resourceName);
+};
+pixi_display_FlumpResource.getResourceForMovie = function(symbolId) {
+	var $it0 = pixi_display_FlumpResource.resources.iterator();
+	while( $it0.hasNext() ) {
+		var resource = $it0.next();
+		if(resource.library.movies.exists(symbolId)) return resource;
+	}
+	throw new js__$Boot_HaxeError("Movie: " + symbolId + "does not exists in any loaded flump resources.");
+};
+pixi_display_FlumpResource.getResourceForSprite = function(symbolId) {
+	var $it0 = pixi_display_FlumpResource.resources.iterator();
+	while( $it0.hasNext() ) {
+		var resource = $it0.next();
+		if(resource.library.sprites.exists(symbolId)) return resource;
+	}
+	throw new js__$Boot_HaxeError("Sprite: " + symbolId + "does not exists in any loaded flump resources.");
+};
+pixi_display_FlumpResource.prototype = {
+	createMovie: function(id) {
+		var movie = new pixi_display_FlumpMovie(id,this.resourceId);
+		movie.disableAsMaster();
+		return movie;
+	}
+	,createSprite: function(id) {
+		return new pixi_display_FlumpSprite(id,this.resourceId);
+	}
+	,createDisplayObject: function(id) {
+		if(this.library.movies.exists(id)) return this.createMovie(id); else return this.createSprite(id);
+	}
+	,__class__: pixi_display_FlumpResource
+};
+var pixi_display_FlumpSprite = function(symbolId,resourceId) {
+	this.symbolId = symbolId;
+	this.resourceId = resourceId;
+	var resource;
+	if(resourceId != null) {
+		resource = pixi_display_FlumpResource.get(resourceId);
+		if(resource == null) throw new js__$Boot_HaxeError("Library: " + resourceId + "does has not been loaded.");
+	} else resource = pixi_display_FlumpResource.getResourceForSprite(symbolId);
+	var symbol = resource.library.sprites.get(symbolId);
+	var texture = resource.textures.get(symbol.texture);
+	PIXI.Sprite.call(this,texture);
+	this.pivot.x = symbol.origin.x;
+	this.pivot.y = symbol.origin.y;
+};
+pixi_display_FlumpSprite.__name__ = true;
+pixi_display_FlumpSprite.__super__ = PIXI.Sprite;
+pixi_display_FlumpSprite.prototype = $extend(PIXI.Sprite.prototype,{
+	__class__: pixi_display_FlumpSprite
 });
 var pixi_display_PixiLayer = function() {
 	this.skew = new PIXI.Point();
@@ -1779,12 +1604,12 @@ pixi_loaders_FlumpParser.flumpParser = function(resource,next) {
 		})(atlasSpec));
 	}
 	atlasLoader.once("complete",function(loader) {
-		var factory = new pixi_display_FlumpFactory(lib,textures);
+		var flumpResource = new pixi_display_FlumpResource(lib,textures,resource.name);
 		if(resource.name != null) {
-			pixi_display_FlumpFactory.factories.set(resource.name,factory);
-			factory;
+			pixi_display_FlumpResource.resources.set(resource.name,flumpResource);
+			flumpResource;
 		}
-		resource.data = factory;
+		resource.data = flumpResource;
 		next();
 	});
 	atlasLoader.load();
@@ -1806,7 +1631,6 @@ Bool.__ename__ = ["Bool"];
 var Class = { __name__ : ["Class"]};
 var Enum = { };
 var __map_reserved = {}
-msignal_SlotList.NIL = new msignal_SlotList(null,null);
 pixi_plugins_app_Application.AUTO = "auto";
 pixi_plugins_app_Application.RECOMMENDED = "recommended";
 pixi_plugins_app_Application.CANVAS = "canvas";
@@ -1816,7 +1640,7 @@ flump_library_Label.LABEL_EXIT = "labelExit";
 flump_library_Label.LABEL_UPDATE = "labelUpdate";
 haxe_ds_ObjectMap.count = 0;
 js_Boot.__toStr = {}.toString;
-pixi_display_FlumpFactory.factories = new haxe_ds_StringMap();
+pixi_display_FlumpResource.resources = new haxe_ds_StringMap();
 Main.main();
 })(typeof console != "undefined" ? console : {log:function(){}});
 

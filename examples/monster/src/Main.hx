@@ -1,7 +1,6 @@
 package;
 	
 import flump.library.FlumpLibrary;
-import pixi.display.FlumpFactory;
 import pixi.display.FlumpMovie;
 import pixi.plugins.app.Application;
 import pixi.loaders.Loader;
@@ -30,9 +29,8 @@ class Main extends Application{
 	}
 
 
-	public function begin(factory:FlumpFactory){
-		var factory = FlumpFactory.get("MonsterLibrary");
-		var monster = factory.createMovie("walk");
+	public function begin(){
+		var monster = new FlumpMovie("walk");
 		stage.addChild(monster);
 		monster.x = 200;
 		monster.y = 200;
