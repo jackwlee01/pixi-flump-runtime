@@ -44,7 +44,7 @@ class FlumpParser{
 		}
 
 		atlasLoader.once("complete", function(loader:Loader){
-			var factory = new FlumpFactory(lib, textures);
+			var factory = new FlumpFactory(lib, textures, resource.name);
 			if(resource.name != null) FlumpFactory.factories[resource.name] = factory;
 			resource.data = factory;
 			next();
