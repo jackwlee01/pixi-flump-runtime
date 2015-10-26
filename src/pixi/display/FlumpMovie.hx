@@ -12,7 +12,7 @@ import pixi.core.ticker.Ticker;
 
 
 @:access(pixi.display.FlumpFactory)
-class FlumpMovie extends Container implements IFlumpMovie{
+class FlumpMovie extends Container implements IFlumpMovie {
 
 	public var player:MoviePlayer;
 	private var symbol:MovieSymbol;
@@ -242,6 +242,15 @@ class FlumpMovie extends Container implements IFlumpMovie{
 
 	private function labelPassed(label:Label){
 		emit("labelPassed", label.name);
+	}
+	
+	override public function destroy (): Void {
+		stop();
+		onComplete = null;
+		for (layer in layers) layer.removeChildren();
+		symbol = null;
+		player = null;
+		super.destroy(true);
 	}
 
 
