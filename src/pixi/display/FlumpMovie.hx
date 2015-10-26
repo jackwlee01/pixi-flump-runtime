@@ -4,7 +4,7 @@ import flump.*;
 import flump.DisplayObjectKey;
 import flump.library.*;
 import flump.library.MovieSymbol;
-import pixi.display.FlumpFactory;
+import pixi.display.FlumpResource;
 import pixi.extras.MovieClip;
 import pixi.core.display.Container;
 import pixi.core.display.DisplayObject;
@@ -12,7 +12,7 @@ import pixi.core.math.Point;
 import pixi.core.ticker.Ticker;
 
 
-@:access(pixi.display.FlumpFactory)
+@:access(pixi.display.FlumpResource)
 class FlumpMovie extends Container implements IFlumpMovie {
 
 	public var player:MoviePlayer;
@@ -24,7 +24,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	private var ticker:Ticker = untyped __js__ ("PIXI.ticker.shared");
 	private var master:Bool;
 
-	private var factory:FlumpFactory;
+	private var resource:FlumpResource;
 	private var resourceId:String;
 	
 
@@ -33,14 +33,14 @@ class FlumpMovie extends Container implements IFlumpMovie {
 		this.resourceId = resourceId;
 
 		if(resourceId == null){
-			factory = FlumpFactory.getFactoryForMovie(symbolId);
-			if(factory == null) throw("Flump movie does not exist: " + symbolId);
+			resource = FlumpResource.getResourceForMovie(symbolId);
+			if(resource == null) throw("Flump movie does not exist: " + symbolId);
 		}else{
-			factory = FlumpFactory.get(resourceId);
-			if(factory == null) throw("Flump resource does not exist: " + resourceId);
+			resource = FlumpResource.get(resourceId);
+			if(resource == null) throw("Flump resource does not exist: " + resourceId);
 		}
 
-		this.symbol = factory.library.movies.get(symbolId);
+		this.symbol = resource.library.movies.get(symbolId);
 		
 		player = new MoviePlayer(symbol, this);	
 		this.loop = true;
@@ -223,7 +223,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 
 
 	private function createFlumpChild(displayKey:DisplayObjectKey):Void{
-		movieChildren[displayKey] = factory.createDisplayObject(displayKey.symbolId);
+		movieChildren[displayKey] = resource.createDisplayObject(displayKey.symbolId);
 	}
 
 

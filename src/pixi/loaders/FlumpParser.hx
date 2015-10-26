@@ -1,7 +1,7 @@
 package pixi.loaders;
 
 import flump.library.FlumpLibrary;
-import pixi.display.FlumpFactory;
+import pixi.display.FlumpResource;
 import js.Browser;
 import js.html.Image;
 import pixi.core.math.Point;
@@ -15,7 +15,7 @@ import pixi.loaders.Resource;
 using Reflect;
 
 
-@:access(pixi.display.FlumpFactory)
+@:access(pixi.display.FlumpResource)
 class FlumpParser{
 
 
@@ -44,9 +44,9 @@ class FlumpParser{
 		}
 
 		atlasLoader.once("complete", function(loader:Loader){
-			var factory = new FlumpFactory(lib, textures, resource.name);
-			if(resource.name != null) FlumpFactory.factories[resource.name] = factory;
-			resource.data = factory;
+			var flumpResource = new FlumpResource(lib, textures, resource.name);
+			if(resource.name != null) FlumpResource.resources[resource.name] = flumpResource;
+			resource.data = flumpResource;
 			next();
 		});
 		atlasLoader.load();

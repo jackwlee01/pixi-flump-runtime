@@ -4,7 +4,7 @@ import flump.library.FlumpLibrary;
 import pixi.core.sprites.Sprite;
 
 
-@:access(pixi.display.FlumpFactory)
+@:access(pixi.display.FlumpResource)
 class FlumpSprite extends Sprite{
 
 	public var symbolId:String;
@@ -15,16 +15,16 @@ class FlumpSprite extends Sprite{
 		this.symbolId = symbolId;
 		this.resourceId = resourceId;
 
-		var factory:FlumpFactory;
+		var resource:FlumpResource;
 		if(resourceId != null){
-			factory = FlumpFactory.get(resourceId);
-			if(factory == null) throw("Library: " + resourceId + "does has not been loaded.");
+			resource = FlumpResource.get(resourceId);
+			if(resource == null) throw("Library: " + resourceId + "does has not been loaded.");
 		}else{
-			factory = FlumpFactory.getFactoryForSprite(symbolId);
+			resource = FlumpResource.getResourceForSprite(symbolId);
 		}
 
-		var symbol = factory.library.sprites[symbolId];
-		var texture = factory.textures[symbol.texture];
+		var symbol = resource.library.sprites[symbolId];
+		var texture = resource.textures[symbol.texture];
 		super(texture);
 
 		pivot.x = symbol.origin.x;
