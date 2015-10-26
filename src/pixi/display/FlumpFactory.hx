@@ -12,13 +12,14 @@ import pixi.core.ticker.Ticker;
 @:access(pixi.display.FlumpMovie)
 class FlumpFactory{
 	
-	public var library:FlumpLibrary;
-	public var textures:Map<String, Texture>;
+	private var library:FlumpLibrary;
+	private var textures:Map<String, Texture>;
+	private var resourceId:String;
 
 	private static var factories = new Map<String, FlumpFactory>();
 
 
-	public static function get(resourceName:String){
+	private static function get(resourceName:String){
 		if(!factories.exists(resourceName)) throw("FlumpFactory for resource name: " + resourceName + " does not exist.");
 		return factories[resourceName];
 	}
@@ -44,38 +45,28 @@ class FlumpFactory{
 	}
 
 
-	private function new(library:FlumpLibrary, textures:Map<String, Texture>){
+	private function new(library:FlumpLibrary, textures:Map<String, Texture>, resourceId:String){
 		this.library = library;
 		this.textures = textures;
+		this.resourceId = resourceId;
 	}
 
 
-	public function createMovie(id:String):FlumpMovie{
-		return new FlumpMovie(library.movies[id], this, true);
+	private function createMovie(id:String):FlumpMovie{
+		var movie = new FlumpMovie(id, this.resourceId);
+		movie.disableAsMaster();
+		return movie;
 	}
 
 
-	public function createSprite(id:String):Sprite{
-		var symbol = library.sprites[id];
-		var texture = textures[symbol.texture];
-		
-		var sprite = new Sprite(texture);
-		sprite.pivot.x = symbol.origin.x;
-		sprite.pivot.y = symbol.origin.y;
-		return sprite;
+	private function createSprite(id:String):Sprite{
+		return new FlumpSprite(id, this.resourceId);
 	}
 
 
-	public function createDisplayObject(id:String):DisplayObject{
+	private function createDisplayObject(id:String):DisplayObject{
 		return library.movies.exists(id)
 		? createMovie(id)
-		: createSprite(id);
-	}
-
-
-	private function createChildDisplayObject(id:String):DisplayObject{
-		return library.movies.exists(id)
-		? new FlumpMovie(library.movies[id], this, false)
 		: createSprite(id);
 	}
 

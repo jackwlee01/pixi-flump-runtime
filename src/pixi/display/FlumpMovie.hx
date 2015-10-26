@@ -4,6 +4,7 @@ import flump.*;
 import flump.DisplayObjectKey;
 import flump.library.*;
 import flump.library.MovieSymbol;
+import pixi.display.FlumpFactory;
 import pixi.extras.MovieClip;
 import pixi.core.display.Container;
 import pixi.core.display.DisplayObject;
@@ -24,19 +25,35 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	private var master:Bool;
 
 	private var factory:FlumpFactory;
+	private var resourceId:String;
+	
 
-
-	private function new(symbol:MovieSymbol, flumpFactory:FlumpFactory, master:Bool){
+	public function new(symbolId:String, resourceId:String = null){
 		super();
-		this.symbol = symbol;
-		factory = flumpFactory;
-		this.master = master;
+		this.resourceId = resourceId;
+
+		if(resourceId == null){
+			factory = FlumpFactory.getFactoryForMovie(symbolId);
+			if(factory == null) throw("Flump movie does not exist: " + symbolId);
+		}else{
+			factory = FlumpFactory.get(resourceId);
+			if(factory == null) throw("Flump resource does not exist: " + resourceId);
+		}
+
+		this.symbol = factory.library.movies.get(symbolId);
+		
 		player = new MoviePlayer(symbol, this);	
 		this.loop = true;
 
-		if(master) once("added", onAdded);
+		master = true;
+		once("added", onAdded);
 	}
 
+
+	private function disableAsMaster(){
+		master = false;
+		off("added", onAdded);
+	}
 
 
 	/////////////////////////////////////////////////////
@@ -206,7 +223,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 
 
 	private function createFlumpChild(displayKey:DisplayObjectKey):Void{
-		movieChildren[displayKey] = factory.createChildDisplayObject(displayKey.symbolId);
+		movieChildren[displayKey] = factory.createDisplayObject(displayKey.symbolId);
 	}
 
 
@@ -244,7 +261,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 		emit("labelPassed", label.name);
 	}
 	
-	override public function destroy (): Void {
+	override public function destroy(): Void {
 		stop();
 		onComplete = null;
 		for (layer in layers) layer.removeChildren();
