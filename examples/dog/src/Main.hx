@@ -1,8 +1,8 @@
 package;
 	
 import flump.library.FlumpLibrary;
-import pixi.display.FlumpFactory;
 import pixi.display.FlumpMovie;
+import pixi.display.FlumpSprite;
 import pixi.plugins.app.Application;
 import pixi.loaders.FlumpParser;
 import pixi.interaction.InteractionManager;
@@ -33,16 +33,13 @@ class Main extends Application{
 
 
 	public function begin(){
-		var factory = FlumpFactory.get("DogLibrary");
-		var movie = factory.createMovie("TestScene");
-		
+		var movie = new FlumpMovie("TestScene");
 		movie.animationSpeed = 1;
 		stage.addChild(movie);
 		movies.push(movie);
-		
-		var dog = movie.getChildMovie("DogRunning");
-		
+
 		/*
+		var dog = movie.getChildMovie("DogRunning");
 		var placeholder = movie.getLayer("Placeholder");
 		var graphics = new Graphics();
 		graphics.lineColor = 0x990000;
@@ -50,6 +47,7 @@ class Main extends Application{
 		graphics.drawCircle(100, 100, 100);
 		placeholder.addChild(graphics);
 		*/
+		
 	}
 
 

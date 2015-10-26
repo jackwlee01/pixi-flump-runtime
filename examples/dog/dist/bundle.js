@@ -172,12 +172,10 @@ Main.main = function() {
 Main.__super__ = pixi_plugins_app_Application;
 Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
 	begin: function() {
-		var factory = pixi_display_FlumpFactory.get("DogLibrary");
-		var movie = factory.createMovie("TestScene");
+		var movie = new pixi_display_FlumpMovie("TestScene");
 		movie.animationSpeed = 1;
 		this.stage.addChild(movie);
 		this.movies.push(movie);
-		var dog = movie.getChildMovie("DogRunning");
 	}
 	,__class__: Main
 });
@@ -984,7 +982,31 @@ haxe_ds_ObjectMap.prototype = {
 		}
 		return HxOverrides.iter(a);
 	}
+	,iterator: function() {
+		return { ref : this.h, it : this.keys(), hasNext : function() {
+			return this.it.hasNext();
+		}, next : function() {
+			var i = this.it.next();
+			return this.ref[i.__id__];
+		}};
+	}
 	,__class__: haxe_ds_ObjectMap
+};
+var haxe_ds__$StringMap_StringMapIterator = function(map,keys) {
+	this.map = map;
+	this.keys = keys;
+	this.index = 0;
+	this.count = keys.length;
+};
+haxe_ds__$StringMap_StringMapIterator.__name__ = true;
+haxe_ds__$StringMap_StringMapIterator.prototype = {
+	hasNext: function() {
+		return this.index < this.count;
+	}
+	,next: function() {
+		return this.map.get(this.keys[this.index++]);
+	}
+	,__class__: haxe_ds__$StringMap_StringMapIterator
 };
 var haxe_ds_StringMap = function() {
 	this.h = { };
@@ -1013,6 +1035,33 @@ haxe_ds_StringMap.prototype = {
 	,existsReserved: function(key) {
 		if(this.rh == null) return false;
 		return this.rh.hasOwnProperty("$" + key);
+	}
+	,remove: function(key) {
+		if(__map_reserved[key] != null) {
+			key = "$" + key;
+			if(this.rh == null || !this.rh.hasOwnProperty(key)) return false;
+			delete(this.rh[key]);
+			return true;
+		} else {
+			if(!this.h.hasOwnProperty(key)) return false;
+			delete(this.h[key]);
+			return true;
+		}
+	}
+	,arrayKeys: function() {
+		var out = [];
+		for( var key in this.h ) {
+		if(this.h.hasOwnProperty(key)) out.push(key);
+		}
+		if(this.rh != null) {
+			for( var key in this.rh ) {
+			if(key.charCodeAt(0) == 36) out.push(key.substr(1));
+			}
+		}
+		return out;
+	}
+	,iterator: function() {
+		return new haxe_ds__$StringMap_StringMapIterator(this,this.arrayKeys());
 	}
 	,__class__: haxe_ds_StringMap
 };
@@ -1161,36 +1210,7 @@ js_Boot.__isNativeObj = function(o) {
 js_Boot.__resolveNativeClass = function(name) {
 	return (Function("return typeof " + name + " != \"undefined\" ? " + name + " : null"))();
 };
-var pixi_display_FlumpFactory = function(library,textures) {
-	this.library = library;
-	this.textures = textures;
-};
-pixi_display_FlumpFactory.__name__ = true;
-pixi_display_FlumpFactory.get = function(resourceName) {
-	if(!pixi_display_FlumpFactory.factories.exists(resourceName)) throw new js__$Boot_HaxeError("FlumpFactory for resource name: " + resourceName + " does not exist.");
-	return pixi_display_FlumpFactory.factories.get(resourceName);
-};
-pixi_display_FlumpFactory.prototype = {
-	createMovie: function(id) {
-		return new pixi_display_FlumpMovie(this.library.movies.get(id),this,true);
-	}
-	,createSprite: function(id) {
-		var symbol = this.library.sprites.get(id);
-		var texture = this.textures.get(symbol.texture);
-		var sprite = new PIXI.Sprite(texture);
-		sprite.pivot.x = symbol.origin.x;
-		sprite.pivot.y = symbol.origin.y;
-		return sprite;
-	}
-	,createDisplayObject: function(id) {
-		if(this.library.movies.exists(id)) return this.createMovie(id); else return this.createSprite(id);
-	}
-	,createChildDisplayObject: function(id) {
-		if(this.library.movies.exists(id)) return new pixi_display_FlumpMovie(this.library.movies.get(id),this,false); else return this.createSprite(id);
-	}
-	,__class__: pixi_display_FlumpFactory
-};
-var pixi_display_FlumpMovie = function(symbol,flumpFactory,master) {
+var pixi_display_FlumpMovie = function(symbolId,resourceId) {
 	this.animationSpeed = 1.0;
 	this.ticker = PIXI.ticker.shared;
 	this.displaying = new haxe_ds_ObjectMap();
@@ -1198,18 +1218,29 @@ var pixi_display_FlumpMovie = function(symbol,flumpFactory,master) {
 	this.layerLookup = new haxe_ds_StringMap();
 	this.layers = new haxe_ds_ObjectMap();
 	PIXI.Container.call(this);
-	this.symbol = symbol;
-	this.factory = flumpFactory;
-	this.master = master;
-	this.player = new flump_MoviePlayer(symbol,this);
+	this.resourceId = resourceId;
+	if(resourceId == null) {
+		this.resource = pixi_display_FlumpResource.getResourceForMovie(symbolId);
+		if(this.resource == null) throw new js__$Boot_HaxeError("Flump movie does not exist: " + symbolId);
+	} else {
+		this.resource = pixi_display_FlumpResource.get(resourceId);
+		if(this.resource == null) throw new js__$Boot_HaxeError("Flump resource does not exist: " + resourceId);
+	}
+	this.symbol = this.resource.library.movies.get(symbolId);
+	this.player = new flump_MoviePlayer(this.symbol,this);
 	this.set_loop(true);
-	if(master) this.once("added",$bind(this,this.onAdded));
+	this.master = true;
+	this.once("added",$bind(this,this.onAdded));
 };
 pixi_display_FlumpMovie.__name__ = true;
 pixi_display_FlumpMovie.__interfaces__ = [flump_IFlumpMovie];
 pixi_display_FlumpMovie.__super__ = PIXI.Container;
 pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
-	getLayer: function(layerId) {
+	disableAsMaster: function() {
+		this.master = false;
+		this.off("added",$bind(this,this.onAdded));
+	}
+	,getLayer: function(layerId) {
 		if(this.layerLookup.exists(layerId) == false) throw new js__$Boot_HaxeError("Layer " + layerId + "does not exist");
 		return this.layerLookup.get(layerId);
 	}
@@ -1323,7 +1354,7 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 		return movie.player;
 	}
 	,createFlumpChild: function(displayKey) {
-		var v = this.factory.createChildDisplayObject(displayKey.symbolId);
+		var v = this.resource.createDisplayObject(displayKey.symbolId);
 		this.movieChildren.set(displayKey,v);
 		v;
 	}
@@ -1352,7 +1383,92 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 	,labelPassed: function(label) {
 		this.emit("labelPassed",label.name);
 	}
+	,destroy: function() {
+		this.stop();
+		this.set_onComplete(null);
+		var $it0 = this.layers.iterator();
+		while( $it0.hasNext() ) {
+			var layer = $it0.next();
+			layer.removeChildren();
+		}
+		this.symbol = null;
+		this.player = null;
+		PIXI.Container.prototype.destroy.call(this,true);
+	}
 	,__class__: pixi_display_FlumpMovie
+});
+var pixi_display_FlumpResource = function(library,textures,resourceId) {
+	this.library = library;
+	this.textures = textures;
+	this.resourceId = resourceId;
+};
+pixi_display_FlumpResource.__name__ = true;
+pixi_display_FlumpResource.exists = function(resourceName) {
+	return pixi_display_FlumpResource.resources.exists(resourceName);
+};
+pixi_display_FlumpResource.destroy = function(resourceName) {
+	if(pixi_display_FlumpResource.resources.exists(resourceName) == false) throw new js__$Boot_HaxeError("Cannot destroy FlumpResource: " + resourceName + " as it does not exist.");
+	var resource = pixi_display_FlumpResource.resources.get(resourceName);
+	var $it0 = resource.textures.iterator();
+	while( $it0.hasNext() ) {
+		var texture = $it0.next();
+		texture.destroy();
+	}
+	resource.library = null;
+	pixi_display_FlumpResource.resources.remove(resourceName);
+};
+pixi_display_FlumpResource.get = function(resourceName) {
+	if(!pixi_display_FlumpResource.resources.exists(resourceName)) throw new js__$Boot_HaxeError("Flump resource: " + resourceName + " does not exist.");
+	return pixi_display_FlumpResource.resources.get(resourceName);
+};
+pixi_display_FlumpResource.getResourceForMovie = function(symbolId) {
+	var $it0 = pixi_display_FlumpResource.resources.iterator();
+	while( $it0.hasNext() ) {
+		var resource = $it0.next();
+		if(resource.library.movies.exists(symbolId)) return resource;
+	}
+	throw new js__$Boot_HaxeError("Movie: " + symbolId + "does not exists in any loaded flump resources.");
+};
+pixi_display_FlumpResource.getResourceForSprite = function(symbolId) {
+	var $it0 = pixi_display_FlumpResource.resources.iterator();
+	while( $it0.hasNext() ) {
+		var resource = $it0.next();
+		if(resource.library.sprites.exists(symbolId)) return resource;
+	}
+	throw new js__$Boot_HaxeError("Sprite: " + symbolId + "does not exists in any loaded flump resources.");
+};
+pixi_display_FlumpResource.prototype = {
+	createMovie: function(id) {
+		var movie = new pixi_display_FlumpMovie(id,this.resourceId);
+		movie.disableAsMaster();
+		return movie;
+	}
+	,createSprite: function(id) {
+		return new pixi_display_FlumpSprite(id,this.resourceId);
+	}
+	,createDisplayObject: function(id) {
+		if(this.library.movies.exists(id)) return this.createMovie(id); else return this.createSprite(id);
+	}
+	,__class__: pixi_display_FlumpResource
+};
+var pixi_display_FlumpSprite = function(symbolId,resourceId) {
+	this.symbolId = symbolId;
+	this.resourceId = resourceId;
+	var resource;
+	if(resourceId != null) {
+		resource = pixi_display_FlumpResource.get(resourceId);
+		if(resource == null) throw new js__$Boot_HaxeError("Library: " + resourceId + "does has not been loaded.");
+	} else resource = pixi_display_FlumpResource.getResourceForSprite(symbolId);
+	var symbol = resource.library.sprites.get(symbolId);
+	var texture = resource.textures.get(symbol.texture);
+	PIXI.Sprite.call(this,texture);
+	this.pivot.x = symbol.origin.x;
+	this.pivot.y = symbol.origin.y;
+};
+pixi_display_FlumpSprite.__name__ = true;
+pixi_display_FlumpSprite.__super__ = PIXI.Sprite;
+pixi_display_FlumpSprite.prototype = $extend(PIXI.Sprite.prototype,{
+	__class__: pixi_display_FlumpSprite
 });
 var pixi_display_PixiLayer = function() {
 	this.skew = new PIXI.Point();
@@ -1487,12 +1603,12 @@ pixi_loaders_FlumpParser.flumpParser = function(resource,next) {
 		})(atlasSpec));
 	}
 	atlasLoader.once("complete",function(loader) {
-		var factory = new pixi_display_FlumpFactory(lib,textures);
+		var flumpResource = new pixi_display_FlumpResource(lib,textures,resource.name);
 		if(resource.name != null) {
-			pixi_display_FlumpFactory.factories.set(resource.name,factory);
-			factory;
+			pixi_display_FlumpResource.resources.set(resource.name,flumpResource);
+			flumpResource;
 		}
-		resource.data = factory;
+		resource.data = flumpResource;
 		next();
 	});
 	atlasLoader.load();
@@ -1523,7 +1639,7 @@ flump_library_Label.LABEL_EXIT = "labelExit";
 flump_library_Label.LABEL_UPDATE = "labelUpdate";
 haxe_ds_ObjectMap.count = 0;
 js_Boot.__toStr = {}.toString;
-pixi_display_FlumpFactory.factories = new haxe_ds_StringMap();
+pixi_display_FlumpResource.resources = new haxe_ds_StringMap();
 Main.main();
 })(typeof console != "undefined" ? console : {log:function(){}});
 
