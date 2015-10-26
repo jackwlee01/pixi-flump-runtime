@@ -28,8 +28,11 @@ class FlumpResource{
 		if(resources.exists(resourceName) == false) throw("Cannot destroy FlumpResource: " + resourceName + " as it does not exist.");
 		var resource = resources[resourceName];
 		
+		for(texture in resource.textures){
+			texture.destroy();
+		}
 
-		//resource.destroy();
+		resources.remove(resourceName);
 	}
 
 
