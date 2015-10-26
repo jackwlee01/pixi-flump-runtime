@@ -12,8 +12,8 @@ import pixi.core.ticker.Ticker;
 @:access(pixi.display.FlumpMovie)
 class FlumpFactory{
 	
-	private var library:FlumpLibrary;
-	private var textures:Map<String, Texture>;
+	public var library:FlumpLibrary;
+	public var textures:Map<String, Texture>;
 
 	private static var factories = new Map<String, FlumpFactory>();
 
@@ -21,6 +21,26 @@ class FlumpFactory{
 	public static function get(resourceName:String){
 		if(!factories.exists(resourceName)) throw("FlumpFactory for resource name: " + resourceName + " does not exist.");
 		return factories[resourceName];
+	}
+
+
+	private static function getFactoryForMovie(symbolId:String):FlumpFactory{
+		for(factory in factories){
+			if(factory.library.movies.exists(symbolId)){
+				return factory;
+			}
+		}
+		throw("Movie: " + symbolId + "does not exists in any loaded libraries.");
+	}
+
+
+	private static function getFactoryForSprite(symbolId:String):FlumpFactory{
+		for(factory in factories){
+			if(factory.library.sprites.exists(symbolId)){
+				return factory;
+			}
+		}
+		throw("Sprite: " + symbolId + "does not exists in any loaded libraries.");
 	}
 
 
