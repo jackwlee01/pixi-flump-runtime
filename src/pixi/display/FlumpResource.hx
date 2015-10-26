@@ -26,18 +26,16 @@ class FlumpResource{
 
 	public static function destroy(resourceName:String){
 		if(resources.exists(resourceName) == false) throw("Cannot destroy FlumpResource: " + resourceName + " as it does not exist.");
-		var resource = resources[resourceName];
 		
-		for(texture in resource.textures){
-			texture.destroy();
-		}
-
+		var resource = resources[resourceName];
+		for(texture in resource.textures)texture.destroy();
+		resource.library = null;
 		resources.remove(resourceName);
 	}
 
 
 	private static function get(resourceName:String){
-		if(!resources.exists(resourceName)) throw("Flumpresource for resource name: " + resourceName + " does not exist.");
+		if(!resources.exists(resourceName)) throw("Flump resource: " + resourceName + " does not exist.");
 		return resources[resourceName];
 	}
 
