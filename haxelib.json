@@ -4,12 +4,11 @@
   "license": "MIT",
   "tags": ["flump", "animation", "flash", "timeline", "pixi"],
   "description": "Currently a work in progress.",
-  "version": "0.0.2",
-  "releasenote": "Do not use yet",
+  "version": "0.1.0",
+  "releasenote": "Ready to use",
   "classPath":"src",
   "contributors": ["Jack Lee"],
   "dependencies": {
-    "pixijs": "",
-    "msignal": ""
+    "pixijs": ""
   }
 }
