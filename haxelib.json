@@ -1,13 +1,13 @@
 {
-  "name": "flump-pixi-runtime",
-  "url" : "https://github.com/jackwlee01/flump-pixi-runtime",
+  "name": "pixi-flump-runtime",
+  "url" : "https://github.com/jackwlee01/pixi-flump-runtime",
   "license": "MIT",
   "tags": ["flump", "animation", "flash", "timeline", "pixi"],
-  "description": "Currently a work in progress.",
+  "description": "A Flump runtime for Pixi.js. See examples for usage.",
   "version": "0.1.0",
   "releasenote": "Ready to use",
   "classPath":"src",
-  "contributors": ["Jack Lee"],
+  "contributors": ["jackwlee"],
   "dependencies": {
     "pixijs": ""
   }
