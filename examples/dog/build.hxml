@@ -1,6 +1,0 @@
--cp src
--cp ../../src
--js dist/bundle.js
--main Main
--lib pixijs
--debug

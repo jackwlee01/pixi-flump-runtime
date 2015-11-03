@@ -1,4 +1,4 @@
-(function (console) { "use strict";
+(function (console, $global) { "use strict";
 function $extend(from, fields) {
 	function Inherit() {} Inherit.prototype = from; var proto = new Inherit();
 	for (var name in fields) proto[name] = fields[name];
@@ -61,7 +61,17 @@ Lambda.find = function(it,f) {
 };
 var pixi_plugins_app_Application = function() {
 	this._lastTime = new Date();
-	this._setDefaultValues();
+	this.pixelRatio = 1;
+	this.set_skipFrame(false);
+	this.autoResize = true;
+	this.transparent = false;
+	this.antialias = false;
+	this.forceFXAA = false;
+	this.roundPixels = false;
+	this.backgroundColor = 16777215;
+	this.width = window.innerWidth;
+	this.height = window.innerHeight;
+	this.set_fps(60);
 };
 pixi_plugins_app_Application.__name__ = true;
 pixi_plugins_app_Application.prototype = {
@@ -83,13 +93,13 @@ pixi_plugins_app_Application.prototype = {
 		this.transparent = false;
 		this.antialias = false;
 		this.forceFXAA = false;
+		this.roundPixels = false;
 		this.backgroundColor = 16777215;
 		this.width = window.innerWidth;
 		this.height = window.innerHeight;
 		this.set_fps(60);
 	}
-	,start: function(rendererType,stats,parentDom) {
-		if(stats == null) stats = true;
+	,start: function(rendererType,parentDom) {
 		if(rendererType == null) rendererType = "auto";
 		var _this = window.document;
 		this.canvas = _this.createElement("canvas");
@@ -107,11 +117,21 @@ pixi_plugins_app_Application.prototype = {
 		renderingOptions.autoResize = this.autoResize;
 		renderingOptions.transparent = this.transparent;
 		if(rendererType == "auto") this.renderer = PIXI.autoDetectRenderer(this.width,this.height,renderingOptions); else if(rendererType == "canvas") this.renderer = new PIXI.CanvasRenderer(this.width,this.height,renderingOptions); else this.renderer = new PIXI.WebGLRenderer(this.width,this.height,renderingOptions);
+		if(this.roundPixels) this.renderer.roundPixels = true;
 		window.document.body.appendChild(this.renderer.view);
 		if(this.autoResize) window.onresize = $bind(this,this._onWindowResize);
 		window.requestAnimationFrame($bind(this,this._onRequestAnimationFrame));
 		this._lastTime = new Date();
-		if(stats) this._addStats();
+		this._addStats();
+	}
+	,pauseRendering: function() {
+		window.onresize = null;
+		window.requestAnimationFrame(function() {
+		});
+	}
+	,resumeRendering: function() {
+		if(this.autoResize) window.onresize = $bind(this,this._onWindowResize);
+		window.requestAnimationFrame($bind(this,this._onRequestAnimationFrame));
 	}
 	,_onWindowResize: function(event) {
 		this.width = window.innerWidth;
@@ -119,10 +139,6 @@ pixi_plugins_app_Application.prototype = {
 		this.renderer.resize(this.width,this.height);
 		this.canvas.style.width = this.width + "px";
 		this.canvas.style.height = this.height + "px";
-		if(this._stats != null) {
-			this._stats.domElement.style.top = "2px";
-			this._stats.domElement.style.right = "2px";
-		}
 		if(this.onResize != null) this.onResize();
 	}
 	,_onRequestAnimationFrame: function() {
@@ -134,7 +150,6 @@ pixi_plugins_app_Application.prototype = {
 			this.renderer.render(this.stage);
 		}
 		window.requestAnimationFrame($bind(this,this._onRequestAnimationFrame));
-		if(this._stats != null) this._stats.update();
 	}
 	,_calculateElapsedTime: function() {
 		this._currentTime = new Date();
@@ -142,16 +157,26 @@ pixi_plugins_app_Application.prototype = {
 		this._lastTime = this._currentTime;
 	}
 	,_addStats: function() {
-		if(window.Stats != null) {
-			var _container = window.document.createElement("div");
-			window.document.body.appendChild(_container);
-			this._stats = new Stats();
-			this._stats.domElement.style.position = "absolute";
-			this._stats.domElement.style.top = "2px";
-			this._stats.domElement.style.right = "2px";
-			_container.appendChild(this._stats.domElement);
-			this._stats.begin();
-		}
+	}
+	,_addRenderStats: function(top) {
+		if(top == null) top = 0;
+		var ren;
+		var _this = window.document;
+		ren = _this.createElement("div");
+		ren.style.position = "absolute";
+		ren.style.width = "76px";
+		ren.style.top = top + "px";
+		ren.style.right = "0px";
+		ren.style.background = "#CCCCC";
+		ren.style.backgroundColor = "#105CB6";
+		ren.style.fontFamily = "Helvetica,Arial";
+		ren.style.padding = "2px";
+		ren.style.color = "#0FF";
+		ren.style.fontSize = "9px";
+		ren.style.fontWeight = "bold";
+		ren.style.textAlign = "center";
+		window.document.body.appendChild(ren);
+		ren.innerHTML = ["UNKNOWN","WEBGL","CANVAS"][this.renderer.type] + " - " + this.pixelRatio;
 	}
 	,__class__: pixi_plugins_app_Application
 };
@@ -357,7 +382,7 @@ flump_MoviePlayer.prototype = {
 				this.elapsed = 0;
 				this.stop();
 				this.movie.onAnimationComplete();
-			} else if(this.get_position() > this.symbol.duration - this.symbol.library.frameTime) {
+			} else if(this.get_position() >= this.symbol.duration - this.symbol.library.frameTime) {
 				this.elapsed = this.symbol.duration - this.symbol.library.frameTime;
 				this.stop();
 				this.movie.onAnimationComplete();
@@ -559,7 +584,11 @@ flump_library_FlumpLibrary.create = function(flumpData) {
 				keyframe1.numFrames = keyframeSpec.duration;
 				keyframe1.duration = _$UInt_UInt_$Impl_$.toFloat(keyframeSpec.duration) * flumpLibrary.frameTime;
 				keyframe1.index = keyframeSpec.index;
-				keyframe1.time = _$UInt_UInt_$Impl_$.toFloat(keyframe1.index) * flumpLibrary.frameTime;
+				var time = _$UInt_UInt_$Impl_$.toFloat(keyframe1.index) * flumpLibrary.frameTime;
+				time *= 10;
+				time = Math.floor(time);
+				time /= 10;
+				keyframe1.time = time;
 				if(keyframeSpec.ref == null) keyframe1.isEmpty = true; else {
 					keyframe1.isEmpty = false;
 					keyframe1.symbolId = keyframeSpec.ref;
@@ -1209,7 +1238,7 @@ js_Boot.__isNativeObj = function(o) {
 	return js_Boot.__nativeClassName(o) != null;
 };
 js_Boot.__resolveNativeClass = function(name) {
-	return (Function("return typeof " + name + " != \"undefined\" ? " + name + " : null"))();
+	return $global[name];
 };
 var pixi_display_FlumpMovie = function(symbolId,resourceId) {
 	this.animationSpeed = 1.0;
@@ -1417,6 +1446,48 @@ pixi_display_FlumpResource.destroy = function(resourceName) {
 	}
 	resource.library = null;
 	pixi_display_FlumpResource.resources.remove(resourceName);
+};
+pixi_display_FlumpResource.flumpParser = function(resource,next) {
+	if(resource.data == null || resource.isJson == false) return;
+	if(!resource.data.hasField("md5") || !resource.data.hasField("movies") || !resource.data.hasField("textureGroups") || !resource.data.hasField("frameRate")) return;
+	var lib = flump_library_FlumpLibrary.create(resource.data);
+	var textures = new haxe_ds_StringMap();
+	var atlasLoader = new PIXI.loaders.Loader();
+	atlasLoader.baseUrl = new EReg("/(.[^/]*)$","i").replace(resource.url,"");
+	var _g = 0;
+	var _g1 = lib.atlases;
+	while(_g < _g1.length) {
+		var atlasSpec = [_g1[_g]];
+		++_g;
+		atlasLoader.add(atlasSpec[0].file,null,(function(atlasSpec) {
+			return function(atlasResource) {
+				var atlasTexture = new PIXI.BaseTexture(atlasResource.data);
+				var _g2 = 0;
+				var _g3 = atlasSpec[0].textures;
+				while(_g2 < _g3.length) {
+					var textureSpec = _g3[_g2];
+					++_g2;
+					var frame = new PIXI.Rectangle(textureSpec.rect[0],textureSpec.rect[1],textureSpec.rect[2],textureSpec.rect[3]);
+					var origin = new flump_library_Point(textureSpec.origin[0],textureSpec.origin[1]);
+					origin.x = origin.x / frame.width;
+					origin.y = origin.y / frame.height;
+					var v = new PIXI.Texture(atlasTexture,frame);
+					textures.set(textureSpec.symbol,v);
+					v;
+				}
+			};
+		})(atlasSpec));
+	}
+	atlasLoader.once("complete",function(loader) {
+		var flumpResource = new pixi_display_FlumpResource(lib,textures,resource.name);
+		if(resource.name != null) {
+			pixi_display_FlumpResource.resources.set(resource.name,flumpResource);
+			flumpResource;
+		}
+		resource.data = flumpResource;
+		next();
+	});
+	atlasLoader.load();
 };
 pixi_display_FlumpResource.get = function(resourceName) {
 	if(!pixi_display_FlumpResource.resources.exists(resourceName)) throw new js__$Boot_HaxeError("Flump resource: " + resourceName + " does not exist.");
@@ -1642,6 +1713,6 @@ haxe_ds_ObjectMap.count = 0;
 js_Boot.__toStr = {}.toString;
 pixi_display_FlumpResource.resources = new haxe_ds_StringMap();
 Main.main();
-})(typeof console != "undefined" ? console : {log:function(){}});
+})(typeof console != "undefined" ? console : {log:function(){}}, typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
 
 //# sourceMappingURL=bundle.js.map

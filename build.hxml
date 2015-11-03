@@ -4,3 +4,12 @@
 -main Main
 -lib pixijs
 -debug
+
+--next
+
+-cp src
+-cp examples/monster/src
+-js examples/monster/dist/bundle.js
+-main Main
+-lib pixijs
+-debug
