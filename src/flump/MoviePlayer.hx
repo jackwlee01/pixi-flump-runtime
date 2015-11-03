@@ -228,7 +228,7 @@ class MoviePlayer{
 				elapsed = 0;
 				stop();
 				movie.onAnimationComplete();
-			}else if(position > symbol.duration - symbol.library.frameTime){
+			}else if(position >= symbol.duration - symbol.library.frameTime){
 				elapsed = symbol.duration - symbol.library.frameTime;
 				stop();
 				movie.onAnimationComplete();

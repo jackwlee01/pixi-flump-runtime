@@ -1,4 +1,4 @@
-(function (console) { "use strict";
+(function (console, $global) { "use strict";
 function $extend(from, fields) {
 	function Inherit() {} Inherit.prototype = from; var proto = new Inherit();
 	for (var name in fields) proto[name] = fields[name];
@@ -124,6 +124,15 @@ pixi_plugins_app_Application.prototype = {
 		this._lastTime = new Date();
 		this._addStats();
 	}
+	,pauseRendering: function() {
+		window.onresize = null;
+		window.requestAnimationFrame(function() {
+		});
+	}
+	,resumeRendering: function() {
+		if(this.autoResize) window.onresize = $bind(this,this._onWindowResize);
+		window.requestAnimationFrame($bind(this,this._onRequestAnimationFrame));
+	}
 	,_onWindowResize: function(event) {
 		this.width = window.innerWidth;
 		this.height = window.innerHeight;
@@ -156,6 +165,7 @@ pixi_plugins_app_Application.prototype = {
 		ren = _this.createElement("div");
 		ren.style.position = "absolute";
 		ren.style.width = "76px";
+		ren.style.top = top + "px";
 		ren.style.right = "0px";
 		ren.style.background = "#CCCCC";
 		ren.style.backgroundColor = "#105CB6";
@@ -171,7 +181,6 @@ pixi_plugins_app_Application.prototype = {
 	,__class__: pixi_plugins_app_Application
 };
 var Main = function() {
-	this.movies = [];
 	pixi_plugins_app_Application.call(this);
 	pixi_plugins_app_Application.prototype.start.call(this);
 	var loader = new PIXI.loaders.Loader();
@@ -188,9 +197,10 @@ Main.__super__ = pixi_plugins_app_Application;
 Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
 	begin: function() {
 		var movie = new pixi_display_FlumpMovie("TestScene");
+		movie.set_loop(true);
 		movie.animationSpeed = 1;
+		movie.gotoAndPlay(0);
 		this.stage.addChild(movie);
-		this.movies.push(movie);
 	}
 	,__class__: Main
 });
@@ -371,7 +381,7 @@ flump_MoviePlayer.prototype = {
 				this.elapsed = 0;
 				this.stop();
 				this.movie.onAnimationComplete();
-			} else if(this.get_position() > this.symbol.duration - this.symbol.library.frameTime) {
+			} else if(this.get_position() >= this.symbol.duration - this.symbol.library.frameTime) {
 				this.elapsed = this.symbol.duration - this.symbol.library.frameTime;
 				this.stop();
 				this.movie.onAnimationComplete();
@@ -573,7 +583,11 @@ flump_library_FlumpLibrary.create = function(flumpData) {
 				keyframe1.numFrames = keyframeSpec.duration;
 				keyframe1.duration = _$UInt_UInt_$Impl_$.toFloat(keyframeSpec.duration) * flumpLibrary.frameTime;
 				keyframe1.index = keyframeSpec.index;
-				keyframe1.time = _$UInt_UInt_$Impl_$.toFloat(keyframe1.index) * flumpLibrary.frameTime;
+				var time = _$UInt_UInt_$Impl_$.toFloat(keyframe1.index) * flumpLibrary.frameTime;
+				time *= 10;
+				time = Math.floor(time);
+				time /= 10;
+				keyframe1.time = time;
 				if(keyframeSpec.ref == null) keyframe1.isEmpty = true; else {
 					keyframe1.isEmpty = false;
 					keyframe1.symbolId = keyframeSpec.ref;
@@ -1223,7 +1237,7 @@ js_Boot.__isNativeObj = function(o) {
 	return js_Boot.__nativeClassName(o) != null;
 };
 js_Boot.__resolveNativeClass = function(name) {
-	return (Function("return typeof " + name + " != \"undefined\" ? " + name + " : null"))();
+	return $global[name];
 };
 var pixi_display_FlumpMovie = function(symbolId,resourceId) {
 	this.animationSpeed = 1.0;
@@ -1431,6 +1445,48 @@ pixi_display_FlumpResource.destroy = function(resourceName) {
 	}
 	resource.library = null;
 	pixi_display_FlumpResource.resources.remove(resourceName);
+};
+pixi_display_FlumpResource.flumpParser = function(resource,next) {
+	if(resource.data == null || resource.isJson == false) return;
+	if(!resource.data.hasField("md5") || !resource.data.hasField("movies") || !resource.data.hasField("textureGroups") || !resource.data.hasField("frameRate")) return;
+	var lib = flump_library_FlumpLibrary.create(resource.data);
+	var textures = new haxe_ds_StringMap();
+	var atlasLoader = new PIXI.loaders.Loader();
+	atlasLoader.baseUrl = new EReg("/(.[^/]*)$","i").replace(resource.url,"");
+	var _g = 0;
+	var _g1 = lib.atlases;
+	while(_g < _g1.length) {
+		var atlasSpec = [_g1[_g]];
+		++_g;
+		atlasLoader.add(atlasSpec[0].file,null,(function(atlasSpec) {
+			return function(atlasResource) {
+				var atlasTexture = new PIXI.BaseTexture(atlasResource.data);
+				var _g2 = 0;
+				var _g3 = atlasSpec[0].textures;
+				while(_g2 < _g3.length) {
+					var textureSpec = _g3[_g2];
+					++_g2;
+					var frame = new PIXI.Rectangle(textureSpec.rect[0],textureSpec.rect[1],textureSpec.rect[2],textureSpec.rect[3]);
+					var origin = new flump_library_Point(textureSpec.origin[0],textureSpec.origin[1]);
+					origin.x = origin.x / frame.width;
+					origin.y = origin.y / frame.height;
+					var v = new PIXI.Texture(atlasTexture,frame);
+					textures.set(textureSpec.symbol,v);
+					v;
+				}
+			};
+		})(atlasSpec));
+	}
+	atlasLoader.once("complete",function(loader) {
+		var flumpResource = new pixi_display_FlumpResource(lib,textures,resource.name);
+		if(resource.name != null) {
+			pixi_display_FlumpResource.resources.set(resource.name,flumpResource);
+			flumpResource;
+		}
+		resource.data = flumpResource;
+		next();
+	});
+	atlasLoader.load();
 };
 pixi_display_FlumpResource.get = function(resourceName) {
 	if(!pixi_display_FlumpResource.resources.exists(resourceName)) throw new js__$Boot_HaxeError("Flump resource: " + resourceName + " does not exist.");
@@ -1656,6 +1712,6 @@ haxe_ds_ObjectMap.count = 0;
 js_Boot.__toStr = {}.toString;
 pixi_display_FlumpResource.resources = new haxe_ds_StringMap();
 Main.main();
-})(typeof console != "undefined" ? console : {log:function(){}});
+})(typeof console != "undefined" ? console : {log:function(){}}, typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
 
 //# sourceMappingURL=bundle.js.map

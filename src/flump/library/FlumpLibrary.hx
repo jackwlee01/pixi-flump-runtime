@@ -28,7 +28,7 @@ class FlumpLibrary{
 		flumpLibrary.sprites = spriteSymbols;
 		flumpLibrary.movies = movieSymbols;
 		flumpLibrary.framerate = lib.frameRate;
-		flumpLibrary.frameTime = 1000/flumpLibrary.framerate;
+		flumpLibrary.frameTime = 1000/flumpLibrary.framerate;		
 		flumpLibrary.md5 = lib.md5;
 
 		var atlasSpecs = new Array<flump.json.FlumpJSON.AtlasSpec>();
@@ -73,7 +73,12 @@ class FlumpLibrary{
 					keyframe.numFrames = keyframeSpec.duration;
 					keyframe.duration = keyframeSpec.duration * flumpLibrary.frameTime;
 					keyframe.index = keyframeSpec.index;
-					keyframe.time = keyframe.index * flumpLibrary.frameTime;
+
+					var time = keyframe.index * flumpLibrary.frameTime;
+					time *= 10;
+					time = Math.floor(time);
+					time /= 10;
+					keyframe.time = time;
 					
 					if(keyframeSpec.ref == null){
 						keyframe.isEmpty = true;

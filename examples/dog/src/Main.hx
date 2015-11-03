@@ -12,7 +12,6 @@ import pixi.loaders.Loader;
 
 class Main extends Application{
 
-	private var movies = new Array<FlumpMovie>();
 	
 
 	public static function main():Void {
@@ -23,7 +22,7 @@ class Main extends Application{
 	public function new(){
 		super();
 		super.start();
-		
+
 		var loader = new Loader();
 		loader.after(FlumpParser.flumpParser);
 		loader.add("DogLibrary", "./flump-assets/dog/library.json");
@@ -33,10 +32,11 @@ class Main extends Application{
 
 
 	public function begin(){
-		var movie = new FlumpMovie("TestScene");
+		var movie = new FlumpMovie("TestScene");	
+		movie.loop = true;	
 		movie.animationSpeed = 1;
+		movie.gotoAndPlay(0);
 		stage.addChild(movie);
-		movies.push(movie);
 
 		/*
 		var dog = movie.getChildMovie("DogRunning");

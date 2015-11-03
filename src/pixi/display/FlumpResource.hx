@@ -3,10 +3,15 @@ package pixi.display;
 import flump.library.FlumpLibrary;
 import flump.library.SpriteSymbol;
 import flump.library.MovieSymbol;
+import flump.library.Point;
+import pixi.core.math.shapes.Rectangle;
 import pixi.core.display.DisplayObject;
 import pixi.core.sprites.Sprite;
+import pixi.core.textures.BaseTexture;
 import pixi.core.textures.Texture;
 import pixi.core.ticker.Ticker;
+import pixi.loaders.Resource;
+import pixi.loaders.Loader;
 
 
 @:access(pixi.display.FlumpMovie)
@@ -15,6 +20,8 @@ class FlumpResource{
 	private var library:FlumpLibrary;
 	private var textures:Map<String, Texture>;
 	private var resourceId:String;
+
+
 
 	private static var resources = new Map<String, FlumpResource>();
 
@@ -31,6 +38,40 @@ class FlumpResource{
 		for(texture in resource.textures)texture.destroy();
 		resource.library = null;
 		resources.remove(resourceName);
+	}
+
+
+	public static function flumpParser(resource:Resource, next:Void->Void){
+		if(resource.data == null || resource.isJson == false) return;
+		if(!resource.data.hasField("md5") || !resource.data.hasField("movies") || !resource.data.hasField("textureGroups") || !resource.data.hasField("frameRate")) return;
+		
+		var lib:FlumpLibrary = FlumpLibrary.create(resource.data);
+		var textures = new Map<String, Texture>();
+		
+		var atlasLoader = new Loader();
+		atlasLoader.baseUrl = ~/\/(.[^\/]*)$/i.replace(resource.url, "");
+
+		for(atlasSpec in lib.atlases){
+			atlasLoader.add(atlasSpec.file, function(atlasResource){
+				var atlasTexture = new BaseTexture(atlasResource.data);
+
+				for(textureSpec in atlasSpec.textures){
+					var frame = new Rectangle(textureSpec.rect.x, textureSpec.rect.y, textureSpec.rect.width, textureSpec.rect.height);
+					var origin = new Point(textureSpec.origin.x, textureSpec.origin.y);
+					origin.x = origin.x / frame.width;
+					origin.y = origin.y / frame.height;
+					textures[textureSpec.symbol] = new Texture(atlasTexture, frame);
+				};
+			});
+		}
+
+		atlasLoader.once("complete", function(loader:Loader){
+			var flumpResource = new FlumpResource(lib, textures, resource.name);
+			if(resource.name != null) FlumpResource.resources[resource.name] = flumpResource;
+			resource.data = flumpResource;
+			next();
+		});
+		atlasLoader.load();
 	}
 
 
