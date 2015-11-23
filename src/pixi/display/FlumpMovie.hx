@@ -64,6 +64,8 @@ class FlumpMovie extends Container implements IFlumpMovie {
 
 	public var animationSpeed(default, default):Float = 1.0;
 
+
+	
 	public function getLayer(layerId:String):Container{
 		if(layerLookup.exists(layerId) == false) throw("Layer " + layerId + "does not exist");
 		return layerLookup[layerId];

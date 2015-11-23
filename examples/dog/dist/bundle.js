@@ -267,6 +267,7 @@ var flump_MoviePlayer = function(symbol,movie) {
 		movie.createLayer(layer);
 	}
 	this.state = this.STATE_LOOPING;
+	this.advanceTime(0);
 };
 flump_MoviePlayer.__name__ = true;
 flump_MoviePlayer.prototype = {
@@ -456,6 +457,7 @@ flump_MoviePlayer.prototype = {
 				if(childMovie.independantControl == false) childMovie.setState(state);
 			}
 		}
+		this.advanceTime(0);
 	}
 	,timeForLabel: function(label) {
 		return this.symbol.labels.get(label).keyframe.time;

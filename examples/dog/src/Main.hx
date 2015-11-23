@@ -39,7 +39,6 @@ class Main extends Application{
 		stage.addChild(movie);
 
 		/*
-		var dog = movie.getChildMovie("DogRunning");
 		var placeholder = movie.getLayer("Placeholder");
 		var graphics = new Graphics();
 		graphics.lineColor = 0x990000;
