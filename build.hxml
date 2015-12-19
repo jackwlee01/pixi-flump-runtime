@@ -1,0 +1,6 @@
+-cp ./examples/dog/src
+-cp ./src
+-js ./examples/dog/dist/bundle.js
+-main Main
+-lib pixijs
+-debug

@@ -34,11 +34,13 @@ class MoviePlayer{
 	private var dirty:Bool = false;
 	private var fullyGenerated:Bool = false;
 
+	private var resolution:Float;
 
-	public function new(symbol:MovieSymbol, movie:IFlumpMovie){
+	public function new(symbol:MovieSymbol, movie:IFlumpMovie, resolution:Float){
 		this.symbol = symbol;
 		this.movie = movie;
-		
+		this.resolution = resolution;
+
 		for(layer in symbol.layers){
 			movie.createLayer(layer);
 		}
@@ -250,10 +252,10 @@ class MoviePlayer{
 
 				movie.renderFrame(
 					keyframe,
-					keyframe.location.x + (next.location.x - keyframe.location.x) * interped,
-					keyframe.location.y + (next.location.y - keyframe.location.y) * interped,
-					keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,
-					keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,
+					(keyframe.location.x + (next.location.x - keyframe.location.x) * interped) * (resolution),
+					(keyframe.location.y + (next.location.y - keyframe.location.y) * interped) * (resolution),
+					(keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped),
+					(keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped),
 					keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,
 					keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped
 				);

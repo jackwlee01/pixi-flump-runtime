@@ -20,6 +20,7 @@ class FlumpResource{
 	private var library:FlumpLibrary;
 	private var textures:Map<String, Texture>;
 	private var resourceId:String;
+	private var resolution:Float;
 
 
 
@@ -40,11 +41,12 @@ class FlumpResource{
 		resources.remove(resourceName);
 	}
 
-
+	/*
 	public static function flumpParser(resource:Resource, next:Void->Void){
 		if(resource.data == null || resource.isJson == false) return;
 		if(!resource.data.hasField("md5") || !resource.data.hasField("movies") || !resource.data.hasField("textureGroups") || !resource.data.hasField("frameRate")) return;
 		
+
 		var lib:FlumpLibrary = FlumpLibrary.create(resource.data);
 		var textures = new Map<String, Texture>();
 		
@@ -73,6 +75,7 @@ class FlumpResource{
 		});
 		atlasLoader.load();
 	}
+	*/
 
 
 	private static function get(resourceName:String){
@@ -102,10 +105,11 @@ class FlumpResource{
 	
 
 
-	private function new(library:FlumpLibrary, textures:Map<String, Texture>, resourceId:String){
+	private function new(library:FlumpLibrary, textures:Map<String, Texture>, resourceId:String, resolution:Float){
 		this.library = library;
 		this.textures = textures;
 		this.resourceId = resourceId;
+		this.resolution = resolution;
 	}
 
 

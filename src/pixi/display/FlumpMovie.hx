@@ -24,6 +24,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	private var ticker:Ticker = untyped __js__ ("PIXI.ticker.shared");
 	private var master:Bool;
 
+	private var resolution:Float;
 	private var resource:FlumpResource;
 	private var resourceId:String;
 	
@@ -40,9 +41,11 @@ class FlumpMovie extends Container implements IFlumpMovie {
 			if(resource == null) throw("Flump resource does not exist: " + resourceId);
 		}
 
+		this.resolution = resource.resolution;
+
 		this.symbol = resource.library.movies.get(symbolId);
 		
-		player = new MoviePlayer(symbol, this);	
+		player = new MoviePlayer(symbol, this, resolution);	
 		this.loop = true;
 
 		master = true;

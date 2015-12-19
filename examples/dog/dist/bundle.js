@@ -182,9 +182,14 @@ pixi_plugins_app_Application.prototype = {
 };
 var Main = function() {
 	pixi_plugins_app_Application.call(this);
+	this.width = 600;
+	this.height = 270;
+	this.pixelRatio = 2;
 	pixi_plugins_app_Application.prototype.start.call(this);
+	this.stage.scale.x = 1 / this.pixelRatio;
+	this.stage.scale.y = 1 / this.pixelRatio;
 	var loader = new PIXI.loaders.Loader();
-	loader.after(pixi_loaders_FlumpParser.flumpParser);
+	loader.after(pixi_loaders_FlumpParser.flumpParser(this.pixelRatio));
 	loader.add("DogLibrary","./flump-assets/dog/library.json");
 	loader.once("complete",$bind(this,this.begin));
 	loader.load();
@@ -241,7 +246,7 @@ flump_IFlumpMovie.__name__ = true;
 flump_IFlumpMovie.prototype = {
 	__class__: flump_IFlumpMovie
 };
-var flump_MoviePlayer = function(symbol,movie) {
+var flump_MoviePlayer = function(symbol,movie,resolution) {
 	this.position = 0.0;
 	this.fullyGenerated = false;
 	this.dirty = false;
@@ -259,6 +264,7 @@ var flump_MoviePlayer = function(symbol,movie) {
 	this.elapsed = 0.0;
 	this.symbol = symbol;
 	this.movie = movie;
+	this.resolution = resolution;
 	var _g = 0;
 	var _g1 = symbol.layers;
 	while(_g < _g1.length) {
@@ -399,7 +405,7 @@ flump_MoviePlayer.prototype = {
 				var interped = this.getInterpolation(keyframe,this.get_position());
 				var next = keyframe.next;
 				if(next.isEmpty) next = keyframe;
-				this.movie.renderFrame(keyframe,keyframe.location.x + (next.location.x - keyframe.location.x) * interped,keyframe.location.y + (next.location.y - keyframe.location.y) * interped,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped);
+				this.movie.renderFrame(keyframe,(keyframe.location.x + (next.location.x - keyframe.location.x) * interped) * this.resolution,(keyframe.location.y + (next.location.y - keyframe.location.y) * interped) * this.resolution,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped);
 				if(this.currentChildrenKey.h[layer.__id__] != keyframe.displayKey) {
 					this.createChildIfNessessary(keyframe);
 					this.removeChildIfNessessary(keyframe);
@@ -501,46 +507,50 @@ flump_json__$FlumpJSON_FlumpRectSpec_$Impl_$.get_width = function(this1) {
 flump_json__$FlumpJSON_FlumpRectSpec_$Impl_$.get_height = function(this1) {
 	return this1[3];
 };
-var flump_library_FlumpLibrary = function() {
+var flump_library_FlumpLibrary = function(resolution) {
 	this.atlases = [];
 	this.sprites = new haxe_ds_StringMap();
 	this.movies = new haxe_ds_StringMap();
+	this.resolution = resolution;
 };
 flump_library_FlumpLibrary.__name__ = true;
-flump_library_FlumpLibrary.create = function(flumpData) {
+flump_library_FlumpLibrary.create = function(flumpData,resolution) {
 	var lib = flumpData;
 	var spriteSymbols = new haxe_ds_StringMap();
 	var movieSymbols = new haxe_ds_StringMap();
-	var flumpLibrary = new flump_library_FlumpLibrary();
+	var flumpLibrary = new flump_library_FlumpLibrary(resolution);
 	flumpLibrary.sprites = spriteSymbols;
 	flumpLibrary.movies = movieSymbols;
 	flumpLibrary.framerate = _$UInt_UInt_$Impl_$.toFloat(lib.frameRate);
 	flumpLibrary.frameTime = 1000 / flumpLibrary.framerate;
 	flumpLibrary.md5 = lib.md5;
 	var atlasSpecs = [];
+	var textureGroup = null;
 	var _g = 0;
 	var _g1 = lib.textureGroups;
 	while(_g < _g1.length) {
-		var textureGroup = _g1[_g];
+		var tg = _g1[_g];
 		++_g;
-		var _g2 = 0;
-		var _g3 = textureGroup.atlases;
-		while(_g2 < _g3.length) {
-			var atlas = _g3[_g2];
-			++_g2;
-			flumpLibrary.atlases.push(atlas);
-			atlasSpecs.push(atlas);
-		}
+		if(_$UInt_UInt_$Impl_$.toFloat(tg.scaleFactor) >= resolution && textureGroup == null) textureGroup = tg;
 	}
-	var _g4 = 0;
-	while(_g4 < atlasSpecs.length) {
-		var spec = atlasSpecs[_g4];
-		++_g4;
-		var _g11 = 0;
+	if(textureGroup == null) textureGroup = lib.textureGroups[lib.textureGroups.length - 1];
+	var _g2 = 0;
+	var _g11 = textureGroup.atlases;
+	while(_g2 < _g11.length) {
+		var atlas = _g11[_g2];
+		++_g2;
+		flumpLibrary.atlases.push(atlas);
+		atlasSpecs.push(atlas);
+	}
+	var _g3 = 0;
+	while(_g3 < atlasSpecs.length) {
+		var spec = atlasSpecs[_g3];
+		++_g3;
+		var _g12 = 0;
 		var _g21 = spec.textures;
-		while(_g11 < _g21.length) {
-			var textureSpec = _g21[_g11];
-			++_g11;
+		while(_g12 < _g21.length) {
+			var textureSpec = _g21[_g12];
+			++_g12;
 			var frame = new flump_library_Rectangle(textureSpec.rect[0],textureSpec.rect[1],textureSpec.rect[2],textureSpec.rect[3]);
 			var origin = new flump_library_Point(textureSpec.origin[0],textureSpec.origin[1]);
 			origin.x = origin.x / frame.width;
@@ -556,11 +566,11 @@ flump_library_FlumpLibrary.create = function(flumpData) {
 		}
 	}
 	var pendingSymbolAttachments = new haxe_ds_ObjectMap();
-	var _g5 = 0;
-	var _g12 = lib.movies;
-	while(_g5 < _g12.length) {
-		var movieSpec = _g12[_g5];
-		++_g5;
+	var _g4 = 0;
+	var _g13 = lib.movies;
+	while(_g4 < _g13.length) {
+		var movieSpec = _g13[_g4];
+		++_g4;
 		var symbol1 = new flump_library_MovieSymbol();
 		symbol1.name = movieSpec.id;
 		symbol1.library = flumpLibrary;
@@ -574,9 +584,9 @@ flump_library_FlumpLibrary.create = function(flumpData) {
 			var layerDuration = 0;
 			var previousKeyframe = null;
 			var _g41 = 0;
-			var _g51 = layerSpec.keyframes;
-			while(_g41 < _g51.length) {
-				var keyframeSpec = _g51[_g41];
+			var _g5 = layerSpec.keyframes;
+			while(_g41 < _g5.length) {
+				var keyframeSpec = _g5[_g41];
 				++_g41;
 				var keyframe1 = new flump_library_Keyframe();
 				keyframe1.prev = previousKeyframe;
@@ -627,9 +637,9 @@ flump_library_FlumpLibrary.create = function(flumpData) {
 			if(allAreEmpty) {
 			} else {
 				var _g42 = 0;
-				var _g52 = layer1.keyframes;
-				while(_g42 < _g52.length) {
-					var keyframe2 = [_g52[_g42]];
+				var _g51 = layer1.keyframes;
+				while(_g42 < _g51.length) {
+					var keyframe2 = [_g51[_g42]];
 					++_g42;
 					var hasNonEmptySibling = Lambda.exists(layer1.keyframes,(function(keyframe2) {
 						return function(checkedKeyframe1) {
@@ -676,9 +686,9 @@ flump_library_FlumpLibrary.create = function(flumpData) {
 			var layer2 = _g32[_g23];
 			++_g23;
 			var _g43 = 0;
-			var _g53 = layer2.keyframes;
-			while(_g43 < _g53.length) {
-				var keyframe3 = _g53[_g43];
+			var _g52 = layer2.keyframes;
+			while(_g43 < _g52.length) {
+				var keyframe3 = _g52[_g43];
 				++_g43;
 				if(keyframe3.label != null) labels.push(keyframe3.label);
 			}
@@ -1257,8 +1267,9 @@ var pixi_display_FlumpMovie = function(symbolId,resourceId) {
 		this.resource = pixi_display_FlumpResource.get(resourceId);
 		if(this.resource == null) throw new js__$Boot_HaxeError("Flump resource does not exist: " + resourceId);
 	}
+	this.resolution = this.resource.resolution;
 	this.symbol = this.resource.library.movies.get(symbolId);
-	this.player = new flump_MoviePlayer(this.symbol,this);
+	this.player = new flump_MoviePlayer(this.symbol,this,this.resolution);
 	this.set_loop(true);
 	this.master = true;
 	this.once("added",$bind(this,this.onAdded));
@@ -1428,10 +1439,11 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 	}
 	,__class__: pixi_display_FlumpMovie
 });
-var pixi_display_FlumpResource = function(library,textures,resourceId) {
+var pixi_display_FlumpResource = function(library,textures,resourceId,resolution) {
 	this.library = library;
 	this.textures = textures;
 	this.resourceId = resourceId;
+	this.resolution = resolution;
 };
 pixi_display_FlumpResource.__name__ = true;
 pixi_display_FlumpResource.exists = function(resourceName) {
@@ -1447,48 +1459,6 @@ pixi_display_FlumpResource.destroy = function(resourceName) {
 	}
 	resource.library = null;
 	pixi_display_FlumpResource.resources.remove(resourceName);
-};
-pixi_display_FlumpResource.flumpParser = function(resource,next) {
-	if(resource.data == null || resource.isJson == false) return;
-	if(!resource.data.hasField("md5") || !resource.data.hasField("movies") || !resource.data.hasField("textureGroups") || !resource.data.hasField("frameRate")) return;
-	var lib = flump_library_FlumpLibrary.create(resource.data);
-	var textures = new haxe_ds_StringMap();
-	var atlasLoader = new PIXI.loaders.Loader();
-	atlasLoader.baseUrl = new EReg("/(.[^/]*)$","i").replace(resource.url,"");
-	var _g = 0;
-	var _g1 = lib.atlases;
-	while(_g < _g1.length) {
-		var atlasSpec = [_g1[_g]];
-		++_g;
-		atlasLoader.add(atlasSpec[0].file,null,(function(atlasSpec) {
-			return function(atlasResource) {
-				var atlasTexture = new PIXI.BaseTexture(atlasResource.data);
-				var _g2 = 0;
-				var _g3 = atlasSpec[0].textures;
-				while(_g2 < _g3.length) {
-					var textureSpec = _g3[_g2];
-					++_g2;
-					var frame = new PIXI.Rectangle(textureSpec.rect[0],textureSpec.rect[1],textureSpec.rect[2],textureSpec.rect[3]);
-					var origin = new flump_library_Point(textureSpec.origin[0],textureSpec.origin[1]);
-					origin.x = origin.x / frame.width;
-					origin.y = origin.y / frame.height;
-					var v = new PIXI.Texture(atlasTexture,frame);
-					textures.set(textureSpec.symbol,v);
-					v;
-				}
-			};
-		})(atlasSpec));
-	}
-	atlasLoader.once("complete",function(loader) {
-		var flumpResource = new pixi_display_FlumpResource(lib,textures,resource.name);
-		if(resource.name != null) {
-			pixi_display_FlumpResource.resources.set(resource.name,flumpResource);
-			flumpResource;
-		}
-		resource.data = flumpResource;
-		next();
-	});
-	atlasLoader.load();
 };
 pixi_display_FlumpResource.get = function(resourceName) {
 	if(!pixi_display_FlumpResource.resources.exists(resourceName)) throw new js__$Boot_HaxeError("Flump resource: " + resourceName + " does not exist.");
@@ -1532,11 +1502,12 @@ var pixi_display_FlumpSprite = function(symbolId,resourceId) {
 		resource = pixi_display_FlumpResource.get(resourceId);
 		if(resource == null) throw new js__$Boot_HaxeError("Library: " + resourceId + "does has not been loaded.");
 	} else resource = pixi_display_FlumpResource.getResourceForSprite(symbolId);
+	this.resolution = resource.resolution;
 	var symbol = resource.library.sprites.get(symbolId);
 	var texture = resource.textures.get(symbol.texture);
 	PIXI.Sprite.call(this,texture);
-	this.pivot.x = symbol.origin.x;
-	this.pivot.y = symbol.origin.y;
+	this.pivot.x = symbol.origin.x * this.resolution;
+	this.pivot.y = symbol.origin.y * this.resolution;
 };
 pixi_display_FlumpSprite.__name__ = true;
 pixi_display_FlumpSprite.__super__ = PIXI.Sprite;
@@ -1644,47 +1615,50 @@ pixi_display_PixiLayer.prototype = $extend(PIXI.Container.prototype,{
 });
 var pixi_loaders_FlumpParser = function() { };
 pixi_loaders_FlumpParser.__name__ = true;
-pixi_loaders_FlumpParser.flumpParser = function(resource,next) {
-	if(resource.data == null || resource.isJson == false) return;
-	if(!Object.prototype.hasOwnProperty.call(resource.data,"md5") || !Object.prototype.hasOwnProperty.call(resource.data,"movies") || !Object.prototype.hasOwnProperty.call(resource.data,"textureGroups") || !Object.prototype.hasOwnProperty.call(resource.data,"frameRate")) return;
-	var lib = flump_library_FlumpLibrary.create(resource.data);
-	var textures = new haxe_ds_StringMap();
-	var atlasLoader = new PIXI.loaders.Loader();
-	atlasLoader.baseUrl = new EReg("/(.[^/]*)$","i").replace(resource.url,"");
-	var _g = 0;
-	var _g1 = lib.atlases;
-	while(_g < _g1.length) {
-		var atlasSpec = [_g1[_g]];
-		++_g;
-		atlasLoader.add(atlasSpec[0].file,null,(function(atlasSpec) {
-			return function(atlasResource) {
-				var atlasTexture = new PIXI.BaseTexture(atlasResource.data);
-				var _g2 = 0;
-				var _g3 = atlasSpec[0].textures;
-				while(_g2 < _g3.length) {
-					var textureSpec = _g3[_g2];
-					++_g2;
-					var frame = new PIXI.Rectangle(textureSpec.rect[0],textureSpec.rect[1],textureSpec.rect[2],textureSpec.rect[3]);
-					var origin = new PIXI.Point(textureSpec.origin[0],textureSpec.origin[1]);
-					origin.x = origin.x / frame.width;
-					origin.y = origin.y / frame.height;
-					var v = new PIXI.Texture(atlasTexture,frame);
-					textures.set(textureSpec.symbol,v);
-					v;
-				}
-			};
-		})(atlasSpec));
-	}
-	atlasLoader.once("complete",function(loader) {
-		var flumpResource = new pixi_display_FlumpResource(lib,textures,resource.name);
-		if(resource.name != null) {
-			pixi_display_FlumpResource.resources.set(resource.name,flumpResource);
-			flumpResource;
+pixi_loaders_FlumpParser.flumpParser = function(resolution) {
+	return function(resource,next) {
+		if(resource.data == null || resource.isJson == false) return;
+		if(!Object.prototype.hasOwnProperty.call(resource.data,"md5") || !Object.prototype.hasOwnProperty.call(resource.data,"movies") || !Object.prototype.hasOwnProperty.call(resource.data,"textureGroups") || !Object.prototype.hasOwnProperty.call(resource.data,"frameRate")) return;
+		var lib = flump_library_FlumpLibrary.create(resource.data,resolution);
+		var textures = new haxe_ds_StringMap();
+		var atlasLoader = new PIXI.loaders.Loader();
+		atlasLoader.baseUrl = new EReg("/(.[^/]*)$","i").replace(resource.url,"");
+		var _g = 0;
+		var _g1 = lib.atlases;
+		while(_g < _g1.length) {
+			var atlasSpec = [_g1[_g]];
+			++_g;
+			atlasLoader.add(atlasSpec[0].file,null,(function(atlasSpec) {
+				return function(atlasResource) {
+					var atlasTexture = new PIXI.BaseTexture(atlasResource.data);
+					atlasTexture.resolution = resolution;
+					var _g2 = 0;
+					var _g3 = atlasSpec[0].textures;
+					while(_g2 < _g3.length) {
+						var textureSpec = _g3[_g2];
+						++_g2;
+						var frame = new PIXI.Rectangle(textureSpec.rect[0],textureSpec.rect[1],textureSpec.rect[2],textureSpec.rect[3]);
+						var origin = new PIXI.Point(textureSpec.origin[0],textureSpec.origin[1]);
+						origin.x = origin.x / frame.width;
+						origin.y = origin.y / frame.height;
+						var v = new PIXI.Texture(atlasTexture,frame);
+						textures.set(textureSpec.symbol,v);
+						v;
+					}
+				};
+			})(atlasSpec));
 		}
-		resource.data = flumpResource;
-		next();
-	});
-	atlasLoader.load();
+		atlasLoader.once("complete",function(loader) {
+			var flumpResource = new pixi_display_FlumpResource(lib,textures,resource.name,resolution);
+			if(resource.name != null) {
+				pixi_display_FlumpResource.resources.set(resource.name,flumpResource);
+				flumpResource;
+			}
+			resource.data = flumpResource;
+			next();
+		});
+		atlasLoader.load();
+	};
 };
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;

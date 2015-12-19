@@ -9,6 +9,7 @@ class FlumpSprite extends Sprite{
 
 	public var symbolId:String;
 	public var resourceId:String;
+	private var resolution:Float;
 	
 
 	public function new(symbolId:String, resourceId:String = null){
@@ -22,13 +23,14 @@ class FlumpSprite extends Sprite{
 		}else{
 			resource = FlumpResource.getResourceForSprite(symbolId);
 		}
+		this.resolution = resource.resolution;
 
 		var symbol = resource.library.sprites[symbolId];
 		var texture = resource.textures[symbol.texture];
 		super(texture);
 
-		pivot.x = symbol.origin.x;
-		pivot.y = symbol.origin.y;
+		pivot.x = symbol.origin.x * resolution;
+		pivot.y = symbol.origin.y * resolution;
 	}
 
 

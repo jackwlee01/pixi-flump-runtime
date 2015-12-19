@@ -21,10 +21,18 @@ class Main extends Application{
 
 	public function new(){
 		super();
+
+		this.width = 600;
+		this.height = 270;
+		this.pixelRatio = 2;
+
 		super.start();
 
+		stage.scale.x = 1 / pixelRatio;
+		stage.scale.y = 1 / pixelRatio;
+
 		var loader = new Loader();
-		loader.after(FlumpParser.flumpParser);
+		loader.after(FlumpParser.flumpParser(pixelRatio));
 		loader.add("DogLibrary", "./flump-assets/dog/library.json");
 		loader.once("complete", begin);
 		loader.load();
@@ -37,6 +45,7 @@ class Main extends Application{
 		movie.animationSpeed = 1;
 		movie.gotoAndPlay(0);
 		stage.addChild(movie);
+
 
 		/*
 		var placeholder = movie.getLayer("Placeholder");

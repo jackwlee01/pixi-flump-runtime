@@ -14,17 +14,21 @@ class FlumpLibrary{
 	public var framerate:Float;
 	public var frameTime:Float;
 	public var md5:String;
+	public var resolution:Float;
 
-	function new(){}
+
+	function new(resolution:Float){
+		this.resolution = resolution;
+	}
 
 
-	public static function create(flumpData:Dynamic):FlumpLibrary{
+	public static function create(flumpData:Dynamic, resolution:Float):FlumpLibrary{
 		var lib:FlumpJSON = cast flumpData;
 		
 		var spriteSymbols = new Map<String, SpriteSymbol>();
 		var movieSymbols = new Map<String, MovieSymbol>();
 
-		var flumpLibrary = new FlumpLibrary();
+		var flumpLibrary = new FlumpLibrary(resolution);
 		flumpLibrary.sprites = spriteSymbols;
 		flumpLibrary.movies = movieSymbols;
 		flumpLibrary.framerate = lib.frameRate;
@@ -32,11 +36,18 @@ class FlumpLibrary{
 		flumpLibrary.md5 = lib.md5;
 
 		var atlasSpecs = new Array<flump.json.FlumpJSON.AtlasSpec>();
-		for(textureGroup in lib.textureGroups){
-			for(atlas in textureGroup.atlases){
-				flumpLibrary.atlases.push(atlas);
-				atlasSpecs.push(atlas);
-			}
+		var textureGroup = null;
+
+		// Find best suited resolution from available textures
+		for(tg in lib.textureGroups){
+			if(tg.scaleFactor >= resolution && textureGroup == null) textureGroup = tg;
+		}
+		if(textureGroup == null) textureGroup =  lib.textureGroups[lib.textureGroups.length-1];
+
+
+		for(atlas in textureGroup.atlases){
+			flumpLibrary.atlases.push(atlas);
+			atlasSpecs.push(atlas);
 		}
 
 
