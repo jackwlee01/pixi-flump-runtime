@@ -252,8 +252,8 @@ class MoviePlayer{
 
 				movie.renderFrame(
 					keyframe,
-					(keyframe.location.x + (next.location.x - keyframe.location.x) * interped) * (resolution),
-					(keyframe.location.y + (next.location.y - keyframe.location.y) * interped) * (resolution),
+					(keyframe.location.x + (next.location.x - keyframe.location.x) * interped),
+					(keyframe.location.y + (next.location.y - keyframe.location.y) * interped),
 					(keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped),
 					(keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped),
 					keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,

@@ -67,8 +67,43 @@ class FlumpMovie extends Container implements IFlumpMovie {
 
 	public var animationSpeed(default, default):Float = 1.0;
 
+	public var resX(get, set):Float;
+	public function get_resX():Float{
+		return x / resolution;
+	}
+	public function set_resX(value:Float):Float{
+		x = value * resolution;
+		return value;
+	}
 
-	
+	public var resY(get, set):Float;
+	public function get_resY():Float{
+		return y / resolution;
+	}
+	public function set_resY(value:Float):Float{
+		y = value * resolution;
+		return value;
+	}
+
+	public var resScaleX(get, set):Float;
+	public function get_resScaleX():Float{
+		return scale.x / resolution;
+	}
+	public function set_resScaleX(value:Float):Float{
+		scale.x = value * resolution;
+		return value;
+	}
+
+	public var resScaleY(get, set):Float;
+	public function get_resScaleY():Float{
+		return scale.y / resolution;
+	}
+	public function set_resScaleY(value:Float):Float{
+		scale.y = value * resolution;
+		return value;
+	}
+
+
 	public function getLayer(layerId:String):Container{
 		if(layerLookup.exists(layerId) == false) throw("Layer " + layerId + "does not exist");
 		return layerLookup[layerId];

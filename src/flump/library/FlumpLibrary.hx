@@ -96,8 +96,8 @@ class FlumpLibrary{
 					}else{
 						keyframe.isEmpty = false;
 						keyframe.symbolId = keyframeSpec.ref;
-						keyframe.pivot = keyframeSpec.pivot == null ? new Point(0,0) : new Point( keyframeSpec.pivot.x, keyframeSpec.pivot.y );
-						keyframe.location = keyframeSpec.loc == null ? new Point(0,0) : new Point( keyframeSpec.loc.x, keyframeSpec.loc.y );
+						keyframe.pivot = keyframeSpec.pivot == null ? new Point(0,0) : new Point( keyframeSpec.pivot.x * resolution, keyframeSpec.pivot.y * resolution);
+						keyframe.location = keyframeSpec.loc == null ? new Point(0,0) : new Point( keyframeSpec.loc.x * resolution, keyframeSpec.loc.y * resolution);
 						keyframe.tweened = keyframeSpec.tweened == false ? false : true;
 						keyframe.symbol = null;
 						keyframe.scale = keyframeSpec.scale == null ? new Point(1,1) : new Point(keyframeSpec.scale.x, keyframeSpec.scale.y);

@@ -405,7 +405,7 @@ flump_MoviePlayer.prototype = {
 				var interped = this.getInterpolation(keyframe,this.get_position());
 				var next = keyframe.next;
 				if(next.isEmpty) next = keyframe;
-				this.movie.renderFrame(keyframe,(keyframe.location.x + (next.location.x - keyframe.location.x) * interped) * this.resolution,(keyframe.location.y + (next.location.y - keyframe.location.y) * interped) * this.resolution,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped);
+				this.movie.renderFrame(keyframe,keyframe.location.x + (next.location.x - keyframe.location.x) * interped,keyframe.location.y + (next.location.y - keyframe.location.y) * interped,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped);
 				if(this.currentChildrenKey.h[layer.__id__] != keyframe.displayKey) {
 					this.createChildIfNessessary(keyframe);
 					this.removeChildIfNessessary(keyframe);
@@ -603,8 +603,8 @@ flump_library_FlumpLibrary.create = function(flumpData,resolution) {
 				if(keyframeSpec.ref == null) keyframe1.isEmpty = true; else {
 					keyframe1.isEmpty = false;
 					keyframe1.symbolId = keyframeSpec.ref;
-					if(keyframeSpec.pivot == null) keyframe1.pivot = new flump_library_Point(0,0); else keyframe1.pivot = new flump_library_Point(keyframeSpec.pivot[0],keyframeSpec.pivot[1]);
-					if(keyframeSpec.loc == null) keyframe1.location = new flump_library_Point(0,0); else keyframe1.location = new flump_library_Point(keyframeSpec.loc[0],keyframeSpec.loc[1]);
+					if(keyframeSpec.pivot == null) keyframe1.pivot = new flump_library_Point(0,0); else keyframe1.pivot = new flump_library_Point(keyframeSpec.pivot[0] * resolution,keyframeSpec.pivot[1] * resolution);
+					if(keyframeSpec.loc == null) keyframe1.location = new flump_library_Point(0,0); else keyframe1.location = new flump_library_Point(keyframeSpec.loc[0] * resolution,keyframeSpec.loc[1] * resolution);
 					if(keyframeSpec.tweened == false) keyframe1.tweened = false; else keyframe1.tweened = true;
 					keyframe1.symbol = null;
 					if(keyframeSpec.scale == null) keyframe1.scale = new flump_library_Point(1,1); else keyframe1.scale = new flump_library_Point(keyframeSpec.scale[0],keyframeSpec.scale[1]);
@@ -1282,6 +1282,34 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 		this.master = false;
 		this.off("added",$bind(this,this.onAdded));
 	}
+	,get_resX: function() {
+		return this.x / this.resolution;
+	}
+	,set_resX: function(value) {
+		this.x = value * this.resolution;
+		return value;
+	}
+	,get_resY: function() {
+		return this.y / this.resolution;
+	}
+	,set_resY: function(value) {
+		this.y = value * this.resolution;
+		return value;
+	}
+	,get_resScaleX: function() {
+		return this.scale.x / this.resolution;
+	}
+	,set_resScaleX: function(value) {
+		this.scale.x = value * this.resolution;
+		return value;
+	}
+	,get_resScaleY: function() {
+		return this.scale.y / this.resolution;
+	}
+	,set_resScaleY: function(value) {
+		this.scale.y = value * this.resolution;
+		return value;
+	}
 	,getLayer: function(layerId) {
 		if(this.layerLookup.exists(layerId) == false) throw new js__$Boot_HaxeError("Layer " + layerId + "does not exist");
 		return this.layerLookup.get(layerId);
@@ -1512,7 +1540,35 @@ var pixi_display_FlumpSprite = function(symbolId,resourceId) {
 pixi_display_FlumpSprite.__name__ = true;
 pixi_display_FlumpSprite.__super__ = PIXI.Sprite;
 pixi_display_FlumpSprite.prototype = $extend(PIXI.Sprite.prototype,{
-	__class__: pixi_display_FlumpSprite
+	get_resX: function() {
+		return this.x / this.resolution;
+	}
+	,set_resX: function(value) {
+		this.x = value * this.resolution;
+		return value;
+	}
+	,get_resY: function() {
+		return this.y / this.resolution;
+	}
+	,set_resY: function(value) {
+		this.y = value * this.resolution;
+		return value;
+	}
+	,get_resScaleX: function() {
+		return this.scale.x / this.resolution;
+	}
+	,set_resScaleX: function(value) {
+		this.scale.x = value * this.resolution;
+		return value;
+	}
+	,get_resScaleY: function() {
+		return this.scale.y / this.resolution;
+	}
+	,set_resScaleY: function(value) {
+		this.scale.y = value * this.resolution;
+		return value;
+	}
+	,__class__: pixi_display_FlumpSprite
 });
 var pixi_display_PixiLayer = function() {
 	this.skew = new PIXI.Point();
