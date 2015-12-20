@@ -22,7 +22,7 @@ class Main extends Application{
 		super.start();
 
 		var loader = new Loader();
-		loader.after(FlumpParser.flumpParser);
+		loader.after(FlumpParser.flumpParser(1));
 		loader.add("MonsterLibrary", "./flump-assets/library.json");
 		loader.once("complete", begin);
 		loader.load();
