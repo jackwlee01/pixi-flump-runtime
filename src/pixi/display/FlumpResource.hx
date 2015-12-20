@@ -13,6 +13,8 @@ import pixi.core.ticker.Ticker;
 import pixi.loaders.Resource;
 import pixi.loaders.Loader;
 
+using Type;
+
 
 @:access(pixi.display.FlumpMovie)
 class FlumpResource{
@@ -21,6 +23,8 @@ class FlumpResource{
 	private var textures:Map<String, Texture>;
 	private var resourceId:String;
 	private var resolution:Float;
+
+	public static var flumpFactory:FlumpFactory;
 
 
 
@@ -46,7 +50,6 @@ class FlumpResource{
 		if(resource.data == null || resource.isJson == false) return;
 		if(!resource.data.hasField("md5") || !resource.data.hasField("movies") || !resource.data.hasField("textureGroups") || !resource.data.hasField("frameRate")) return;
 		
-
 		var lib:FlumpLibrary = FlumpLibrary.create(resource.data);
 		var textures = new Map<String, Texture>();
 		
@@ -114,14 +117,24 @@ class FlumpResource{
 
 
 	private function createMovie(id:String):FlumpMovie{
-		var movie = new FlumpMovie(id, this.resourceId);
+		var movie:FlumpMovie;
+		if(flumpFactory != null && flumpFactory.displayClassExists(id)){
+			movie = flumpFactory.getMovieClass(id).createInstance([]);
+		}else{
+			movie = new FlumpMovie(id, this.resourceId);
+		}
+
 		movie.disableAsMaster();
 		return movie;
 	}
 
 
 	private function createSprite(id:String):Sprite{
-		return new FlumpSprite(id, this.resourceId);
+		if(flumpFactory != null && flumpFactory.displayClassExists(id)){
+			return flumpFactory.getSpriteClass(id).createInstance([]);
+		}else{
+			return new FlumpSprite(id, this.resourceId);
+		}
 	}
 
 

@@ -301,6 +301,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 		emit("labelPassed", label.name);
 	}
 	
+
 	override public function destroy(): Void {
 		stop();
 		onComplete = null;
