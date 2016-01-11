@@ -103,7 +103,7 @@ class FlumpResource{
 				return resource;
 			}
 		}
-		throw("Sprite: " + symbolId + "does not exists in any loaded flump resources.");
+		throw("Sprite: " + symbolId + " does not exists in any loaded flump resources.");
 	}
 	
 
