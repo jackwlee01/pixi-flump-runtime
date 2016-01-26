@@ -294,6 +294,15 @@ class FlumpMovie extends Container implements IFlumpMovie {
 		layer.skew.y = skewY;
 		layer.pivot.x = keyframe.pivot.x;
 		layer.pivot.y = keyframe.pivot.y;
+
+		if(master){
+			//layer.pivot.x /= resolution;
+			//layer.pivot.y /= resolution;
+			layer.x /= resolution;
+			layer.y /= resolution;
+			layer.scale.x /= resolution;
+			layer.scale.y /= resolution;
+		}
 	}
 
 
