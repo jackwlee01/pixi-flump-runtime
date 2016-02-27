@@ -153,7 +153,7 @@ class MoviePlayer{
 
 
 	public function labelExists(label:String):Bool{
-		return symbol.labels.exists("label");
+		return symbol.labels.exists(label);
 	}
 
 
