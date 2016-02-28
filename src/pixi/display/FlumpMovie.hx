@@ -17,7 +17,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 
 	public var player:MoviePlayer;
 	private var symbol:MovieSymbol;
-	private var layers = new Map<Layer, PixiLayer>();
+	private var layers = new Map<Layer, Container>();
 	private var layerLookup = new Map<String, Container>();
 	private var movieChildren = new Map<DisplayObjectKey, DisplayObject>();
 	private var displaying = new Map<Layer, DisplayObjectKey>();
@@ -103,7 +103,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 		return value;
 	}
 
-
+	
 	public function getLayer(layerId:String):Container{
 		if(layerLookup.exists(layerId) == false) throw("Layer " + layerId + "does not exist");
 		return layerLookup[layerId];
@@ -250,7 +250,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	
 	
 	private function createLayer(layer:Layer):Void{
-		layers[layer] = new PixiLayer();
+		layers[layer] = new Container();
 		layerLookup[layer.name] = layers[layer];
 		addChild(layers[layer]);
 	}
@@ -286,14 +286,23 @@ class FlumpMovie extends Container implements IFlumpMovie {
 
 	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):Void{
 		var layer = layers[keyframe.layer];
+		
+		layer.pivot.x = keyframe.pivot.x;
+		layer.pivot.y = keyframe.pivot.y;
+
+		if(Std.is(keyframe.symbol, SpriteSymbol)){
+			var spriteSymbol:SpriteSymbol = cast keyframe.symbol;
+			layer.pivot.x -= spriteSymbol.origin.x;
+			layer.pivot.y -= spriteSymbol.origin.y;
+		}
+
 		layer.x = x;
 		layer.y = y;
 		layer.scale.x = scaleX;
 		layer.scale.y = scaleY;
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
-		layer.pivot.x = keyframe.pivot.x;
-		layer.pivot.y = keyframe.pivot.y;
+
 
 		if(master){
 			//layer.pivot.x /= resolution;

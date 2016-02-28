@@ -24,7 +24,7 @@ class Main extends Application{
 
 		this.width = 600;
 		this.height = 270;
-		this.pixelRatio = 2;
+		this.pixelRatio = 1;
 
 		super.start();
 
@@ -32,7 +32,8 @@ class Main extends Application{
 		stage.scale.y = 1 / pixelRatio;
 
 		var loader = new Loader();
-		loader.after(FlumpParser.flumpParser(pixelRatio));
+
+		loader.after(FlumpParser.flumpParser(1));
 		loader.add("DogLibrary", "./flump-assets/dog/library.json");
 		loader.once("complete", begin);
 		loader.load();

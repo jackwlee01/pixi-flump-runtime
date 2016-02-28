@@ -19,7 +19,7 @@ class MoviePlayer{
 	private var advanced:Float = 0.0; // Time advanced since the last frame
 
 	public var independantTimeline:Bool = true;
-	public var independantControl:Bool = false;
+	public var independantControl:Bool = true;
 
 	private var state:String;
 	private var STATE_PLAYING:String = "playing";

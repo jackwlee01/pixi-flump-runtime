@@ -55,9 +55,7 @@ class FlumpLibrary{
 			for(textureSpec in spec.textures){
 				var frame = new Rectangle(textureSpec.rect.x, textureSpec.rect.y, textureSpec.rect.width, textureSpec.rect.height);
 				var origin = new Point(textureSpec.origin.x, textureSpec.origin.y);
-				origin.x = origin.x / frame.width;
-				origin.y = origin.y / frame.height;
-
+			
 				var symbol = new SpriteSymbol();
 				symbol.name = textureSpec.symbol;
 				symbol.origin = origin;

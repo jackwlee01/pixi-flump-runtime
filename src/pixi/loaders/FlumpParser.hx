@@ -16,8 +16,8 @@ using Reflect;
 class FlumpParser{
 
 
-	public static function flumpParser(resolution:Float){
-		return function(resource:Resource, next:Void->Void, ?loadFromCache:Bool = true){
+	public static function flumpParser(resolution:Float, ?loadFromCache:Bool = true){
+		return function(resource:Resource, next:Void->Void){
 			if(resource.data == null || resource.isJson == false) return;
 			if(!resource.data.hasField("md5") || !resource.data.hasField("movies") || !resource.data.hasField("textureGroups") || !resource.data.hasField("frameRate")) return;
 			
