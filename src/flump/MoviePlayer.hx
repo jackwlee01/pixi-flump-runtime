@@ -257,7 +257,8 @@ class MoviePlayer{
 					(keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped),
 					(keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped),
 					keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,
-					keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped
+					keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,
+					keyframe.alpha + (next.alpha - keyframe.alpha) * interped
 				);
 
 

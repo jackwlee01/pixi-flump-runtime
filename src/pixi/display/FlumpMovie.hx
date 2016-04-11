@@ -284,7 +284,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	}
 
 
-	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float):Void{
+	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float, alpha:Float):Void{
 		var layer = layers[keyframe.layer];
 		
 		layer.pivot.x = keyframe.pivot.x;
@@ -302,6 +302,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 		layer.scale.y = scaleY;
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
+		layer.alpha  = alpha;
 
 
 		if(master){

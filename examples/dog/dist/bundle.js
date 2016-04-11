@@ -1,4 +1,4 @@
-(function (console, $hx_exports, $global) { "use strict";
+(function (console, $hx_exports) { "use strict";
 function $extend(from, fields) {
 	function Inherit() {} Inherit.prototype = from; var proto = new Inherit();
 	for (var name in fields) proto[name] = fields[name];
@@ -125,7 +125,7 @@ pixi_plugins_app_Application.prototype = {
 		renderingOptions.preserveDrawingBuffer = this.preserveDrawingBuffer;
 		if(rendererType == "auto") this.renderer = PIXI.autoDetectRenderer(this.width,this.height,renderingOptions); else if(rendererType == "canvas") this.renderer = new PIXI.CanvasRenderer(this.width,this.height,renderingOptions); else this.renderer = new PIXI.WebGLRenderer(this.width,this.height,renderingOptions);
 		if(this.roundPixels) this.renderer.roundPixels = true;
-		window.document.body.appendChild(this.renderer.view);
+		if(parentDom == null) window.document.body.appendChild(this.renderer.view); else parentDom.appendChild(this.renderer.view);
 		this.resumeRendering();
 	}
 	,pauseRendering: function() {
@@ -187,10 +187,6 @@ Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
 		movie.animationSpeed = 1;
 		movie.gotoAndPlay(0);
 		this.stage.addChild(movie);
-		haxe_Timer.delay(function() {
-			movie.stop();
-			console.log("on Timer!");
-		},1500);
 	}
 	,__class__: Main
 });
@@ -624,7 +620,7 @@ flump_MoviePlayer.prototype = {
 				var interped = this.getInterpolation(keyframe,this.get_position());
 				var next = keyframe.next;
 				if(next.isEmpty) next = keyframe;
-				this.movie.renderFrame(keyframe,keyframe.location.x + (next.location.x - keyframe.location.x) * interped,keyframe.location.y + (next.location.y - keyframe.location.y) * interped,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped);
+				this.movie.renderFrame(keyframe,keyframe.location.x + (next.location.x - keyframe.location.x) * interped,keyframe.location.y + (next.location.y - keyframe.location.y) * interped,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,keyframe.alpha + (next.alpha - keyframe.alpha) * interped);
 				if(this.currentChildrenKey.h[layer.__id__] != keyframe.displayKey) {
 					this.createChildIfNessessary(keyframe);
 					this.removeChildIfNessessary(keyframe);
@@ -826,6 +822,7 @@ flump_library_FlumpLibrary.create = function(flumpData,resolution) {
 					keyframe1.symbol = null;
 					if(keyframeSpec.scale == null) keyframe1.scale = new flump_library_Point(1,1); else keyframe1.scale = new flump_library_Point(keyframeSpec.scale[0],keyframeSpec.scale[1]);
 					if(keyframeSpec.skew == null) keyframe1.skew = new flump_library_Point(0,0); else keyframe1.skew = new flump_library_Point(keyframeSpec.skew[0],keyframeSpec.skew[1]);
+					if(keyframeSpec.alpha == null) keyframe1.alpha = 1; else keyframe1.alpha = keyframeSpec.alpha;
 					if(keyframeSpec.ease == null) keyframe1.ease = 0; else keyframe1.ease = keyframeSpec.ease;
 				}
 				if(layer1.keyframes.length == 0) layer1.firstKeyframe = keyframe1;
@@ -1105,31 +1102,6 @@ flump_library_SpriteSymbol.prototype = $extend(flump_library_Symbol.prototype,{
 });
 var haxe_IMap = function() { };
 haxe_IMap.__name__ = true;
-var haxe_Timer = function(time_ms) {
-	var me = this;
-	this.id = setInterval(function() {
-		me.run();
-	},time_ms);
-};
-haxe_Timer.__name__ = true;
-haxe_Timer.delay = function(f,time_ms) {
-	var t = new haxe_Timer(time_ms);
-	t.run = function() {
-		t.stop();
-		f();
-	};
-	return t;
-};
-haxe_Timer.prototype = {
-	stop: function() {
-		if(this.id == null) return;
-		clearInterval(this.id);
-		this.id = null;
-	}
-	,run: function() {
-	}
-	,__class__: haxe_Timer
-};
 var haxe_ds_ArraySort = function() { };
 haxe_ds_ArraySort.__name__ = true;
 haxe_ds_ArraySort.sort = function(a,cmp) {
@@ -1491,7 +1463,7 @@ js_Boot.__isNativeObj = function(o) {
 	return js_Boot.__nativeClassName(o) != null;
 };
 js_Boot.__resolveNativeClass = function(name) {
-	return $global[name];
+	return (Function("return typeof " + name + " != \"undefined\" ? " + name + " : null"))();
 };
 var pixi_display_FlumpFactory = function() { };
 pixi_display_FlumpFactory.__name__ = true;
@@ -1686,7 +1658,7 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 	,onAnimationComplete: function() {
 		if(this.onComplete != null) this.onComplete();
 	}
-	,renderFrame: function(keyframe,x,y,scaleX,scaleY,skewX,skewY) {
+	,renderFrame: function(keyframe,x,y,scaleX,scaleY,skewX,skewY,alpha) {
 		var layer = this.layers.h[keyframe.layer.__id__];
 		layer.pivot.x = keyframe.pivot.x;
 		layer.pivot.y = keyframe.pivot.y;
@@ -1701,6 +1673,7 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 		layer.scale.y = scaleY;
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
+		layer.alpha = alpha;
 		if(this.master) {
 			layer.x /= this.resolution;
 			layer.y /= this.resolution;
@@ -1923,6 +1896,6 @@ haxe_ds_ObjectMap.count = 0;
 js_Boot.__toStr = {}.toString;
 pixi_display_FlumpResource.resources = new haxe_ds_StringMap();
 Main.main();
-})(typeof console != "undefined" ? console : {log:function(){}}, typeof window != "undefined" ? window : exports, typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
+})(typeof console != "undefined" ? console : {log:function(){}}, typeof window != "undefined" ? window : exports);
 
 //# sourceMappingURL=bundle.js.map

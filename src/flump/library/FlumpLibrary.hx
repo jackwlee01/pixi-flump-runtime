@@ -100,7 +100,7 @@ class FlumpLibrary{
 						keyframe.symbol = null;
 						keyframe.scale = keyframeSpec.scale == null ? new Point(1,1) : new Point(keyframeSpec.scale.x, keyframeSpec.scale.y);
 						keyframe.skew = keyframeSpec.skew == null ? new Point(0,0) : new Point(keyframeSpec.skew.x, keyframeSpec.skew.y);
-						
+						keyframe.alpha = keyframeSpec.alpha == null ? 1 : keyframeSpec.alpha;
 						keyframe.ease = keyframeSpec.ease == null ? 0 : keyframeSpec.ease;
 					}
 
