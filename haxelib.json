@@ -4,8 +4,8 @@
   "license": "MIT",
   "tags": ["flump", "animation", "flash", "timeline", "pixi"],
   "description": "A Flump runtime for Pixi.js. See examples for usage.",
-  "version": "0.1.2",
-  "releasenote": "Ready to use",
+  "version": "0.1.3",
+  "releasenote": "Requires pixi.js v3.0.10",
   "classPath":"src",
   "contributors": ["jackwlee"],
   "dependencies": {

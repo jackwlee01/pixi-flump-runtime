@@ -29,8 +29,12 @@ class FlumpSprite extends Sprite{
 		var texture = resource.textures[symbol.texture];
 		super(texture);
 
-		pivot.x = symbol.origin.x * resolution;
-		pivot.y = symbol.origin.y * resolution;
+
+		anchor.x = symbol.origin.x / texture.width;
+		anchor.y = symbol.origin.y / texture.height;
+
+		//pivot.x = symbol.origin.x;
+		//pivot.y = symbol.origin.y;
 	}
 
 	public var resX(get, set):Float;

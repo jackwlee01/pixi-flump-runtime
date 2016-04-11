@@ -2,13 +2,10 @@ package pixi.loaders;
 
 import flump.library.FlumpLibrary;
 import pixi.display.FlumpResource;
-import js.Browser;
-import js.html.Image;
 import pixi.core.math.Point;
 import pixi.core.math.shapes.Rectangle;
 import pixi.core.textures.Texture;
 import pixi.core.textures.BaseTexture;
-import pixi.core.ticker.Ticker;
 import pixi.loaders.Loader;
 import pixi.loaders.Resource;
 
@@ -19,7 +16,7 @@ using Reflect;
 class FlumpParser{
 
 
-	public static function flumpParser(resolution:Float){
+	public static function flumpParser(resolution:Float, ?loadFromCache:Bool = true){
 		return function(resource:Resource, next:Void->Void){
 			if(resource.data == null || resource.isJson == false) return;
 			if(!resource.data.hasField("md5") || !resource.data.hasField("movies") || !resource.data.hasField("textureGroups") || !resource.data.hasField("frameRate")) return;
@@ -31,6 +28,7 @@ class FlumpParser{
 			atlasLoader.baseUrl = ~/\/(.[^\/]*)$/i.replace(resource.url, "");
 
 			for(atlasSpec in lib.atlases){
+				atlasSpec.file += loadFromCache ? '' : "?" + Date.now().getTime();
 				atlasLoader.add(atlasSpec.file, function(atlasResource){
 					var atlasTexture = new BaseTexture(atlasResource.data);
 					atlasTexture.resolution = resolution;

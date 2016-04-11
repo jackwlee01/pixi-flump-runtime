@@ -1,4 +1,4 @@
-(function (console, $global) { "use strict";
+(function (console, $hx_exports, $global) { "use strict";
 function $extend(from, fields) {
 	function Inherit() {} Inherit.prototype = from; var proto = new Inherit();
 	for (var name in fields) proto[name] = fields[name];
@@ -60,7 +60,7 @@ Lambda.find = function(it,f) {
 	return null;
 };
 var pixi_plugins_app_Application = function() {
-	this._lastTime = new Date();
+	this._animationFrameId = null;
 	this.pixelRatio = 1;
 	this.set_skipFrame(false);
 	this.autoResize = true;
@@ -68,6 +68,8 @@ var pixi_plugins_app_Application = function() {
 	this.antialias = false;
 	this.forceFXAA = false;
 	this.roundPixels = false;
+	this.clearBeforeRender = true;
+	this.preserveDrawingBuffer = false;
 	this.backgroundColor = 16777215;
 	this.width = window.innerWidth;
 	this.height = window.innerHeight;
@@ -87,6 +89,7 @@ pixi_plugins_app_Application.prototype = {
 		return this.skipFrame = val;
 	}
 	,_setDefaultValues: function() {
+		this._animationFrameId = null;
 		this.pixelRatio = 1;
 		this.set_skipFrame(false);
 		this.autoResize = true;
@@ -94,6 +97,8 @@ pixi_plugins_app_Application.prototype = {
 		this.antialias = false;
 		this.forceFXAA = false;
 		this.roundPixels = false;
+		this.clearBeforeRender = true;
+		this.preserveDrawingBuffer = false;
 		this.backgroundColor = 16777215;
 		this.width = window.innerWidth;
 		this.height = window.innerHeight;
@@ -116,22 +121,23 @@ pixi_plugins_app_Application.prototype = {
 		renderingOptions.forceFXAA = this.forceFXAA;
 		renderingOptions.autoResize = this.autoResize;
 		renderingOptions.transparent = this.transparent;
+		renderingOptions.clearBeforeRender = this.clearBeforeRender;
+		renderingOptions.preserveDrawingBuffer = this.preserveDrawingBuffer;
 		if(rendererType == "auto") this.renderer = PIXI.autoDetectRenderer(this.width,this.height,renderingOptions); else if(rendererType == "canvas") this.renderer = new PIXI.CanvasRenderer(this.width,this.height,renderingOptions); else this.renderer = new PIXI.WebGLRenderer(this.width,this.height,renderingOptions);
 		if(this.roundPixels) this.renderer.roundPixels = true;
 		window.document.body.appendChild(this.renderer.view);
-		if(this.autoResize) window.onresize = $bind(this,this._onWindowResize);
-		window.requestAnimationFrame($bind(this,this._onRequestAnimationFrame));
-		this._lastTime = new Date();
-		this._addStats();
+		this.resumeRendering();
 	}
 	,pauseRendering: function() {
 		window.onresize = null;
-		window.requestAnimationFrame(function() {
-		});
+		if(this._animationFrameId != null) {
+			window.cancelAnimationFrame(this._animationFrameId);
+			this._animationFrameId = null;
+		}
 	}
 	,resumeRendering: function() {
 		if(this.autoResize) window.onresize = $bind(this,this._onWindowResize);
-		window.requestAnimationFrame($bind(this,this._onRequestAnimationFrame));
+		if(this._animationFrameId == null) this._animationFrameId = window.requestAnimationFrame($bind(this,this._onRequestAnimationFrame));
 	}
 	,_onWindowResize: function(event) {
 		this.width = window.innerWidth;
@@ -141,42 +147,17 @@ pixi_plugins_app_Application.prototype = {
 		this.canvas.style.height = this.height + "px";
 		if(this.onResize != null) this.onResize();
 	}
-	,_onRequestAnimationFrame: function() {
+	,_onRequestAnimationFrame: function(elapsedTime) {
 		this._frameCount++;
 		if(this._frameCount == (60 / this.fps | 0)) {
 			this._frameCount = 0;
-			this._calculateElapsedTime();
-			if(this.onUpdate != null) this.onUpdate(this._elapsedTime);
+			if(this.onUpdate != null) this.onUpdate(elapsedTime);
 			this.renderer.render(this.stage);
 		}
-		window.requestAnimationFrame($bind(this,this._onRequestAnimationFrame));
+		this._animationFrameId = window.requestAnimationFrame($bind(this,this._onRequestAnimationFrame));
 	}
-	,_calculateElapsedTime: function() {
-		this._currentTime = new Date();
-		this._elapsedTime = this._currentTime.getTime() - this._lastTime.getTime();
-		this._lastTime = this._currentTime;
-	}
-	,_addStats: function() {
-	}
-	,_addRenderStats: function(top) {
-		if(top == null) top = 0;
-		var ren;
-		var _this = window.document;
-		ren = _this.createElement("div");
-		ren.style.position = "absolute";
-		ren.style.width = "76px";
-		ren.style.top = top + "px";
-		ren.style.right = "0px";
-		ren.style.background = "#CCCCC";
-		ren.style.backgroundColor = "#105CB6";
-		ren.style.fontFamily = "Helvetica,Arial";
-		ren.style.padding = "2px";
-		ren.style.color = "#0FF";
-		ren.style.fontSize = "9px";
-		ren.style.fontWeight = "bold";
-		ren.style.textAlign = "center";
-		window.document.body.appendChild(ren);
-		ren.innerHTML = ["UNKNOWN","WEBGL","CANVAS"][this.renderer.type] + " - " + this.pixelRatio;
+	,addStats: function() {
+		if(window.Perf != null) new Perf().addInfo(["UNKNOWN","WEBGL","CANVAS"][this.renderer.type] + " - " + this.pixelRatio);
 	}
 	,__class__: pixi_plugins_app_Application
 };
@@ -206,6 +187,212 @@ Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
 	,__class__: Main
 });
 Math.__name__ = true;
+var Perf = $hx_exports.Perf = function(pos,offset) {
+	if(offset == null) offset = 0;
+	if(pos == null) pos = "TR";
+	this._perfObj = window.performance;
+	if(Reflect.field(this._perfObj,"memory") != null) this._memoryObj = Reflect.field(this._perfObj,"memory");
+	this._memCheck = this._perfObj != null && this._memoryObj != null && this._memoryObj.totalJSHeapSize > 0;
+	this._pos = pos;
+	this._offset = offset;
+	this.currentFps = 60;
+	this.currentMs = 0;
+	this.currentMem = "0";
+	this.lowFps = 60;
+	this.avgFps = 60;
+	this._measureCount = 0;
+	this._totalFps = 0;
+	this._time = 0;
+	this._ticks = 0;
+	this._fpsMin = 60;
+	this._fpsMax = 60;
+	if(this._perfObj != null && ($_=this._perfObj,$bind($_,$_.now)) != null) this._startTime = this._perfObj.now(); else this._startTime = new Date().getTime();
+	this._prevTime = -Perf.MEASUREMENT_INTERVAL;
+	this._createFpsDom();
+	this._createMsDom();
+	if(this._memCheck) this._createMemoryDom();
+	if(($_=window,$bind($_,$_.requestAnimationFrame)) != null) this.RAF = ($_=window,$bind($_,$_.requestAnimationFrame)); else if(window.mozRequestAnimationFrame != null) this.RAF = window.mozRequestAnimationFrame; else if(window.webkitRequestAnimationFrame != null) this.RAF = window.webkitRequestAnimationFrame; else if(window.msRequestAnimationFrame != null) this.RAF = window.msRequestAnimationFrame;
+	if(($_=window,$bind($_,$_.cancelAnimationFrame)) != null) this.CAF = ($_=window,$bind($_,$_.cancelAnimationFrame)); else if(window.mozCancelAnimationFrame != null) this.CAF = window.mozCancelAnimationFrame; else if(window.webkitCancelAnimationFrame != null) this.CAF = window.webkitCancelAnimationFrame; else if(window.msCancelAnimationFrame != null) this.CAF = window.msCancelAnimationFrame;
+	if(this.RAF != null) this._raf = Reflect.callMethod(window,this.RAF,[$bind(this,this._tick)]);
+};
+Perf.__name__ = true;
+Perf.prototype = {
+	_init: function() {
+		this.currentFps = 60;
+		this.currentMs = 0;
+		this.currentMem = "0";
+		this.lowFps = 60;
+		this.avgFps = 60;
+		this._measureCount = 0;
+		this._totalFps = 0;
+		this._time = 0;
+		this._ticks = 0;
+		this._fpsMin = 60;
+		this._fpsMax = 60;
+		if(this._perfObj != null && ($_=this._perfObj,$bind($_,$_.now)) != null) this._startTime = this._perfObj.now(); else this._startTime = new Date().getTime();
+		this._prevTime = -Perf.MEASUREMENT_INTERVAL;
+	}
+	,_now: function() {
+		if(this._perfObj != null && ($_=this._perfObj,$bind($_,$_.now)) != null) return this._perfObj.now(); else return new Date().getTime();
+	}
+	,_tick: function(val) {
+		var time;
+		if(this._perfObj != null && ($_=this._perfObj,$bind($_,$_.now)) != null) time = this._perfObj.now(); else time = new Date().getTime();
+		this._ticks++;
+		if(this._raf != null && time > this._prevTime + Perf.MEASUREMENT_INTERVAL) {
+			this.currentMs = Math.round(time - this._startTime);
+			this.ms.innerHTML = "MS: " + this.currentMs;
+			this.currentFps = Math.round(this._ticks * 1000 / (time - this._prevTime));
+			if(this.currentFps > 0 && val > Perf.DELAY_TIME) {
+				this._measureCount++;
+				this._totalFps += this.currentFps;
+				this.lowFps = this._fpsMin = Math.min(this._fpsMin,this.currentFps);
+				this._fpsMax = Math.max(this._fpsMax,this.currentFps);
+				this.avgFps = Math.round(this._totalFps / this._measureCount);
+			}
+			this.fps.innerHTML = "FPS: " + this.currentFps + " (" + this._fpsMin + "-" + this._fpsMax + ")";
+			if(this.currentFps >= 30) this.fps.style.backgroundColor = Perf.FPS_BG_CLR; else if(this.currentFps >= 15) this.fps.style.backgroundColor = Perf.FPS_WARN_BG_CLR; else this.fps.style.backgroundColor = Perf.FPS_PROB_BG_CLR;
+			this._prevTime = time;
+			this._ticks = 0;
+			if(this._memCheck) {
+				this.currentMem = this._getFormattedSize(this._memoryObj.usedJSHeapSize,2);
+				this.memory.innerHTML = "MEM: " + this.currentMem;
+			}
+		}
+		this._startTime = time;
+		if(this._raf != null) this._raf = Reflect.callMethod(window,this.RAF,[$bind(this,this._tick)]);
+	}
+	,_createDiv: function(id,top) {
+		if(top == null) top = 0;
+		var div;
+		var _this = window.document;
+		div = _this.createElement("div");
+		div.id = id;
+		div.className = id;
+		div.style.position = "absolute";
+		var _g = this._pos;
+		switch(_g) {
+		case "TL":
+			div.style.left = this._offset + "px";
+			div.style.top = top + "px";
+			break;
+		case "TR":
+			div.style.right = this._offset + "px";
+			div.style.top = top + "px";
+			break;
+		case "BL":
+			div.style.left = this._offset + "px";
+			div.style.bottom = (this._memCheck?48:32) - top + "px";
+			break;
+		case "BR":
+			div.style.right = this._offset + "px";
+			div.style.bottom = (this._memCheck?48:32) - top + "px";
+			break;
+		}
+		div.style.width = "80px";
+		div.style.height = "12px";
+		div.style.lineHeight = "12px";
+		div.style.padding = "2px";
+		div.style.fontFamily = Perf.FONT_FAMILY;
+		div.style.fontSize = "9px";
+		div.style.fontWeight = "bold";
+		div.style.textAlign = "center";
+		window.document.body.appendChild(div);
+		return div;
+	}
+	,_createFpsDom: function() {
+		this.fps = this._createDiv("fps");
+		this.fps.style.backgroundColor = Perf.FPS_BG_CLR;
+		this.fps.style.zIndex = "995";
+		this.fps.style.color = Perf.FPS_TXT_CLR;
+		this.fps.innerHTML = "FPS: 0";
+	}
+	,_createMsDom: function() {
+		this.ms = this._createDiv("ms",16);
+		this.ms.style.backgroundColor = Perf.MS_BG_CLR;
+		this.ms.style.zIndex = "996";
+		this.ms.style.color = Perf.MS_TXT_CLR;
+		this.ms.innerHTML = "MS: 0";
+	}
+	,_createMemoryDom: function() {
+		this.memory = this._createDiv("memory",32);
+		this.memory.style.backgroundColor = Perf.MEM_BG_CLR;
+		this.memory.style.color = Perf.MEM_TXT_CLR;
+		this.memory.style.zIndex = "997";
+		this.memory.innerHTML = "MEM: 0";
+	}
+	,_getFormattedSize: function(bytes,frac) {
+		if(frac == null) frac = 0;
+		var sizes = ["Bytes","KB","MB","GB","TB"];
+		if(bytes == 0) return "0";
+		var precision = Math.pow(10,frac);
+		var i = Math.floor(Math.log(bytes) / Math.log(1024));
+		return Math.round(bytes * precision / Math.pow(1024,i)) / precision + " " + sizes[i];
+	}
+	,addInfo: function(val) {
+		this.info = this._createDiv("info",this._memCheck?48:32);
+		this.info.style.backgroundColor = Perf.INFO_BG_CLR;
+		this.info.style.color = Perf.INFO_TXT_CLR;
+		this.info.style.zIndex = "998";
+		this.info.innerHTML = val;
+	}
+	,clearInfo: function() {
+		if(this.info != null) {
+			window.document.body.removeChild(this.info);
+			this.info = null;
+		}
+	}
+	,destroy: function() {
+		Reflect.callMethod(window,this.CAF,[this._raf]);
+		this._raf = null;
+		this._perfObj = null;
+		this._memoryObj = null;
+		if(this.fps != null) {
+			window.document.body.removeChild(this.fps);
+			this.fps = null;
+		}
+		if(this.ms != null) {
+			window.document.body.removeChild(this.ms);
+			this.ms = null;
+		}
+		if(this.memory != null) {
+			window.document.body.removeChild(this.memory);
+			this.memory = null;
+		}
+		this.clearInfo();
+		this.currentFps = 60;
+		this.currentMs = 0;
+		this.currentMem = "0";
+		this.lowFps = 60;
+		this.avgFps = 60;
+		this._measureCount = 0;
+		this._totalFps = 0;
+		this._time = 0;
+		this._ticks = 0;
+		this._fpsMin = 60;
+		this._fpsMax = 60;
+		if(this._perfObj != null && ($_=this._perfObj,$bind($_,$_.now)) != null) this._startTime = this._perfObj.now(); else this._startTime = new Date().getTime();
+		this._prevTime = -Perf.MEASUREMENT_INTERVAL;
+	}
+	,_cancelRAF: function() {
+		Reflect.callMethod(window,this.CAF,[this._raf]);
+		this._raf = null;
+	}
+	,__class__: Perf
+};
+var Reflect = function() { };
+Reflect.__name__ = true;
+Reflect.field = function(o,field) {
+	try {
+		return o[field];
+	} catch( e ) {
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
+		return null;
+	}
+};
+Reflect.callMethod = function(o,func,args) {
+	return func.apply(o,args);
+};
 var Std = function() { };
 Std.__name__ = true;
 Std.string = function(s) {
@@ -213,6 +400,34 @@ Std.string = function(s) {
 };
 Std["int"] = function(x) {
 	return x | 0;
+};
+var Type = function() { };
+Type.__name__ = true;
+Type.createInstance = function(cl,args) {
+	var _g = args.length;
+	switch(_g) {
+	case 0:
+		return new cl();
+	case 1:
+		return new cl(args[0]);
+	case 2:
+		return new cl(args[0],args[1]);
+	case 3:
+		return new cl(args[0],args[1],args[2]);
+	case 4:
+		return new cl(args[0],args[1],args[2],args[3]);
+	case 5:
+		return new cl(args[0],args[1],args[2],args[3],args[4]);
+	case 6:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5]);
+	case 7:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
+	case 8:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
+	default:
+		throw new js__$Boot_HaxeError("Too many arguments");
+	}
+	return null;
 };
 var _$UInt_UInt_$Impl_$ = {};
 _$UInt_UInt_$Impl_$.__name__ = true;
@@ -341,7 +556,7 @@ flump_MoviePlayer.prototype = {
 		return value;
 	}
 	,labelExists: function(label) {
-		return this.symbol.labels.exists("label");
+		return this.symbol.labels.exists(label);
 	}
 	,advanceTime: function(ms) {
 		if(this.state != this.STATE_STOPPED) {
@@ -549,8 +764,6 @@ flump_library_FlumpLibrary.create = function(flumpData,resolution) {
 			++_g12;
 			var frame = new flump_library_Rectangle(textureSpec.rect[0],textureSpec.rect[1],textureSpec.rect[2],textureSpec.rect[3]);
 			var origin = new flump_library_Point(textureSpec.origin[0],textureSpec.origin[1]);
-			origin.x = origin.x / frame.width;
-			origin.y = origin.y / frame.height;
 			var symbol = new flump_library_SpriteSymbol();
 			symbol.name = textureSpec.symbol;
 			symbol.origin = origin;
@@ -1247,6 +1460,11 @@ js_Boot.__isNativeObj = function(o) {
 js_Boot.__resolveNativeClass = function(name) {
 	return $global[name];
 };
+var pixi_display_FlumpFactory = function() { };
+pixi_display_FlumpFactory.__name__ = true;
+pixi_display_FlumpFactory.prototype = {
+	__class__: pixi_display_FlumpFactory
+};
 var pixi_display_FlumpMovie = function(symbolId,resourceId) {
 	this.animationSpeed = 1.0;
 	this.ticker = PIXI.ticker.shared;
@@ -1407,7 +1625,7 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 		this.ticker.remove($bind(this,this.tick));
 	}
 	,createLayer: function(layer) {
-		var v = new pixi_display_PixiLayer();
+		var v = new PIXI.Container();
 		this.layers.set(layer,v);
 		v;
 		var v1 = this.layers.h[layer.__id__];
@@ -1437,14 +1655,25 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 	}
 	,renderFrame: function(keyframe,x,y,scaleX,scaleY,skewX,skewY) {
 		var layer = this.layers.h[keyframe.layer.__id__];
+		layer.pivot.x = keyframe.pivot.x;
+		layer.pivot.y = keyframe.pivot.y;
+		if(js_Boot.__instanceof(keyframe.symbol,flump_library_SpriteSymbol)) {
+			var spriteSymbol = keyframe.symbol;
+			layer.pivot.x -= spriteSymbol.origin.x;
+			layer.pivot.y -= spriteSymbol.origin.y;
+		}
 		layer.x = x;
 		layer.y = y;
 		layer.scale.x = scaleX;
 		layer.scale.y = scaleY;
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
-		layer.pivot.x = keyframe.pivot.x;
-		layer.pivot.y = keyframe.pivot.y;
+		if(this.master) {
+			layer.x /= this.resolution;
+			layer.y /= this.resolution;
+			layer.scale.x /= this.resolution;
+			layer.scale.y /= this.resolution;
+		}
 	}
 	,labelPassed: function(label) {
 		this.emit("labelPassed",label.name);
@@ -1502,16 +1731,17 @@ pixi_display_FlumpResource.getResourceForSprite = function(symbolId) {
 		var resource = $it0.next();
 		if(resource.library.sprites.exists(symbolId)) return resource;
 	}
-	throw new js__$Boot_HaxeError("Sprite: " + symbolId + "does not exists in any loaded flump resources.");
+	throw new js__$Boot_HaxeError("Sprite: " + symbolId + " does not exists in any loaded flump resources.");
 };
 pixi_display_FlumpResource.prototype = {
 	createMovie: function(id) {
-		var movie = new pixi_display_FlumpMovie(id,this.resourceId);
+		var movie;
+		if(pixi_display_FlumpResource.flumpFactory != null && pixi_display_FlumpResource.flumpFactory.displayClassExists(id)) movie = Type.createInstance(pixi_display_FlumpResource.flumpFactory.getMovieClass(id),[]); else movie = new pixi_display_FlumpMovie(id,this.resourceId);
 		movie.disableAsMaster();
 		return movie;
 	}
 	,createSprite: function(id) {
-		return new pixi_display_FlumpSprite(id,this.resourceId);
+		if(pixi_display_FlumpResource.flumpFactory != null && pixi_display_FlumpResource.flumpFactory.displayClassExists(id)) return Type.createInstance(pixi_display_FlumpResource.flumpFactory.getSpriteClass(id),[]); else return new pixi_display_FlumpSprite(id,this.resourceId);
 	}
 	,createDisplayObject: function(id) {
 		if(this.library.movies.exists(id)) return this.createMovie(id); else return this.createSprite(id);
@@ -1530,8 +1760,8 @@ var pixi_display_FlumpSprite = function(symbolId,resourceId) {
 	var symbol = resource.library.sprites.get(symbolId);
 	var texture = resource.textures.get(symbol.texture);
 	PIXI.Sprite.call(this,texture);
-	this.pivot.x = symbol.origin.x * this.resolution;
-	this.pivot.y = symbol.origin.y * this.resolution;
+	this.anchor.x = symbol.origin.x / texture.width;
+	this.anchor.y = symbol.origin.y / texture.height;
 };
 pixi_display_FlumpSprite.__name__ = true;
 pixi_display_FlumpSprite.__super__ = PIXI.Sprite;
@@ -1566,108 +1796,10 @@ pixi_display_FlumpSprite.prototype = $extend(PIXI.Sprite.prototype,{
 	}
 	,__class__: pixi_display_FlumpSprite
 });
-var pixi_display_PixiLayer = function() {
-	this.skew = new PIXI.Point();
-	PIXI.Container.call(this);
-};
-pixi_display_PixiLayer.__name__ = true;
-pixi_display_PixiLayer.__super__ = PIXI.Container;
-pixi_display_PixiLayer.prototype = $extend(PIXI.Container.prototype,{
-	updateTransform: function() {
-		
-            if (!this.visible)
-            {
-                return;
-            }
-		
-             // create some matrix refs for easy access
-            var pt = this.parent.worldTransform;
-            var wt = this.worldTransform;
-
-            // temporary matrix variables
-            var a, b, c, d, tx, ty,
-                rotY = this.rotation + this.skew.y,
-                rotX = this.rotation + this.skew.x;
-        ;
-		
-            // so if rotation is between 0 then we can simplify the multiplication process..
-            if (rotY % (Math.PI*2) || rotX % (Math.PI*2))
-            {
-                // check to see if the rotation is the same as the previous render. This means we only need to use sin and cos when rotation actually changes
-                if (rotX !== this._cachedRotX || rotY !== this._cachedRotY)
-                {
-                    // cache new values
-                    this._cachedRotX = rotX;
-                    this._cachedRotY = rotY;
-
-                    // recalculate expensive ops
-                    this._crA = Math.cos(rotY);
-                    this._srB = Math.sin(rotY);
-
-                    this._srC = Math.sin(-rotX);
-                    this._crD = Math.cos(rotX);
-                }
-
-                // get the matrix values of the displayobject based on its transform properties..
-                a  = this._crA * this.scale.x;
-                b  = this._srB * this.scale.x;
-                c  = this._srC * this.scale.y;
-                d  = this._crD * this.scale.y;
-                tx = this.position.x;
-                ty = this.position.y;
-
-                // check for pivot.. not often used so geared towards that fact!
-                //if (this.pivot.x || this.pivot.y)
-                //{
-                    tx -= this.pivot.x * a + this.pivot.y * c;
-                    ty -= this.pivot.x * b + this.pivot.y * d;
-                //}
-
-                // concat the parent matrix with the objects transform.
-                wt.a  = a  * pt.a + b  * pt.c;
-                wt.b  = a  * pt.b + b  * pt.d;
-                wt.c  = c  * pt.a + d  * pt.c;
-                wt.d  = c  * pt.b + d  * pt.d;
-                wt.tx = tx * pt.a + ty * pt.c + pt.tx;
-                wt.ty = tx * pt.b + ty * pt.d + pt.ty;
-            }
-            else
-            {
-                // lets do the fast version as we know there is no rotation..
-                a  = this.scale.x;
-                d  = this.scale.y;
-
-                tx = this.position.x - this.pivot.x * a;
-                ty = this.position.y - this.pivot.y * d;
-
-                wt.a  = a  * pt.a;
-                wt.b  = a  * pt.b;
-                wt.c  = d  * pt.c;
-                wt.d  = d  * pt.d;
-                wt.tx = tx * pt.a + ty * pt.c + pt.tx;
-                wt.ty = tx * pt.b + ty * pt.d + pt.ty;
-            }
-        ;
-		
-
-            // multiply the alphas..
-            this.worldAlpha = this.alpha * this.parent.worldAlpha;
-
-            // reset the bounds each time this is called!
-            this._currentBounds = null;
-        ;
-		
-            for (var i = 0, j = this.children.length; i < j; ++i)
-            {
-                this.children[i].updateTransform();
-            }   
-        ;
-	}
-	,__class__: pixi_display_PixiLayer
-});
 var pixi_loaders_FlumpParser = function() { };
 pixi_loaders_FlumpParser.__name__ = true;
-pixi_loaders_FlumpParser.flumpParser = function(resolution) {
+pixi_loaders_FlumpParser.flumpParser = function(resolution,loadFromCache) {
+	if(loadFromCache == null) loadFromCache = true;
 	return function(resource,next) {
 		if(resource.data == null || resource.isJson == false) return;
 		if(!Object.prototype.hasOwnProperty.call(resource.data,"md5") || !Object.prototype.hasOwnProperty.call(resource.data,"movies") || !Object.prototype.hasOwnProperty.call(resource.data,"textureGroups") || !Object.prototype.hasOwnProperty.call(resource.data,"frameRate")) return;
@@ -1680,6 +1812,7 @@ pixi_loaders_FlumpParser.flumpParser = function(resolution) {
 		while(_g < _g1.length) {
 			var atlasSpec = [_g1[_g]];
 			++_g;
+			if(loadFromCache) atlasSpec[0].file += ""; else atlasSpec[0].file += "?" + new Date().getTime();
 			atlasLoader.add(atlasSpec[0].file,null,(function(atlasSpec) {
 				return function(atlasResource) {
 					var atlasTexture = new PIXI.BaseTexture(atlasResource.data);
@@ -1733,6 +1866,23 @@ pixi_plugins_app_Application.AUTO = "auto";
 pixi_plugins_app_Application.RECOMMENDED = "recommended";
 pixi_plugins_app_Application.CANVAS = "canvas";
 pixi_plugins_app_Application.WEBGL = "webgl";
+Perf.MEASUREMENT_INTERVAL = 1000;
+Perf.FONT_FAMILY = "Helvetica,Arial";
+Perf.FPS_BG_CLR = "#00FF00";
+Perf.FPS_WARN_BG_CLR = "#FF8000";
+Perf.FPS_PROB_BG_CLR = "#FF0000";
+Perf.MS_BG_CLR = "#FFFF00";
+Perf.MEM_BG_CLR = "#086A87";
+Perf.INFO_BG_CLR = "#00FFFF";
+Perf.FPS_TXT_CLR = "#000000";
+Perf.MS_TXT_CLR = "#000000";
+Perf.MEM_TXT_CLR = "#FFFFFF";
+Perf.INFO_TXT_CLR = "#000000";
+Perf.TOP_LEFT = "TL";
+Perf.TOP_RIGHT = "TR";
+Perf.BOTTOM_LEFT = "BL";
+Perf.BOTTOM_RIGHT = "BR";
+Perf.DELAY_TIME = 4000;
 flump_library_Label.LABEL_ENTER = "labelEnter";
 flump_library_Label.LABEL_EXIT = "labelExit";
 flump_library_Label.LABEL_UPDATE = "labelUpdate";
@@ -1740,6 +1890,6 @@ haxe_ds_ObjectMap.count = 0;
 js_Boot.__toStr = {}.toString;
 pixi_display_FlumpResource.resources = new haxe_ds_StringMap();
 Main.main();
-})(typeof console != "undefined" ? console : {log:function(){}}, typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
+})(typeof console != "undefined" ? console : {log:function(){}}, typeof window != "undefined" ? window : exports, typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
 
 //# sourceMappingURL=bundle.js.map
