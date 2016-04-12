@@ -4,7 +4,6 @@ import flump.*;
 import flump.DisplayObjectKey;
 import flump.library.*;
 import flump.library.MovieSymbol;
-import pixi.core.sprites.Sprite;
 import pixi.display.FlumpResource;
 import pixi.extras.MovieClip;
 import pixi.core.display.Container;
@@ -14,7 +13,7 @@ import pixi.core.ticker.Ticker;
 
 
 @:access(pixi.display.FlumpResource)
-class FlumpMovie extends Sprite implements IFlumpMovie {
+class FlumpMovie extends Container implements IFlumpMovie {
 
 	public var player:MoviePlayer;
 	private var symbol:MovieSymbol;
@@ -29,10 +28,11 @@ class FlumpMovie extends Sprite implements IFlumpMovie {
 	private var resource:FlumpResource;
 	private var resourceId:String;
 	
+
 	public function new(symbolId:String, resourceId:String = null){
 		super();
 		this.resourceId = resourceId;
-		
+
 		if(resourceId == null){
 			resource = FlumpResource.getResourceForMovie(symbolId);
 			if(resource == null) throw("Flump movie does not exist: " + symbolId);

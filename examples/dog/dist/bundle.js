@@ -1477,7 +1477,7 @@ var pixi_display_FlumpMovie = function(symbolId,resourceId) {
 	this.movieChildren = new haxe_ds_ObjectMap();
 	this.layerLookup = new haxe_ds_StringMap();
 	this.layers = new haxe_ds_ObjectMap();
-	PIXI.Sprite.call(this);
+	PIXI.Container.call(this);
 	this.resourceId = resourceId;
 	if(resourceId == null) {
 		this.resource = pixi_display_FlumpResource.getResourceForMovie(symbolId);
@@ -1495,8 +1495,8 @@ var pixi_display_FlumpMovie = function(symbolId,resourceId) {
 };
 pixi_display_FlumpMovie.__name__ = true;
 pixi_display_FlumpMovie.__interfaces__ = [flump_IFlumpMovie];
-pixi_display_FlumpMovie.__super__ = PIXI.Sprite;
-pixi_display_FlumpMovie.prototype = $extend(PIXI.Sprite.prototype,{
+pixi_display_FlumpMovie.__super__ = PIXI.Container;
+pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 	disableAsMaster: function() {
 		this.master = false;
 		this.off("added",$bind(this,this.onAdded));
@@ -1694,7 +1694,7 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Sprite.prototype,{
 		}
 		this.symbol = null;
 		this.player = null;
-		PIXI.Sprite.prototype.destroy.call(this,true);
+		PIXI.Container.prototype.destroy.call(this,true);
 	}
 	,__class__: pixi_display_FlumpMovie
 });
