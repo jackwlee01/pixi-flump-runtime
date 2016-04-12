@@ -28,7 +28,6 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	private var resolution:Float;
 	private var resource:FlumpResource;
 	private var resourceId:String;
-	
 
 	public function new(symbolId:String, resourceId:String = null){
 		super();
@@ -267,6 +266,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	
 	private function createLayer(layer:Layer):Void{
 		layers[layer] = new Container();
+		layers[layer].name = layer.name;
 		layerLookup[layer.name] = layers[layer];
 		addChild(layers[layer]);
 	}
