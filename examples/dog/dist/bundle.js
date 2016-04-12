@@ -183,6 +183,7 @@ Main.__super__ = pixi_plugins_app_Application;
 Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
 	begin: function() {
 		var movie = new pixi_display_FlumpMovie("TestScene");
+		movie.set_tint(16771584);
 		movie.set_loop(true);
 		movie.animationSpeed = 1;
 		movie.gotoAndPlay(0);
@@ -1454,6 +1455,9 @@ js_Boot.__instanceof = function(o,cl) {
 		return o.__enum__ == cl;
 	}
 };
+js_Boot.__cast = function(o,t) {
+	if(js_Boot.__instanceof(o,t)) return o; else throw new js__$Boot_HaxeError("Cannot cast " + Std.string(o) + " to " + Std.string(t));
+};
 js_Boot.__nativeClassName = function(o) {
 	var name = js_Boot.__toStr.call(o).slice(8,-1);
 	if(name == "Object" || name == "Function" || name == "Math" || name == "JSON") return null;
@@ -1580,6 +1584,14 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 	}
 	,get_totalFrames: function() {
 		return this.player.get_totalFrames();
+	}
+	,set_tint: function(pTint) {
+		var $it0 = this.movieChildren.iterator();
+		while( $it0.hasNext() ) {
+			var child = $it0.next();
+			if(js_Boot.__instanceof(child,pixi_display_FlumpSprite)) (js_Boot.__cast(child , pixi_display_FlumpSprite)).tint = pTint; else if(js_Boot.__instanceof(child,pixi_display_FlumpMovie)) (js_Boot.__cast(child , pixi_display_FlumpMovie)).set_tint(pTint);
+		}
+		return this.tint = pTint;
 	}
 	,stop: function() {
 		this.player.stop();

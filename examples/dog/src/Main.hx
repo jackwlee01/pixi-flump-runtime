@@ -41,8 +41,9 @@ class Main extends Application{
 
 
 	public function begin(){
-		var movie = new FlumpMovie("TestScene");	
-		movie.loop = true;	
+		var movie = new FlumpMovie("TestScene");
+		movie.tint = 0xFFEA00;
+		movie.loop = true;
 		movie.animationSpeed = 1;
 		movie.gotoAndPlay(0);
 		stage.addChild(movie);

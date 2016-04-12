@@ -4,6 +4,7 @@ import flump.*;
 import flump.DisplayObjectKey;
 import flump.library.*;
 import flump.library.MovieSymbol;
+import pixi.core.sprites.Sprite;
 import pixi.display.FlumpResource;
 import pixi.extras.MovieClip;
 import pixi.core.display.Container;
@@ -177,8 +178,23 @@ class FlumpMovie extends Container implements IFlumpMovie {
 
 
 	public var totalFrames(get, null):Int;
-	private function get_totalFrames(){
+	
+	public var tint(default, set):Int;
+	
+	private function get_totalFrames() {
 		return player.totalFrames;
+	}
+	
+	private function set_tint(pTint:Int):Int {
+		for (child in movieChildren) {
+			if (Std.is(child, FlumpSprite)) {
+				cast(child, FlumpSprite).tint = pTint;
+			} else if (Std.is(child, FlumpMovie)) {
+				cast(child, FlumpMovie).tint = pTint;
+			}
+		}
+		
+		return tint = pTint;
 	}
 
 
