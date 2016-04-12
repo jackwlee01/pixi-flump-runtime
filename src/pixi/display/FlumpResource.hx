@@ -103,10 +103,14 @@ class FlumpResource{
 	}
 
 
-	private function createDisplayObject(id:String):DisplayObject{
-		return library.movies.exists(id)
+	private function createDisplayObject(id:String):DisplayObject {
+		var displayObject:DisplayObject = library.movies.exists(id)
 		? createMovie(id)
 		: createSprite(id);
+		
+		displayObject.name = id;
+		
+		return displayObject;
 	}
 
 }
