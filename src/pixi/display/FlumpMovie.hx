@@ -67,6 +67,12 @@ class FlumpMovie extends Container implements IFlumpMovie {
 
 	public var animationSpeed(default, default):Float = 1.0;
 
+	public var labels(get, null):Iterator<Label>;
+	public function get_labels():Iterator<Label>{
+		return player.labels;
+	}
+
+
 	public var resX(get, set):Float;
 	public function get_resX():Float{
 		return x / resolution;
@@ -212,8 +218,33 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	}
 
 
+	public function goto(frameNumber:Int):Void{
+		player.goToFrame(frameNumber);
+	}
+
+
+	public function gotoLabel(frameLabel:String):Void{
+		goto( getLabelFrame(frameLabel) );
+	}
+
+
+	public function gotoAndStopAtLabel(frameLabel:String):Void{
+		gotoAndStop( getLabelFrame(frameLabel) );
+	}
+
+
+	public function gotoAndPlayAtLabel(frameLabel:String):Void{
+		gotoAndPlay( getLabelFrame(frameLabel) );
+	}
+
+
 	public function getLabelFrame(label:String):UInt{
 		return player.getLabelFrame(label);
+	}
+
+
+	public function hasLabel(label:String):Bool{
+		return player.labelExists(label);
 	}
 
 

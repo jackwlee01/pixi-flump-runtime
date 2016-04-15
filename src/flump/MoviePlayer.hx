@@ -50,6 +50,12 @@ class MoviePlayer{
 	}
 
 
+	public var labels(get, null):Iterator<Label>;
+	public function get_labels():Iterator<Label>{
+		return symbol.labels.iterator();
+	}
+
+
 	public function getDisplayKey(layerId:String, keyframeIndex:UInt = 0):DisplayObjectKey{
 		var layer = symbol.getLayer(layerId);
 		if(layer == null) throw("Layer " + layerId + " does not exist.");
@@ -113,7 +119,7 @@ class MoviePlayer{
 		elapsed = time;
 		previousElapsed = time;
 		clearLabels();
-		fireLabels();
+		//fireLabels();
 		return this;
 	}
 
@@ -200,8 +206,6 @@ class MoviePlayer{
 			}
 		}
 		
-
-
 		var firstChecked = label;
 
 		while(label != null){
@@ -209,7 +213,6 @@ class MoviePlayer{
 			var checkTo = elapsed % symbol.duration;
 			if(label.keyframe.insideRangeStart(checkFrom, checkTo)){
 				labelsToFire.push(label);
-				//trace("pushed: " + label.keyframe.index + " || " + (checkFrom/symbol.library.frameTime) + " : " + (checkTo/symbol.library.frameTime));
 			}
 
 			label = label.next;
