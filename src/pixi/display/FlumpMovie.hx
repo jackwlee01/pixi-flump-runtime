@@ -349,6 +349,11 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	private function labelPassed(label:Label){
 		emit("labelPassed", label.name);
 	}
+
+
+	private function labelHit(label:Label){
+		emit("labelHit", label.name);
+	}
 	
 
 	override public function destroy(): Void {
