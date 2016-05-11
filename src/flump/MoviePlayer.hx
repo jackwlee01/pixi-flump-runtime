@@ -36,6 +36,7 @@ class MoviePlayer{
 
 	private var resolution:Float;
 
+
 	public function new(symbol:MovieSymbol, movie:IFlumpMovie, resolution:Float){
 		this.symbol = symbol;
 		this.movie = movie;

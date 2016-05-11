@@ -3,7 +3,7 @@ package pixi.display;
 import flump.library.FlumpLibrary;
 import pixi.core.sprites.Sprite;
 
-
+@:expose
 @:access(pixi.display.FlumpResource)
 class FlumpSprite extends Sprite{
 

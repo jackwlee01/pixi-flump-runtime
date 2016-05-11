@@ -11,7 +11,7 @@ import pixi.loaders.Resource;
 
 using Reflect;
 
-
+@:expose
 @:access(pixi.display.FlumpResource)
 class FlumpParser{
 

@@ -11,7 +11,7 @@ import pixi.core.display.DisplayObject;
 import pixi.core.math.Point;
 import pixi.core.ticker.Ticker;
 
-
+@:expose
 @:access(pixi.display.FlumpResource)
 class FlumpMovie extends Container implements IFlumpMovie {
 
@@ -247,7 +247,6 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	//
 	/////////////////////////////////////////////////////
 
-	
 	
 	private function createLayer(layer:Layer):Void{
 		layers[layer] = new Container();

@@ -15,7 +15,7 @@ import pixi.loaders.Loader;
 
 using Type;
 
-
+@:expose
 @:access(pixi.display.FlumpMovie)
 class FlumpResource{
 	

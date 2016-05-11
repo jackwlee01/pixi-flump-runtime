@@ -11,7 +11,6 @@ import pixi.loaders.Loader;
 
 
 class Main extends Application{
-
 	
 
 	public static function main():Void {
@@ -47,7 +46,6 @@ class Main extends Application{
 		movie.gotoAndPlay(0);
 		stage.addChild(movie);
 
-
 		/*
 		var placeholder = movie.getLayer("Placeholder");
 		var graphics = new Graphics();
@@ -55,8 +53,7 @@ class Main extends Application{
 		graphics.beginFill(0x009900);
 		graphics.drawCircle(100, 100, 100);
 		placeholder.addChild(graphics);
-		*/
-		
+		*/		
 	}
 
 
