@@ -6,6 +6,7 @@ import flump.library.MovieSymbol;
 import flump.library.Layer;
 import flump.library.Keyframe;
 import flump.library.Label;
+import haxe.ds.ObjectMap;
 using Std;
 
 
@@ -31,6 +32,8 @@ class MoviePlayer{
 	private var childPlayers = new Map<DisplayObjectKey, MoviePlayer>();
 
 	private var labelsToFire = new Array<Label>();
+	private var changed:Int = 0;
+	//private var labelsToIgnore = new ObjectMap<Label, Label>();
 	private var dirty:Bool = false;
 	private var fullyGenerated:Bool = false;
 
@@ -48,6 +51,12 @@ class MoviePlayer{
 
 		state = STATE_LOOPING;
 		advanceTime(0);
+	}
+
+
+	public var labels(get, null):Iterator<Label>;
+	public function get_labels():Iterator<Label>{
+		return symbol.labels.iterator();
 	}
 
 
@@ -100,13 +109,32 @@ class MoviePlayer{
 	public function goToLabel(label:String){
 		if(!labelExists(label)) throw("Symbol " + symbol.name + " does not have label " + label + "." );
 		currentFrame = getLabelFrame(label);
+		fireHitFrames(getLabelFrame(label));
+		//ignoreCurrentLabels();
 		return this;
 	}
 
 
 	public function goToFrame(frame:Int){
 		currentFrame = frame;
+		fireHitFrames(frame);
 		return this;
+	}
+
+
+	private function fireHitFrames(frame:Int){
+		changed++;
+		var current = changed;
+		var time = frame * symbol.library.frameTime;
+
+		for(layer in symbol.layers){
+			for(kf in layer.keyframes){
+				if(current != changed) return;
+				if(kf.label != null){
+					if(kf.timeInside(time)) movie.labelHit(kf.label);
+				}
+			}
+		}
 	}
 
 
@@ -114,7 +142,8 @@ class MoviePlayer{
 		elapsed = time;
 		previousElapsed = time;
 		clearLabels();
-		fireLabels();
+		//ignoreCurrentLabels();
+		//fireLabels();
 		return this;
 	}
 
@@ -142,6 +171,19 @@ class MoviePlayer{
 		return symbol.labels.get(label).keyframe.index;
 	}
 	
+	/*
+	private function ignoreCurrentLabels(){
+		for(layer in symbol.layers){
+			var kf = layer.getKeyframeForFrame(currentFrame);
+			if(kf != null){
+				if(kf.label != null){
+					labelsToIgnore.set(kf.label, kf.label);
+				}
+			}
+		}
+	}
+	*/
+
 
 	public var currentFrame(get, set):Int;
 	private function get_currentFrame():Int{
@@ -201,27 +243,32 @@ class MoviePlayer{
 			}
 		}
 		
-
-
 		var firstChecked = label;
 
 		while(label != null){
 			var checkFrom = previousElapsed % symbol.duration;
 			var checkTo = elapsed % symbol.duration;
-			if(label.keyframe.insideRangeStart(checkFrom, checkTo)){
+			if(label.keyframe.insideRangeStart(checkFrom, checkTo) && state != STATE_STOPPED){
 				labelsToFire.push(label);
-				//trace("pushed: " + label.keyframe.index + " || " + (checkFrom/symbol.library.frameTime) + " : " + (checkTo/symbol.library.frameTime));
 			}
 
 			label = label.next;
 			if(label == firstChecked) label = null;
 		}
-		
 
 		while(labelsToFire.length > 0){
-			movie.labelPassed(labelsToFire.shift());
+			var label = labelsToFire.shift();
+			movie.labelPassed(label);
 		}
 
+		/*
+		for(key in labelsToIgnore.keys()){
+			var label = labelsToIgnore.get(key);
+			labelsToIgnore.remove(key);
+			trace("Label fire: " + label.name);
+			movie.labelHit(label);
+		}
+		*/
 	}
 
 

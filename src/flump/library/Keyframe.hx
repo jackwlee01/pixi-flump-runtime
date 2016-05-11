@@ -48,7 +48,7 @@ class Keyframe{
 
 	// Does the start of the keyframe frames fall inside the range. (Checks for a range that wraps around)
 	public function insideRangeStart(from:Float, to:Float):Bool{
-		if(from == to && to == time) return true;
+		//if(from > to && to == time) return true;
 		return from <= to 
 			? time > from && time <= to
 			: time > from || time <= to;

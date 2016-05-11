@@ -18,7 +18,11 @@ class Layer{
 
 
 	public function getKeyframeForFrame(index:UInt):Keyframe{
-		for(keyframe in keyframes) if(keyframe.index == index) return keyframe;
+		for(keyframe in keyframes){
+			if(keyframe.index <= index && keyframe.index + keyframe.numFrames > index){
+				return keyframe;
+			}
+		}
 		return null;
 	}
 
