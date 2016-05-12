@@ -1,16 +1,11 @@
 package;
 	
-import flump.library.FlumpLibrary;
-import pixi.display.FlumpMovie;
 import pixi.plugins.app.Application;
 import pixi.loaders.Loader;
-import pixi.loaders.FlumpParser;
 
 
 class Main extends Application{
 
-	private var movies = new Array<FlumpMovie>();
-	
 
 	public static function main():Void {
 		new Main();
@@ -22,7 +17,7 @@ class Main extends Application{
 		super.start();
 
 		var loader = new Loader();
-		loader.after(FlumpParser.flumpParser(1));
+		loader.after(pixi.flump.Parser.parse(1));
 		loader.add("MonsterLibrary", "./flump-assets/library.json");
 		loader.once("complete", begin);
 		loader.load();
@@ -30,11 +25,10 @@ class Main extends Application{
 
 
 	public function begin(){
-		var monster = new FlumpMovie("walk");
+		var monster = new pixi.flump.Movie("walk");
 		stage.addChild(monster);
 		monster.x = 200;
 		monster.y = 200;
-		movies.push(monster);
 	}
 
 }

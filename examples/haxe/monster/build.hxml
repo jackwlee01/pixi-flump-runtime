@@ -1,4 +1,4 @@
--cp ../../src
+-cp ../../../src
 -cp ./src
 -js ./dist/bundle.js
 -main Main

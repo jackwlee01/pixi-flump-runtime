@@ -14,7 +14,7 @@ Pixi Flump Runtime is a library built for Pixi.js to support animation exported 
 - Pivot data
 - Multi resolution support (currently experimental)
 - Familiar and easy API
-- Documentation (coming soon)
+- Documentation (better documentation coming soon)
 
 ## Examples
 
@@ -26,3 +26,7 @@ The examples demonstrate the usage. In order to view the examples locally, ensur
 
 <a href="https://cdn.rawgit.com/jackwlee01/pixi-flump-runtime/master/examples/js/monster/bin/index.html"><img src="http://i.imgur.com/MAzJOL6.png"></a>
 <br><sub><a href="https://cdn.rawgit.com/jackwlee01/pixi-flump-runtime/master/examples/js/monster/bin/index.html">View the monster example</a></sub>
+
+## Documentation
+
+See the [wiki](https://github.com/jackwlee01/pixi-flump-runtime/wiki) for the complete api.

@@ -1,7 +1,4 @@
-(function (console, $hx_exports, $global) { "use strict";
-$hx_exports.pixi = $hx_exports.pixi || {};
-$hx_exports.pixi.loaders = $hx_exports.pixi.loaders || {};
-;$hx_exports.pixi.display = $hx_exports.pixi.display || {};
+(function (console, $global) { "use strict";
 function $extend(from, fields) {
 	function Inherit() {} Inherit.prototype = from; var proto = new Inherit();
 	for (var name in fields) proto[name] = fields[name];
@@ -65,14 +62,11 @@ Lambda.find = function(it,f) {
 var Main = function() { };
 Main.__name__ = true;
 Main.main = function() {
-	pixi_display_FlumpMovie;
-	pixi_display_FlumpSprite;
-	pixi_loaders_FlumpParser;
 	var global = PIXI;
 	global.flump = { };
-	global.flump.Movie = pixi_display_FlumpMovie;
-	global.flump.Sprite = pixi_display_FlumpSprite;
-	global.flump.Parser = pixi_loaders_FlumpParser.flumpParser;
+	global.flump.Movie = pixi_flump_Movie;
+	global.flump.Sprite = pixi_flump_Sprite;
+	global.flump.Parser = pixi_flump_Parser.parse;
 };
 Math.__name__ = true;
 var Std = function() { };
@@ -1170,12 +1164,12 @@ js_Boot.__isNativeObj = function(o) {
 js_Boot.__resolveNativeClass = function(name) {
 	return $global[name];
 };
-var pixi_display_FlumpFactory = function() { };
-pixi_display_FlumpFactory.__name__ = true;
-pixi_display_FlumpFactory.prototype = {
-	__class__: pixi_display_FlumpFactory
+var pixi_flump_Factory = function() { };
+pixi_flump_Factory.__name__ = true;
+pixi_flump_Factory.prototype = {
+	__class__: pixi_flump_Factory
 };
-var pixi_display_FlumpMovie = $hx_exports.pixi.display.FlumpMovie = function(symbolId,resourceId) {
+var pixi_flump_Movie = function(symbolId,resourceId) {
 	this.animationSpeed = 1.0;
 	this.ticker = PIXI.ticker.shared;
 	this.displaying = new haxe_ds_ObjectMap();
@@ -1185,10 +1179,10 @@ var pixi_display_FlumpMovie = $hx_exports.pixi.display.FlumpMovie = function(sym
 	PIXI.Container.call(this);
 	this.resourceId = resourceId;
 	if(resourceId == null) {
-		this.resource = pixi_display_FlumpResource.getResourceForMovie(symbolId);
+		this.resource = pixi_flump_Resource.getResourceForMovie(symbolId);
 		if(this.resource == null) throw new js__$Boot_HaxeError("Flump movie does not exist: " + symbolId);
 	} else {
-		this.resource = pixi_display_FlumpResource.get(resourceId);
+		this.resource = pixi_flump_Resource.get(resourceId);
 		if(this.resource == null) throw new js__$Boot_HaxeError("Flump resource does not exist: " + resourceId);
 	}
 	this.resolution = this.resource.resolution;
@@ -1198,10 +1192,10 @@ var pixi_display_FlumpMovie = $hx_exports.pixi.display.FlumpMovie = function(sym
 	this.master = true;
 	this.once("added",$bind(this,this.onAdded));
 };
-pixi_display_FlumpMovie.__name__ = true;
-pixi_display_FlumpMovie.__interfaces__ = [flump_IFlumpMovie];
-pixi_display_FlumpMovie.__super__ = PIXI.Container;
-pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
+pixi_flump_Movie.__name__ = true;
+pixi_flump_Movie.__interfaces__ = [flump_IFlumpMovie];
+pixi_flump_Movie.__super__ = PIXI.Container;
+pixi_flump_Movie.prototype = $extend(PIXI.Container.prototype,{
 	disableAsMaster: function() {
 		this.master = false;
 		this.off("added",$bind(this,this.onAdded));
@@ -1249,7 +1243,7 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 	,getChildMovie: function(layerId,keyframeIndex) {
 		if(keyframeIndex == null) keyframeIndex = 0;
 		var child = this.getChildDisplayObject(layerId,keyframeIndex);
-		if(js_Boot.__instanceof(child,pixi_display_FlumpMovie) == false) throw new js__$Boot_HaxeError("Child on layer " + layerId + " at keyframeIndex " + Std.string(_$UInt_UInt_$Impl_$.toFloat(keyframeIndex)) + " is not of type FlumpMovie!");
+		if(js_Boot.__instanceof(child,pixi_flump_Movie) == false) throw new js__$Boot_HaxeError("Child on layer " + layerId + " at keyframeIndex " + Std.string(_$UInt_UInt_$Impl_$.toFloat(keyframeIndex)) + " is not of type pixi.flump.Movie!");
 		return child;
 	}
 	,get_symbolId: function() {
@@ -1421,115 +1415,11 @@ pixi_display_FlumpMovie.prototype = $extend(PIXI.Container.prototype,{
 		this.player = null;
 		PIXI.Container.prototype.destroy.call(this,true);
 	}
-	,__class__: pixi_display_FlumpMovie
+	,__class__: pixi_flump_Movie
 });
-var pixi_display_FlumpResource = function(library,textures,resourceId,resolution) {
-	this.library = library;
-	this.textures = textures;
-	this.resourceId = resourceId;
-	this.resolution = resolution;
-};
-pixi_display_FlumpResource.__name__ = true;
-pixi_display_FlumpResource.exists = function(resourceName) {
-	return pixi_display_FlumpResource.resources.exists(resourceName);
-};
-pixi_display_FlumpResource.destroy = function(resourceName) {
-	if(pixi_display_FlumpResource.resources.exists(resourceName) == false) throw new js__$Boot_HaxeError("Cannot destroy FlumpResource: " + resourceName + " as it does not exist.");
-	var resource = pixi_display_FlumpResource.resources.get(resourceName);
-	var $it0 = resource.textures.iterator();
-	while( $it0.hasNext() ) {
-		var texture = $it0.next();
-		texture.destroy();
-	}
-	resource.library = null;
-	pixi_display_FlumpResource.resources.remove(resourceName);
-};
-pixi_display_FlumpResource.get = function(resourceName) {
-	if(!pixi_display_FlumpResource.resources.exists(resourceName)) throw new js__$Boot_HaxeError("Flump resource: " + resourceName + " does not exist.");
-	return pixi_display_FlumpResource.resources.get(resourceName);
-};
-pixi_display_FlumpResource.getResourceForMovie = function(symbolId) {
-	var $it0 = pixi_display_FlumpResource.resources.iterator();
-	while( $it0.hasNext() ) {
-		var resource = $it0.next();
-		if(resource.library.movies.exists(symbolId)) return resource;
-	}
-	throw new js__$Boot_HaxeError("Movie: " + symbolId + "does not exists in any loaded flump resources.");
-};
-pixi_display_FlumpResource.getResourceForSprite = function(symbolId) {
-	var $it0 = pixi_display_FlumpResource.resources.iterator();
-	while( $it0.hasNext() ) {
-		var resource = $it0.next();
-		if(resource.library.sprites.exists(symbolId)) return resource;
-	}
-	throw new js__$Boot_HaxeError("Sprite: " + symbolId + " does not exists in any loaded flump resources.");
-};
-pixi_display_FlumpResource.prototype = {
-	createMovie: function(id) {
-		var movie;
-		if(pixi_display_FlumpResource.flumpFactory != null && pixi_display_FlumpResource.flumpFactory.displayClassExists(id)) movie = Type.createInstance(pixi_display_FlumpResource.flumpFactory.getMovieClass(id),[]); else movie = new pixi_display_FlumpMovie(id,this.resourceId);
-		movie.disableAsMaster();
-		return movie;
-	}
-	,createSprite: function(id) {
-		if(pixi_display_FlumpResource.flumpFactory != null && pixi_display_FlumpResource.flumpFactory.displayClassExists(id)) return Type.createInstance(pixi_display_FlumpResource.flumpFactory.getSpriteClass(id),[]); else return new pixi_display_FlumpSprite(id,this.resourceId);
-	}
-	,createDisplayObject: function(id) {
-		if(this.library.movies.exists(id)) return this.createMovie(id); else return this.createSprite(id);
-	}
-	,__class__: pixi_display_FlumpResource
-};
-var pixi_display_FlumpSprite = $hx_exports.pixi.display.FlumpSprite = function(symbolId,resourceId) {
-	this.symbolId = symbolId;
-	this.resourceId = resourceId;
-	var resource;
-	if(resourceId != null) {
-		resource = pixi_display_FlumpResource.get(resourceId);
-		if(resource == null) throw new js__$Boot_HaxeError("Library: " + resourceId + "does has not been loaded.");
-	} else resource = pixi_display_FlumpResource.getResourceForSprite(symbolId);
-	this.resolution = resource.resolution;
-	var symbol = resource.library.sprites.get(symbolId);
-	var texture = resource.textures.get(symbol.texture);
-	PIXI.Sprite.call(this,texture);
-	this.anchor.x = symbol.origin.x / texture.width;
-	this.anchor.y = symbol.origin.y / texture.height;
-};
-pixi_display_FlumpSprite.__name__ = true;
-pixi_display_FlumpSprite.__super__ = PIXI.Sprite;
-pixi_display_FlumpSprite.prototype = $extend(PIXI.Sprite.prototype,{
-	get_resX: function() {
-		return this.x / this.resolution;
-	}
-	,set_resX: function(value) {
-		this.x = value * this.resolution;
-		return value;
-	}
-	,get_resY: function() {
-		return this.y / this.resolution;
-	}
-	,set_resY: function(value) {
-		this.y = value * this.resolution;
-		return value;
-	}
-	,get_resScaleX: function() {
-		return this.scale.x / this.resolution;
-	}
-	,set_resScaleX: function(value) {
-		this.scale.x = value * this.resolution;
-		return value;
-	}
-	,get_resScaleY: function() {
-		return this.scale.y / this.resolution;
-	}
-	,set_resScaleY: function(value) {
-		this.scale.y = value * this.resolution;
-		return value;
-	}
-	,__class__: pixi_display_FlumpSprite
-});
-var pixi_loaders_FlumpParser = $hx_exports.pixi.loaders.FlumpParser = function() { };
-pixi_loaders_FlumpParser.__name__ = true;
-pixi_loaders_FlumpParser.flumpParser = function(resolution,loadFromCache) {
+var pixi_flump_Parser = function() { };
+pixi_flump_Parser.__name__ = true;
+pixi_flump_Parser.parse = function(resolution,loadFromCache) {
 	if(loadFromCache == null) loadFromCache = true;
 	return function(resource,next) {
 		if(resource.data == null || resource.isJson == false) return;
@@ -1565,9 +1455,9 @@ pixi_loaders_FlumpParser.flumpParser = function(resolution,loadFromCache) {
 			})(atlasSpec));
 		}
 		atlasLoader.once("complete",function(loader) {
-			var flumpResource = new pixi_display_FlumpResource(lib,textures,resource.name,resolution);
+			var flumpResource = new pixi_flump_Resource(lib,textures,resource.name,resolution);
 			if(resource.name != null) {
-				pixi_display_FlumpResource.resources.set(resource.name,flumpResource);
+				pixi_flump_Resource.resources.set(resource.name,flumpResource);
 				flumpResource;
 			}
 			resource.data = flumpResource;
@@ -1576,6 +1466,110 @@ pixi_loaders_FlumpParser.flumpParser = function(resolution,loadFromCache) {
 		atlasLoader.load();
 	};
 };
+var pixi_flump_Resource = function(library,textures,resourceId,resolution) {
+	this.library = library;
+	this.textures = textures;
+	this.resourceId = resourceId;
+	this.resolution = resolution;
+};
+pixi_flump_Resource.__name__ = true;
+pixi_flump_Resource.exists = function(resourceName) {
+	return pixi_flump_Resource.resources.exists(resourceName);
+};
+pixi_flump_Resource.destroy = function(resourceName) {
+	if(pixi_flump_Resource.resources.exists(resourceName) == false) throw new js__$Boot_HaxeError("Cannot destroy FlumpResource: " + resourceName + " as it does not exist.");
+	var resource = pixi_flump_Resource.resources.get(resourceName);
+	var $it0 = resource.textures.iterator();
+	while( $it0.hasNext() ) {
+		var texture = $it0.next();
+		texture.destroy();
+	}
+	resource.library = null;
+	pixi_flump_Resource.resources.remove(resourceName);
+};
+pixi_flump_Resource.get = function(resourceName) {
+	if(!pixi_flump_Resource.resources.exists(resourceName)) throw new js__$Boot_HaxeError("Flump resource: " + resourceName + " does not exist.");
+	return pixi_flump_Resource.resources.get(resourceName);
+};
+pixi_flump_Resource.getResourceForMovie = function(symbolId) {
+	var $it0 = pixi_flump_Resource.resources.iterator();
+	while( $it0.hasNext() ) {
+		var resource = $it0.next();
+		if(resource.library.movies.exists(symbolId)) return resource;
+	}
+	throw new js__$Boot_HaxeError("Movie: " + symbolId + "does not exists in any loaded flump resources.");
+};
+pixi_flump_Resource.getResourceForSprite = function(symbolId) {
+	var $it0 = pixi_flump_Resource.resources.iterator();
+	while( $it0.hasNext() ) {
+		var resource = $it0.next();
+		if(resource.library.sprites.exists(symbolId)) return resource;
+	}
+	throw new js__$Boot_HaxeError("Sprite: " + symbolId + " does not exists in any loaded flump resources.");
+};
+pixi_flump_Resource.prototype = {
+	createMovie: function(id) {
+		var movie;
+		if(pixi_flump_Resource.flumpFactory != null && pixi_flump_Resource.flumpFactory.displayClassExists(id)) movie = Type.createInstance(pixi_flump_Resource.flumpFactory.getMovieClass(id),[]); else movie = new pixi_flump_Movie(id,this.resourceId);
+		movie.disableAsMaster();
+		return movie;
+	}
+	,createSprite: function(id) {
+		if(pixi_flump_Resource.flumpFactory != null && pixi_flump_Resource.flumpFactory.displayClassExists(id)) return Type.createInstance(pixi_flump_Resource.flumpFactory.getSpriteClass(id),[]); else return new pixi_flump_Sprite(id,this.resourceId);
+	}
+	,createDisplayObject: function(id) {
+		if(this.library.movies.exists(id)) return this.createMovie(id); else return this.createSprite(id);
+	}
+	,__class__: pixi_flump_Resource
+};
+var pixi_flump_Sprite = function(symbolId,resourceId) {
+	this.symbolId = symbolId;
+	this.resourceId = resourceId;
+	var resource;
+	if(resourceId != null) {
+		resource = pixi_flump_Resource.get(resourceId);
+		if(resource == null) throw new js__$Boot_HaxeError("Library: " + resourceId + "does has not been loaded.");
+	} else resource = pixi_flump_Resource.getResourceForSprite(symbolId);
+	this.resolution = resource.resolution;
+	var symbol = resource.library.sprites.get(symbolId);
+	var texture = resource.textures.get(symbol.texture);
+	PIXI.Sprite.call(this,texture);
+	this.anchor.x = symbol.origin.x / texture.width;
+	this.anchor.y = symbol.origin.y / texture.height;
+};
+pixi_flump_Sprite.__name__ = true;
+pixi_flump_Sprite.__super__ = PIXI.Sprite;
+pixi_flump_Sprite.prototype = $extend(PIXI.Sprite.prototype,{
+	get_resX: function() {
+		return this.x / this.resolution;
+	}
+	,set_resX: function(value) {
+		this.x = value * this.resolution;
+		return value;
+	}
+	,get_resY: function() {
+		return this.y / this.resolution;
+	}
+	,set_resY: function(value) {
+		this.y = value * this.resolution;
+		return value;
+	}
+	,get_resScaleX: function() {
+		return this.scale.x / this.resolution;
+	}
+	,set_resScaleX: function(value) {
+		this.scale.x = value * this.resolution;
+		return value;
+	}
+	,get_resScaleY: function() {
+		return this.scale.y / this.resolution;
+	}
+	,set_resScaleY: function(value) {
+		this.scale.y = value * this.resolution;
+		return value;
+	}
+	,__class__: pixi_flump_Sprite
+});
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
@@ -1598,8 +1592,6 @@ flump_library_Label.LABEL_EXIT = "labelExit";
 flump_library_Label.LABEL_UPDATE = "labelUpdate";
 haxe_ds_ObjectMap.count = 0;
 js_Boot.__toStr = {}.toString;
-pixi_display_FlumpResource.resources = new haxe_ds_StringMap();
+pixi_flump_Resource.resources = new haxe_ds_StringMap();
 Main.main();
-})(typeof console != "undefined" ? console : {log:function(){}}, typeof window != "undefined" ? window : exports, typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
-
-//# sourceMappingURL=pixi-flump.js.map
+})(typeof console != "undefined" ? console : {log:function(){}}, typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);

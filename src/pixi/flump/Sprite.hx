@@ -1,11 +1,10 @@
-package pixi.display;
+package pixi.flump;
 
 import flump.library.FlumpLibrary;
-import pixi.core.sprites.Sprite;
 
-@:expose
-@:access(pixi.display.FlumpResource)
-class FlumpSprite extends Sprite{
+
+@:access(pixi.flump.Resource)
+class Sprite extends pixi.core.sprites.Sprite{
 
 	public var symbolId:String;
 	public var resourceId:String;
@@ -16,12 +15,12 @@ class FlumpSprite extends Sprite{
 		this.symbolId = symbolId;
 		this.resourceId = resourceId;
 
-		var resource:FlumpResource;
+		var resource:Resource;
 		if(resourceId != null){
-			resource = FlumpResource.get(resourceId);
+			resource = Resource.get(resourceId);
 			if(resource == null) throw("Library: " + resourceId + "does has not been loaded.");
 		}else{
-			resource = FlumpResource.getResourceForSprite(symbolId);
+			resource = Resource.getResourceForSprite(symbolId);
 		}
 		this.resolution = resource.resolution;
 

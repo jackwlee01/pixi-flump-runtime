@@ -1,4 +1,4 @@
-package pixi.display;
+package pixi.flump;
 
 import flump.library.FlumpLibrary;
 import flump.library.SpriteSymbol;
@@ -6,7 +6,6 @@ import flump.library.MovieSymbol;
 import flump.library.Point;
 import pixi.core.math.shapes.Rectangle;
 import pixi.core.display.DisplayObject;
-import pixi.core.sprites.Sprite;
 import pixi.core.textures.BaseTexture;
 import pixi.core.textures.Texture;
 import pixi.core.ticker.Ticker;
@@ -15,19 +14,20 @@ import pixi.loaders.Loader;
 
 using Type;
 
-@:access(pixi.display.FlumpMovie)
-class FlumpResource{
+
+@:access(pixi.flump.Movie)
+class Resource{
 	
 	private var library:FlumpLibrary;
 	private var textures:Map<String, Texture>;
 	private var resourceId:String;
 	private var resolution:Float;
 
-	public static var flumpFactory:FlumpFactory;
+	public static var flumpFactory:Factory;
 
 
 
-	private static var resources = new Map<String, FlumpResource>();
+	private static var resources = new Map<String, Resource>();
 
 
 	public static function exists(resourceName:String){
@@ -51,7 +51,7 @@ class FlumpResource{
 	}
 
 	
-	private static function getResourceForMovie(symbolId:String):FlumpResource{
+	private static function getResourceForMovie(symbolId:String):Resource{
 		for(resource in resources){
 			if(resource.library.movies.exists(symbolId)){
 				return resource;
@@ -61,7 +61,7 @@ class FlumpResource{
 	}
 
 
-	private static function getResourceForSprite(symbolId:String):FlumpResource{
+	private static function getResourceForSprite(symbolId:String):Resource{
 		for(resource in resources){
 			if(resource.library.sprites.exists(symbolId)){
 				return resource;
@@ -80,12 +80,12 @@ class FlumpResource{
 	}
 
 
-	private function createMovie(id:String):FlumpMovie{
-		var movie:FlumpMovie;
+	private function createMovie(id:String):Movie{
+		var movie:Movie;
 		if(flumpFactory != null && flumpFactory.displayClassExists(id)){
 			movie = flumpFactory.getMovieClass(id).createInstance([]);
 		}else{
-			movie = new FlumpMovie(id, this.resourceId);
+			movie = new Movie(id, this.resourceId);
 		}
 
 		movie.disableAsMaster();
@@ -97,7 +97,7 @@ class FlumpResource{
 		if(flumpFactory != null && flumpFactory.displayClassExists(id)){
 			return flumpFactory.getSpriteClass(id).createInstance([]);
 		}else{
-			return new FlumpSprite(id, this.resourceId);
+			return new Sprite(id, this.resourceId);
 		}
 	}
 

@@ -1,7 +1,6 @@
-package pixi.loaders;
+package pixi.flump;
 
 import flump.library.FlumpLibrary;
-import pixi.display.FlumpResource;
 import pixi.core.math.Point;
 import pixi.core.math.shapes.Rectangle;
 import pixi.core.textures.Texture;
@@ -11,12 +10,11 @@ import pixi.loaders.Resource;
 
 using Reflect;
 
-@:expose
-@:access(pixi.display.FlumpResource)
-class FlumpParser{
+@:access(pixi.flump.Resource)
+class Parser{
 
 
-	public static function flumpParser(resolution:Float, ?loadFromCache:Bool = true){
+	public static function parse(resolution:Float, ?loadFromCache:Bool = true){
 		return function(resource:Resource, next:Void->Void){
 			if(resource.data == null || resource.isJson == false) return;
 			if(!resource.data.hasField("md5") || !resource.data.hasField("movies") || !resource.data.hasField("textureGroups") || !resource.data.hasField("frameRate")) return;
@@ -45,8 +43,8 @@ class FlumpParser{
 			
 
 			atlasLoader.once("complete", function(loader:Loader){
-				var flumpResource = new FlumpResource(lib, textures, resource.name, resolution);
-				if(resource.name != null) FlumpResource.resources[resource.name] = flumpResource;
+				var flumpResource = new pixi.flump.Resource(lib, textures, resource.name, resolution);
+				if(resource.name != null) pixi.flump.Resource.resources[resource.name] = flumpResource;
 				resource.data = flumpResource;
 				next();
 			});
