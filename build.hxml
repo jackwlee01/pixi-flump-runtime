@@ -2,4 +2,3 @@
 -js bin/pixi-flump.js
 -main Main
 -lib pixijs
--debug
