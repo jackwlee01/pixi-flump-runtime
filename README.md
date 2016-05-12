@@ -13,7 +13,7 @@ Pixi Flump Runtime is a library built for Pixi.js to support animation exported 
 - Frame labels with events
 - Pivot data
 - Multi resolution support (currently experimental)
-- Dead simple API
+- Familiar and easy API
 - Documentation (coming soon)
 
 ## Examples
