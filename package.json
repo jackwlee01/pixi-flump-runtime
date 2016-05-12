@@ -1,0 +1,32 @@
+{
+  "name": "pixi-flump-runtime",
+  "version": "1.0.0",
+  "description": "[Flump](https://github.com/tconkling/flump) is a Flash animation exporter that converts Sprites and nested MovieClip animations. It converts your graphics to sprite atlases along with an xml file that describes library and keyframe information.",
+  "main": "bin/pixi-flump.js",
+  "bin": {
+    "pixi-flump-runtime": "pixi-flump.js"
+  },
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jackwlee01/pixi-flump-runtime.git"
+  },
+  "keywords": [
+    "Flash",
+    "Animation",
+    "Pixi",
+    "PixiJS",
+    "Flump"
+  ],
+  "author": "Jack Lee",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jackwlee01/pixi-flump-runtime/issues"
+  },
+  "homepage": "https://github.com/jackwlee01/pixi-flump-runtime#readme"
+}
