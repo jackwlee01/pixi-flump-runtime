@@ -1,6 +1,4 @@
 (function (console, $hx_exports, $global) { "use strict";
-$hx_exports.pixi = $hx_exports.pixi || {};
-$hx_exports.pixi.flump = $hx_exports.pixi.flump || {};
 function $extend(from, fields) {
 	function Inherit() {} Inherit.prototype = from; var proto = new Inherit();
 	for (var name in fields) proto[name] = fields[name];
@@ -1499,7 +1497,7 @@ pixi_flump_Factory.__name__ = true;
 pixi_flump_Factory.prototype = {
 	__class__: pixi_flump_Factory
 };
-var pixi_flump_Movie = $hx_exports.pixi.flump.Movie = function(symbolId,resourceId) {
+var pixi_flump_Movie = function(symbolId,resourceId) {
 	this.animationSpeed = 1.0;
 	this.ticker = PIXI.ticker.shared;
 	this.displaying = new haxe_ds_ObjectMap();
@@ -1747,7 +1745,7 @@ pixi_flump_Movie.prototype = $extend(PIXI.Container.prototype,{
 	}
 	,__class__: pixi_flump_Movie
 });
-var pixi_flump_Parser = $hx_exports.pixi.flump.Parser = function() { };
+var pixi_flump_Parser = function() { };
 pixi_flump_Parser.__name__ = true;
 pixi_flump_Parser.parse = function(resolution,loadFromCache) {
 	if(loadFromCache == null) loadFromCache = true;
@@ -1852,7 +1850,7 @@ pixi_flump_Resource.prototype = {
 	}
 	,__class__: pixi_flump_Resource
 };
-var pixi_flump_Sprite = $hx_exports.pixi.flump.Sprite = function(symbolId,resourceId) {
+var pixi_flump_Sprite = function(symbolId,resourceId) {
 	this.symbolId = symbolId;
 	this.resourceId = resourceId;
 	var resource;

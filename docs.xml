@@ -396,7 +396,7 @@
 			<m n=":directlyUsed"/>
 		</meta>
 	</class>
-	<class path="Main" params="" file="./src/Main.hx"><main public="1" set="method" line="6" static="1">
+	<class path="Main" params="" file="./src/Main.hx"><main public="1" set="method" line="3" static="1">
 	<f a=""><x path="Void"/></f>
 	<meta>
 		<m n=":keep"/>
@@ -15366,42 +15366,42 @@
 		<resolution><x path="Float"/></resolution>
 		<resource><c path="pixi.flump.Resource"/></resource>
 		<resourceId><c path="String"/></resourceId>
-		<disableAsMaster set="method" line="56"><f a=""><x path="Void"/></f></disableAsMaster>
+		<disableAsMaster set="method" line="12"><f a=""><x path="Void"/></f></disableAsMaster>
 		<animationSpeed public="1" expr="1.0">
 			<x path="Float"/>
 			<meta><m n=":value"><e>1.0</e></m></meta>
 		</animationSpeed>
 		<labels public="1" get="accessor" set="null"><t path="Iterator"><c path="flump.library.Label"/></t></labels>
-		<get_labels public="1" set="method" line="72"><f a=""><t path="Iterator"><c path="flump.library.Label"/></t></f></get_labels>
+		<get_labels public="1" set="method" line="12"><f a=""><t path="Iterator"><c path="flump.library.Label"/></t></f></get_labels>
 		<resX public="1" get="accessor" set="accessor"><x path="Float"/></resX>
-		<get_resX public="1" set="method" line="78"><f a=""><x path="Float"/></f></get_resX>
-		<set_resX public="1" set="method" line="81"><f a="value">
+		<get_resX public="1" set="method" line="12"><f a=""><x path="Float"/></f></get_resX>
+		<set_resX public="1" set="method" line="12"><f a="value">
 	<x path="Float"/>
 	<x path="Float"/>
 </f></set_resX>
 		<resY public="1" get="accessor" set="accessor"><x path="Float"/></resY>
-		<get_resY public="1" set="method" line="87"><f a=""><x path="Float"/></f></get_resY>
-		<set_resY public="1" set="method" line="90"><f a="value">
+		<get_resY public="1" set="method" line="12"><f a=""><x path="Float"/></f></get_resY>
+		<set_resY public="1" set="method" line="12"><f a="value">
 	<x path="Float"/>
 	<x path="Float"/>
 </f></set_resY>
 		<resScaleX public="1" get="accessor" set="accessor"><x path="Float"/></resScaleX>
-		<get_resScaleX public="1" set="method" line="96"><f a=""><x path="Float"/></f></get_resScaleX>
-		<set_resScaleX public="1" set="method" line="99"><f a="value">
+		<get_resScaleX public="1" set="method" line="12"><f a=""><x path="Float"/></f></get_resScaleX>
+		<set_resScaleX public="1" set="method" line="12"><f a="value">
 	<x path="Float"/>
 	<x path="Float"/>
 </f></set_resScaleX>
 		<resScaleY public="1" get="accessor" set="accessor"><x path="Float"/></resScaleY>
-		<get_resScaleY public="1" set="method" line="105"><f a=""><x path="Float"/></f></get_resScaleY>
-		<set_resScaleY public="1" set="method" line="108"><f a="value">
+		<get_resScaleY public="1" set="method" line="12"><f a=""><x path="Float"/></f></get_resScaleY>
+		<set_resScaleY public="1" set="method" line="12"><f a="value">
 	<x path="Float"/>
 	<x path="Float"/>
 </f></set_resScaleY>
-		<getLayer public="1" set="method" line="116"><f a="layerId">
+		<getLayer public="1" set="method" line="12"><f a="layerId">
 	<c path="String"/>
 	<c path="pixi.core.display.Container"/>
 </f></getLayer>
-		<getChildDisplayObject public="1" set="method" line="122">
+		<getChildDisplayObject public="1" set="method" line="12">
 			<f a="layerId:?keyframeIndex" v=":0">
 				<c path="String"/>
 				<x path="UInt"/>
@@ -15409,7 +15409,7 @@
 			</f>
 			<meta><m n=":value"><e>{keyframeIndex:0}</e></m></meta>
 		</getChildDisplayObject>
-		<getChildMovie public="1" set="method" line="128">
+		<getChildMovie public="1" set="method" line="12">
 			<f a="layerId:?keyframeIndex" v=":0">
 				<c path="String"/>
 				<x path="UInt"/>
@@ -15418,106 +15418,106 @@
 			<meta><m n=":value"><e>{keyframeIndex:0}</e></m></meta>
 		</getChildMovie>
 		<symbolId public="1" get="accessor" set="null"><c path="String"/></symbolId>
-		<get_symbolId set="method" line="136"><f a=""><c path="String"/></f></get_symbolId>
+		<get_symbolId set="method" line="12"><f a=""><c path="String"/></f></get_symbolId>
 		<loop public="1" set="accessor"><x path="Bool"/></loop>
-		<set_loop set="method" line="141"><f a="value">
+		<set_loop set="method" line="12"><f a="value">
 	<x path="Bool"/>
 	<x path="Bool"/>
 </f></set_loop>
 		<onComplete public="1" set="accessor"><f a=""><x path="Void"/></f></onComplete>
-		<set_onComplete set="method" line="149"><f a="value">
+		<set_onComplete set="method" line="12"><f a="value">
 	<f a=""><x path="Void"/></f>
 	<f a=""><x path="Void"/></f>
 </f></set_onComplete>
 		<currentFrame public="1" get="accessor" set="accessor"><x path="Int"/></currentFrame>
-		<set_currentFrame set="method" line="154"><f a="value">
+		<set_currentFrame set="method" line="12"><f a="value">
 	<x path="Int"/>
 	<x path="Int"/>
 </f></set_currentFrame>
-		<get_currentFrame set="method" line="158"><f a=""><x path="Int"/></f></get_currentFrame>
+		<get_currentFrame set="method" line="12"><f a=""><x path="Int"/></f></get_currentFrame>
 		<playing public="1" get="accessor" set="null"><x path="Bool"/></playing>
-		<get_playing set="method" line="163"><f a=""><x path="Bool"/></f></get_playing>
+		<get_playing set="method" line="12"><f a=""><x path="Bool"/></f></get_playing>
 		<independantTimeline public="1" get="accessor" set="accessor"><x path="Bool"/></independantTimeline>
-		<get_independantTimeline set="method" line="169"><f a=""><x path="Bool"/></f></get_independantTimeline>
-		<set_independantTimeline set="method" line="172"><f a="value">
+		<get_independantTimeline set="method" line="12"><f a=""><x path="Bool"/></f></get_independantTimeline>
+		<set_independantTimeline set="method" line="12"><f a="value">
 	<x path="Bool"/>
 	<x path="Bool"/>
 </f></set_independantTimeline>
 		<independantControl public="1" get="accessor" set="accessor"><x path="Bool"/></independantControl>
-		<get_independantControl set="method" line="179"><f a=""><x path="Bool"/></f></get_independantControl>
-		<set_independantControl set="method" line="182"><f a="value">
+		<get_independantControl set="method" line="12"><f a=""><x path="Bool"/></f></get_independantControl>
+		<set_independantControl set="method" line="12"><f a="value">
 	<x path="Bool"/>
 	<x path="Bool"/>
 </f></set_independantControl>
 		<totalFrames public="1" get="accessor" set="null"><x path="Int"/></totalFrames>
-		<get_totalFrames set="method" line="189"><f a=""><x path="UInt"/></f></get_totalFrames>
-		<stop public="1" set="method" line="194"><f a=""><x path="Void"/></f></stop>
-		<play public="1" set="method" line="199"><f a=""><x path="Void"/></f></play>
-		<gotoAndStop public="1" set="method" line="205"><f a="frameNumber">
+		<get_totalFrames set="method" line="12"><f a=""><x path="UInt"/></f></get_totalFrames>
+		<stop public="1" set="method" line="12"><f a=""><x path="Void"/></f></stop>
+		<play public="1" set="method" line="12"><f a=""><x path="Void"/></f></play>
+		<gotoAndStop public="1" set="method" line="12"><f a="frameNumber">
 	<x path="Int"/>
 	<x path="Void"/>
 </f></gotoAndStop>
-		<gotoAndPlay public="1" set="method" line="214"><f a="frameNumber">
+		<gotoAndPlay public="1" set="method" line="12"><f a="frameNumber">
 	<x path="Int"/>
 	<x path="Void"/>
 </f></gotoAndPlay>
-		<goto public="1" set="method" line="224"><f a="frameNumber">
+		<goto public="1" set="method" line="12"><f a="frameNumber">
 	<x path="Int"/>
 	<x path="Void"/>
 </f></goto>
-		<gotoLabel public="1" set="method" line="229"><f a="frameLabel">
+		<gotoLabel public="1" set="method" line="12"><f a="frameLabel">
 	<c path="String"/>
 	<x path="Void"/>
 </f></gotoLabel>
-		<gotoAndStopAtLabel public="1" set="method" line="234"><f a="frameLabel">
+		<gotoAndStopAtLabel public="1" set="method" line="12"><f a="frameLabel">
 	<c path="String"/>
 	<x path="Void"/>
 </f></gotoAndStopAtLabel>
-		<gotoAndPlayAtLabel public="1" set="method" line="239"><f a="frameLabel">
+		<gotoAndPlayAtLabel public="1" set="method" line="12"><f a="frameLabel">
 	<c path="String"/>
 	<x path="Void"/>
 </f></gotoAndPlayAtLabel>
-		<getLabelFrame public="1" set="method" line="244"><f a="label">
+		<getLabelFrame public="1" set="method" line="12"><f a="label">
 	<c path="String"/>
 	<x path="UInt"/>
 </f></getLabelFrame>
-		<hasLabel public="1" set="method" line="249"><f a="label">
+		<hasLabel public="1" set="method" line="12"><f a="label">
 	<c path="String"/>
 	<x path="Bool"/>
 </f></hasLabel>
-		<tick set="method" line="260"><f a=""><x path="Void"/></f></tick>
-		<onAdded set="method" line="265"><f a="to">
+		<tick set="method" line="12"><f a=""><x path="Void"/></f></tick>
+		<onAdded set="method" line="12"><f a="to">
 	<t path="pixi.interaction.EventTarget"/>
 	<x path="Void"/>
 </f></onAdded>
-		<onRemoved set="method" line="271"><f a="from">
+		<onRemoved set="method" line="12"><f a="from">
 	<t path="pixi.interaction.EventTarget"/>
 	<x path="Void"/>
 </f></onRemoved>
-		<createLayer set="method" line="285"><f a="layer">
+		<createLayer set="method" line="12"><f a="layer">
 	<c path="flump.library.Layer"/>
 	<x path="Void"/>
 </f></createLayer>
-		<getChildPlayer set="method" line="292"><f a="keyframe">
+		<getChildPlayer set="method" line="12"><f a="keyframe">
 	<c path="flump.library.Keyframe"/>
 	<c path="flump.MoviePlayer"/>
 </f></getChildPlayer>
-		<createFlumpChild set="method" line="298"><f a="displayKey">
+		<createFlumpChild set="method" line="12"><f a="displayKey">
 	<c path="flump.DisplayObjectKey"/>
 	<x path="Void"/>
 </f></createFlumpChild>
-		<removeFlumpChild set="method" line="303"><f a="layer:displayKey">
+		<removeFlumpChild set="method" line="12"><f a="layer:displayKey">
 	<c path="flump.library.Layer"/>
 	<c path="flump.DisplayObjectKey"/>
 	<x path="Void"/>
 </f></removeFlumpChild>
-		<addFlumpChild set="method" line="309"><f a="layer:displayKey">
+		<addFlumpChild set="method" line="12"><f a="layer:displayKey">
 	<c path="flump.library.Layer"/>
 	<c path="flump.DisplayObjectKey"/>
 	<x path="Void"/>
 </f></addFlumpChild>
-		<onAnimationComplete set="method" line="315"><f a=""><x path="Void"/></f></onAnimationComplete>
-		<renderFrame set="method" line="320"><f a="keyframe:x:y:scaleX:scaleY:skewX:skewY">
+		<onAnimationComplete set="method" line="12"><f a=""><x path="Void"/></f></onAnimationComplete>
+		<renderFrame set="method" line="12"><f a="keyframe:x:y:scaleX:scaleY:skewX:skewY">
 	<c path="flump.library.Keyframe"/>
 	<x path="Float"/>
 	<x path="Float"/>
@@ -15527,16 +15527,16 @@
 	<x path="Float"/>
 	<x path="Void"/>
 </f></renderFrame>
-		<labelPassed set="method" line="351"><f a="label">
+		<labelPassed set="method" line="12"><f a="label">
 	<c path="flump.library.Label"/>
 	<x path="Void"/>
 </f></labelPassed>
-		<labelHit set="method" line="356"><f a="label">
+		<labelHit set="method" line="12"><f a="label">
 	<c path="flump.library.Label"/>
 	<x path="Void"/>
 </f></labelHit>
-		<destroy public="1" set="method" line="361" override="1"><f a=""><x path="Void"/></f></destroy>
-		<new public="1" set="method" line="32">
+		<destroy public="1" set="method" line="12" override="1"><f a=""><x path="Void"/></f></destroy>
+		<new public="1" set="method" line="12">
 			<f a="symbolId:?resourceId" v=":null">
 				<c path="String"/>
 				<c path="String"/>
