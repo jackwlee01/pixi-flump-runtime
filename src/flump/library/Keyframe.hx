@@ -22,7 +22,8 @@ class Keyframe{
 	public var ease:Float;
 	public var label:Label;
 	public var isEmpty:Bool;
-
+	public var alpha:Float;
+	
 	public var next:Keyframe;
 	public var prev:Keyframe;
 	public var nextNonEmptyKeyframe:Keyframe;

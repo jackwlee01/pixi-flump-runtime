@@ -35,8 +35,9 @@ class Sprite extends pixi.core.sprites.Sprite{
 		//pivot.x = symbol.origin.x;
 		//pivot.y = symbol.origin.y;
 	}
-
+	
 	public var resX(get, set):Float;
+	
 	public function get_resX():Float{
 		return x / resolution;
 	}

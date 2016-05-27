@@ -65,6 +65,7 @@ typedef KeyframeSpec = {
 	var ease:Float;
 	var tweened:Bool;
 	var label:String;
+	var alpha:Float;
 }
 
 
