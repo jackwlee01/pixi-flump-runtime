@@ -1,11 +1,11 @@
-package pixi.display;
+package pixi.flump;
 
 import flump.*;
 import flump.DisplayObjectKey;
 import flump.library.*;
 import flump.library.MovieSymbol;
 import pixi.core.sprites.Sprite;
-import pixi.display.FlumpResource;
+import pixi.flump.Resource;
 import pixi.extras.MovieClip;
 import pixi.core.display.Container;
 import pixi.core.display.DisplayObject;
@@ -13,8 +13,8 @@ import pixi.core.math.Point;
 import pixi.core.ticker.Ticker;
 
 
-@:access(pixi.display.FlumpResource)
-class FlumpMovie extends Container implements IFlumpMovie {
+@:access(pixi.flump.Resource)
+class Movie extends Container implements IFlumpMovie {
 
 	public var player:MoviePlayer;
 	private var symbol:MovieSymbol;
@@ -26,7 +26,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	private var master:Bool;
 
 	private var resolution:Float;
-	private var resource:FlumpResource;
+	private var resource:Resource;
 	private var resourceId:String;
 
 	public function new(symbolId:String, resourceId:String = null){
@@ -34,10 +34,10 @@ class FlumpMovie extends Container implements IFlumpMovie {
 		this.resourceId = resourceId;
 
 		if(resourceId == null){
-			resource = FlumpResource.getResourceForMovie(symbolId);
+			resource = Resource.getResourceForMovie(symbolId);
 			if(resource == null) throw("Flump movie does not exist: " + symbolId);
 		}else{
-			resource = FlumpResource.get(resourceId);
+			resource = Resource.get(resourceId);
 			if(resource == null) throw("Flump resource does not exist: " + resourceId);
 		}
 
@@ -116,9 +116,9 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	}
 
 
-	public function getChildMovie(layerId, keyframeIndex:UInt = 0):FlumpMovie{
+	public function getChildMovie(layerId, keyframeIndex:UInt = 0):Movie{
 		var child = getChildDisplayObject(layerId, keyframeIndex);
-		if(Std.is(child, FlumpMovie) == false) throw("Child on layer " + layerId + " at keyframeIndex " + keyframeIndex + " is not of type FlumpMovie!");
+		if(Std.is(child, Movie) == false) throw("Child on layer " + layerId + " at keyframeIndex " + keyframeIndex + " is not of type flump.Movie!");
 		return cast child;
 	}
 
@@ -186,10 +186,10 @@ class FlumpMovie extends Container implements IFlumpMovie {
 	
 	private function set_tint(pTint:Int):Int {
 		for (child in movieChildren) {
-			if (Std.is(child, FlumpSprite)) {
-				cast(child, FlumpSprite).tint = pTint;
-			} else if (Std.is(child, FlumpMovie)) {
-				cast(child, FlumpMovie).tint = pTint;
+			if (Std.is(child, pixi.flump.Sprite)) {
+				cast(child, pixi.flump.Sprite).tint = pTint;
+			} else if (Std.is(child, pixi.flump.Movie)) {
+				cast(child, pixi.flump.Movie).tint = pTint;
 			}
 		}
 		
@@ -273,7 +273,7 @@ class FlumpMovie extends Container implements IFlumpMovie {
 
 
 	private function getChildPlayer(keyframe:Keyframe):MoviePlayer{
-		var movie:FlumpMovie = cast movieChildren[keyframe.displayKey];
+		var movie:Movie = cast movieChildren[keyframe.displayKey];
 		return movie.player;
 	}
 
@@ -334,6 +334,10 @@ class FlumpMovie extends Container implements IFlumpMovie {
 
 	private function labelPassed(label:Label){
 		emit("labelPassed", label.name);
+	}
+	
+		private function labelHit(label:Label){
+		emit("labelHit", label.name);
 	}
 	
 
