@@ -1,10 +1,17 @@
 package;
-
+	
+import flump.library.FlumpLibrary;
+import pixi.display.FlumpMovie;
+import pixi.display.FlumpSprite;
 import pixi.plugins.app.Application;
+import pixi.loaders.FlumpParser;
+import pixi.interaction.InteractionManager;
+import pixi.core.graphics.Graphics;
 import pixi.loaders.Loader;
 
 
 class Main extends Application{
+
 	
 
 	public static function main():Void {
@@ -26,7 +33,7 @@ class Main extends Application{
 
 		var loader = new Loader();
 
-		loader.after(pixi.flump.Parser.parse(1));
+		loader.after(FlumpParser.flumpParser(1));
 		loader.add("DogLibrary", "./flump-assets/dog/library.json");
 		loader.once("complete", begin);
 		loader.load();
@@ -34,20 +41,23 @@ class Main extends Application{
 
 
 	public function begin(){
-		var movie = new pixi.flump.Movie("TestScene");	
-		movie.loop = true;	
+		var movie = new FlumpMovie("TestScene");
+		movie.tint = 0xFFEA00;
+		movie.loop = true;
 		movie.animationSpeed = 1;
 		movie.gotoAndPlay(0);
 		stage.addChild(movie);
 
+
 		/*
 		var placeholder = movie.getLayer("Placeholder");
-		var graphics = new pixi.core.Graphics();
+		var graphics = new Graphics();
 		graphics.lineColor = 0x990000;
 		graphics.beginFill(0x009900);
 		graphics.drawCircle(100, 100, 100);
 		placeholder.addChild(graphics);
-		*/		
+		*/
+		
 	}
 
 
