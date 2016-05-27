@@ -1,7 +1,7 @@
 
 -cp ./src
 -js bin/pixi-flump.js
--main Main
+-main PixiFlumpMain
 -lib pixijs
 
 --macro include('pixi.flump')

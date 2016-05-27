@@ -1,7 +1,7 @@
 package;
 
 
-class Main{
+class PixiFlumpMain{
 
 	public static function main():Void {
 		var global:Dynamic = untyped __js__("PIXI");
