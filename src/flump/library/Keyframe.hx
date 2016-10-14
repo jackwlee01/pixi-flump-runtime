@@ -23,7 +23,8 @@ class Keyframe{
 	public var label:Label;
 	public var isEmpty:Bool;
 	public var alpha:Float;
-	
+	public var data:Dynamic;
+	public var tint:Int;
 	public var next:Keyframe;
 	public var prev:Keyframe;
 	public var nextNonEmptyKeyframe:Keyframe;
