@@ -9,6 +9,7 @@ class Sprite extends pixi.core.sprites.Sprite{
 	public var symbolId:String;
 	public var resourceId:String;
 	private var resolution:Float;
+	private var data:Dynamic;
 	
 
 	public function new(symbolId:String, resourceId:String = null){
@@ -72,6 +73,14 @@ class Sprite extends pixi.core.sprites.Sprite{
 		scale.y = value * resolution;
 		return value;
 	}
-
-
+	
+	/////////////////////////////////////////////////////
+	//
+	//   custom Data
+	//
+	/////////////////////////////////////////////////////
+	
+	public function getCustomData (): Dynamic {
+		return data;
+	}
 }
