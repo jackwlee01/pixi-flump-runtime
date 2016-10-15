@@ -74,6 +74,7 @@ class FlumpLibrary{
 			for(layerSpec in movieSpec.layers){
 				var layer = new Layer(layerSpec.name);
 				layer.movie = symbol;
+				layer.mask = layerSpec.mask;
 				var layerDuration:Float = 0;
 				var previousKeyframe:Keyframe = null;
 				for(keyframeSpec in layerSpec.keyframes){

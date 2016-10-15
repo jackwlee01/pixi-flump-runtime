@@ -336,6 +336,9 @@ class Movie extends Container implements IFlumpMovie {
 		}
 	}
 
+	private function setMask(layer:Layer):Void{
+		if (layer.mask != null) layers[layer].mask = getLayer(layer.mask).getChildAt(0);		
+	}
 
 	private function labelPassed(label:Label){
 		emit("labelPassed", label.name);

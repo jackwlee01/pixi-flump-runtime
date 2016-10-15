@@ -7,6 +7,7 @@ class Layer{
 	public var name:String;
 	public var movie:MovieSymbol;
 	public var numFrames:UInt;
+	public var mask:String;
 
 	public var firstKeyframe:Keyframe;
 	public var lastKeyframe:Keyframe;

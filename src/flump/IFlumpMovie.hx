@@ -7,6 +7,7 @@ import flump.library.*;
 interface IFlumpMovie{
 
 	private function createLayer(layer:Layer):Void;
+	private function setMask(layer:Layer):Void;
 	private function createFlumpChild(displayKey:DisplayObjectKey):Void;
 	private function removeFlumpChild(layer:Layer, displayKey:DisplayObjectKey):Void;
 	private function addFlumpChild(layer:Layer, displayKey:DisplayObjectKey):Void;
