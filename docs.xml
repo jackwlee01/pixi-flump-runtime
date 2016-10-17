@@ -396,13 +396,6 @@
 			<m n=":directlyUsed"/>
 		</meta>
 	</class>
-	<class path="Main" params="" file="./src/Main.hx"><main public="1" set="method" line="3" static="1">
-	<f a=""><x path="Void"/></f>
-	<meta>
-		<m n=":keep"/>
-		<m n=":has_untyped"/>
-	</meta>
-</main></class>
 	<abstract path="Map" params="K:V" file="/usr/local/lib/haxe/std/Map.hx">
 		<from>
 			<icast field="fromStringMap"><c path="haxe.ds.StringMap"><c path="fromStringMap.V"/></c></icast>
@@ -455,12 +448,23 @@
 	<x path="Float"/>
 	<x path="Int"/>
 </f></floor>
+		<round public="1" set="method" static="1"><f a="v">
+	<x path="Float"/>
+	<x path="Int"/>
+</f></round>
 		<meta>
 			<m n=":keep"/>
 			<m n=":directlyUsed"/>
 			<m n=":keepInit"/>
 		</meta>
 	</class>
+	<class path="PixiFlumpMain" params="" file="./src/PixiFlumpMain.hx"><main public="1" set="method" line="6" static="1">
+	<f a=""><x path="Void"/></f>
+	<meta>
+		<m n=":keep"/>
+		<m n=":has_untyped"/>
+	</meta>
+</main></class>
 	<class path="String" params="" file="/usr/local/lib/haxe/std/js/_std/String.hx" extern="1">
 		<fromCharCode public="1" set="method" static="1">
 			<f a="code">
@@ -665,6 +669,31 @@
 
 		If `x` is outside of the signed Int32 range, or is `NaN`, `NEGATIVE_INFINITY` or `POSITIVE_INFINITY`, the result is unspecified.</haxe_doc>
 		</int>
+		<parseInt public="1" set="method" line="43" static="1">
+			<f a="x">
+				<c path="String"/>
+				<t path="Null"><x path="Int"/></t>
+			</f>
+			<meta><m n=":has_untyped"/></meta>
+			<haxe_doc>Converts a `String` to an `Int`.
+
+		Leading whitespaces are ignored.
+
+		If `x` starts with 0x or 0X, hexadecimal notation is recognized where the following digits may
+		contain 0-9 and A-F.
+
+		Otherwise `x` is read as decimal number with 0-9 being allowed characters. `x` may also start with
+		a - to denote a negative value.
+
+		In decimal mode, parsing continues until an invalid character is detected, in which case the
+		result up to that point is returned. For hexadecimal notation, the effect of invalid characters
+		is unspecified.
+
+		Leading 0s that are not part of the 0x/0X hexadecimal notation are ignored, which means octal
+		notation is not supported.
+
+		If the input cannot be recognized, the result is `null`.</haxe_doc>
+		</parseInt>
 		<haxe_doc>The Std class provides standard methods for manipulating basic types.</haxe_doc>
 		<meta>
 			<m n=":keep"/>
@@ -772,6 +801,34 @@
 	</typedef>
 	<class path="ArrayAccess" params="T" file="/usr/local/lib/haxe/std/StdTypes.hx" module="StdTypes" extern="1" interface="1"><haxe_doc>ArrayAccess is used to indicate a class that can be accessed using brackets.
 	The type parameter represents the type of the elements stored.</haxe_doc></class>
+	<class path="StringTools" params="" file="/usr/local/lib/haxe/std/StringTools.hx">
+		<replace public="1" set="method" line="312" static="1">
+			<f a="s:sub:by">
+				<c path="String"/>
+				<c path="String"/>
+				<c path="String"/>
+				<c path="String"/>
+			</f>
+			<haxe_doc>Replace all occurences of the String `sub` in the String `s` by the
+		String `by`.
+
+		If `sub` is the empty String "", `by` is inserted after each character
+		of `s`. If `by` is also the empty String "", `s` remains unchanged.
+
+		This is a convenience function for `s.split(sub).join(by)`.
+
+		If `sub` or `by` are null, the result is unspecified.</haxe_doc>
+		</replace>
+		<haxe_doc>This class provides advanced methods on Strings. It is ideally used with
+	'using StringTools' and then acts as an extension to the String class.
+
+	If the first argument to any of the methods is null, the result is
+	unspecified.</haxe_doc>
+		<meta>
+			<m n=":keep"/>
+			<m n=":directlyUsed"/>
+		</meta>
+	</class>
 	<class path="Type" params="" file="/usr/local/lib/haxe/std/js/_std/Type.hx">
 		<createInstance public="1" params="T" set="method" line="79" static="1">
 			<f a="cl:args">
@@ -893,6 +950,10 @@
 	<c path="flump.library.Layer"/>
 	<x path="Void"/>
 </f></createLayer>
+		<setMask set="method"><f a="layer">
+	<c path="flump.library.Layer"/>
+	<x path="Void"/>
+</f></setMask>
 		<createFlumpChild set="method"><f a="displayKey">
 	<c path="flump.DisplayObjectKey"/>
 	<x path="Void"/>
@@ -907,7 +968,7 @@
 	<c path="flump.DisplayObjectKey"/>
 	<x path="Void"/>
 </f></addFlumpChild>
-		<renderFrame set="method"><f a="keyframe:x:y:scaleX:scaleY:skewX:skewY">
+		<renderFrame set="method"><f a="keyframe:x:y:scaleX:scaleY:skewX:skewY:alpha:tint">
 	<c path="flump.library.Keyframe"/>
 	<x path="Float"/>
 	<x path="Float"/>
@@ -915,6 +976,8 @@
 	<x path="Float"/>
 	<x path="Float"/>
 	<x path="Float"/>
+	<x path="Float"/>
+	<x path="Int"/>
 	<x path="Void"/>
 </f></renderFrame>
 		<getChildPlayer set="method"><f a="keyframe">
@@ -1007,8 +1070,8 @@
 		</fullyGenerated>
 		<resolution><x path="Float"/></resolution>
 		<labels public="1" get="accessor" set="null"><t path="Iterator"><c path="flump.library.Label"/></t></labels>
-		<get_labels public="1" set="method" line="58"><f a=""><t path="Iterator"><c path="flump.library.Label"/></t></f></get_labels>
-		<getDisplayKey public="1" set="method" line="63">
+		<get_labels public="1" set="method" line="59"><f a=""><t path="Iterator"><c path="flump.library.Label"/></t></f></get_labels>
+		<getDisplayKey public="1" set="method" line="64">
 			<f a="layerId:?keyframeIndex" v=":0">
 				<c path="String"/>
 				<x path="UInt"/>
@@ -1016,81 +1079,81 @@
 			</f>
 			<meta><m n=":value"><e>{keyframeIndex:0}</e></m></meta>
 		</getDisplayKey>
-		<reset set="method" line="73"><f a=""><x path="Void"/></f></reset>
+		<reset set="method" line="74"><f a=""><x path="Void"/></f></reset>
 		<position get="accessor" set="null" expr="0.0">
 			<x path="Float"/>
 			<meta><m n=":value"><e>0.0</e></m></meta>
 		</position>
-		<get_position public="1" set="method" line="80"><f a=""><x path="Float"/></f></get_position>
+		<get_position public="1" set="method" line="81"><f a=""><x path="Float"/></f></get_position>
 		<totalFrames public="1" get="accessor" set="null"><x path="UInt"/></totalFrames>
-		<get_totalFrames set="method" line="86"><f a=""><x path="UInt"/></f></get_totalFrames>
-		<play public="1" set="method" line="91"><f a=""><c path="flump.MoviePlayer"/></f></play>
-		<loop public="1" set="method" line="97"><f a=""><c path="flump.MoviePlayer"/></f></loop>
-		<stop public="1" set="method" line="103"><f a=""><c path="flump.MoviePlayer"/></f></stop>
-		<goToLabel public="1" set="method" line="109"><f a="label">
+		<get_totalFrames set="method" line="87"><f a=""><x path="UInt"/></f></get_totalFrames>
+		<play public="1" set="method" line="92"><f a=""><c path="flump.MoviePlayer"/></f></play>
+		<loop public="1" set="method" line="98"><f a=""><c path="flump.MoviePlayer"/></f></loop>
+		<stop public="1" set="method" line="104"><f a=""><c path="flump.MoviePlayer"/></f></stop>
+		<goToLabel public="1" set="method" line="110"><f a="label">
 	<c path="String"/>
 	<c path="flump.MoviePlayer"/>
 </f></goToLabel>
-		<goToFrame public="1" set="method" line="118"><f a="frame">
+		<goToFrame public="1" set="method" line="119"><f a="frame">
 	<x path="Int"/>
 	<c path="flump.MoviePlayer"/>
 </f></goToFrame>
-		<fireHitFrames set="method" line="125"><f a="frame">
+		<fireHitFrames set="method" line="126"><f a="frame">
 	<x path="Int"/>
 	<x path="Void"/>
 </f></fireHitFrames>
-		<goToPosition public="1" set="method" line="141"><f a="time">
+		<goToPosition public="1" set="method" line="142"><f a="time">
 	<x path="Float"/>
 	<c path="flump.MoviePlayer"/>
 </f></goToPosition>
 		<playing public="1" get="accessor" set="null"><x path="Bool"/></playing>
-		<get_playing set="method" line="152"><f a=""><x path="Bool"/></f></get_playing>
+		<get_playing set="method" line="153"><f a=""><x path="Bool"/></f></get_playing>
 		<looping public="1" get="accessor" set="null"><x path="Bool"/></looping>
-		<get_looping set="method" line="158"><f a=""><x path="Bool"/></f></get_looping>
+		<get_looping set="method" line="159"><f a=""><x path="Bool"/></f></get_looping>
 		<stopped public="1" get="accessor" set="null"><x path="Bool"/></stopped>
-		<get_stopped set="method" line="164"><f a=""><x path="Bool"/></f></get_stopped>
-		<getLabelFrame public="1" set="method" line="169"><f a="label">
+		<get_stopped set="method" line="165"><f a=""><x path="Bool"/></f></get_stopped>
+		<getLabelFrame public="1" set="method" line="170"><f a="label">
 	<c path="String"/>
 	<x path="UInt"/>
 </f></getLabelFrame>
 		<currentFrame public="1" get="accessor" set="accessor"><x path="Int"/></currentFrame>
-		<get_currentFrame set="method" line="189"><f a=""><x path="Int"/></f></get_currentFrame>
-		<set_currentFrame set="method" line="192"><f a="value">
+		<get_currentFrame set="method" line="190"><f a=""><x path="Int"/></f></get_currentFrame>
+		<set_currentFrame set="method" line="193"><f a="value">
 	<x path="Int"/>
 	<x path="Int"/>
 </f></set_currentFrame>
-		<labelExists public="1" set="method" line="198"><f a="label">
+		<labelExists public="1" set="method" line="199"><f a="label">
 	<c path="String"/>
 	<x path="Bool"/>
 </f></labelExists>
-		<advanceTime public="1" set="method" line="203"><f a="ms">
+		<advanceTime public="1" set="method" line="204"><f a="ms">
 	<x path="Float"/>
 	<x path="Void"/>
 </f></advanceTime>
-		<clearLabels set="method" line="218"><f a=""><x path="Void"/></f></clearLabels>
-		<fireLabels set="method" line="223"><f a=""><x path="Void"/></f></fireLabels>
-		<render set="method" line="276"><f a=""><x path="Void"/></f></render>
-		<createChildIfNessessary set="method" line="336"><f a="keyframe">
+		<clearLabels set="method" line="219"><f a=""><x path="Void"/></f></clearLabels>
+		<fireLabels set="method" line="224"><f a=""><x path="Void"/></f></fireLabels>
+		<render set="method" line="277"><f a=""><x path="Void"/></f></render>
+		<createChildIfNessessary set="method" line="354"><f a="keyframe">
 	<c path="flump.library.Keyframe"/>
 	<x path="Void"/>
 </f></createChildIfNessessary>
-		<removeChildIfNessessary set="method" line="345"><f a="keyframe">
+		<removeChildIfNessessary set="method" line="363"><f a="keyframe">
 	<c path="flump.library.Keyframe"/>
 	<x path="Void"/>
 </f></removeChildIfNessessary>
-		<addChildIfNessessary set="method" line="353"><f a="keyframe">
+		<addChildIfNessessary set="method" line="371"><f a="keyframe">
 	<c path="flump.library.Keyframe"/>
 	<x path="Void"/>
 </f></addChildIfNessessary>
-		<setState set="method" line="367"><f a="state">
+		<setState set="method" line="385"><f a="state">
 	<c path="String"/>
 	<x path="Void"/>
 </f></setState>
-		<timeForLabel set="method" line="385"><f a="label">
+		<timeForLabel set="method" line="403"><f a="label">
 	<c path="String"/>
 	<x path="Float"/>
 </f></timeForLabel>
-		<getInterpolation set="method" line="390"><f a="keyframe:time">
+		<getInterpolation set="method" line="408"><f a="keyframe:time">
 	<c path="flump.library.Keyframe"/>
 	<x path="Float"/>
 	<x path="Float"/>
@@ -1258,10 +1321,15 @@
 	<typedef path="flump.json.MovieSpec" params="" file="./src/flump/json/FlumpJSON.hx" module="flump.json.FlumpJSON"><a>
 	<layers><c path="Array"><t path="flump.json.LayerSpec"/></c></layers>
 	<id><t path="flump.json.ReferenceSpec"/></id>
+	<data>
+		<t path="Null"><d/></t>
+		<meta><m n=":optional"/></meta>
+	</data>
 </a></typedef>
 	<typedef path="flump.json.ReferenceSpec" params="" file="./src/flump/json/FlumpJSON.hx" module="flump.json.FlumpJSON"><c path="String"/></typedef>
 	<typedef path="flump.json.KeyframeSpec" params="" file="./src/flump/json/FlumpJSON.hx" module="flump.json.FlumpJSON"><a>
 	<tweened><x path="Bool"/></tweened>
+	<tint><c path="Array"><d/></c></tint>
 	<skew><x path="flump.json.FlumpPointSpec"/></skew>
 	<scale><x path="flump.json.FlumpPointSpec"/></scale>
 	<ref><t path="flump.json.ReferenceSpec"/></ref>
@@ -1271,11 +1339,20 @@
 	<index><x path="UInt"/></index>
 	<ease><x path="Float"/></ease>
 	<duration><x path="UInt"/></duration>
+	<data>
+		<t path="Null"><d/></t>
+		<meta><m n=":optional"/></meta>
+	</data>
+	<alpha><x path="Float"/></alpha>
 </a></typedef>
 	<typedef path="flump.json.TextureSpec" params="" file="./src/flump/json/FlumpJSON.hx" module="flump.json.FlumpJSON"><a>
 	<symbol><t path="flump.json.ReferenceSpec"/></symbol>
 	<rect><x path="flump.json.FlumpRectSpec"/></rect>
 	<origin><x path="flump.json.FlumpPointSpec"/></origin>
+	<data>
+		<t path="Null"><d/></t>
+		<meta><m n=":optional"/></meta>
+	</data>
 </a></typedef>
 	<typedef path="flump.json.TextureGroupSpec" params="" file="./src/flump/json/FlumpJSON.hx" module="flump.json.FlumpJSON"><a>
 	<scaleFactor><x path="UInt"/></scaleFactor>
@@ -1287,6 +1364,10 @@
 </a></typedef>
 	<typedef path="flump.json.LayerSpec" params="" file="./src/flump/json/FlumpJSON.hx" module="flump.json.FlumpJSON"><a>
 	<name><c path="String"/></name>
+	<mask>
+		<t path="Null"><c path="String"/></t>
+		<meta><m n=":optional"/></meta>
+	</mask>
 	<keyframes><c path="Array"><t path="flump.json.KeyframeSpec"/></c></keyframes>
 </a></typedef>
 	<class path="flump.library.FlumpLibrary" params="" file="./src/flump/library/FlumpLibrary.hx">
@@ -1295,7 +1376,7 @@
 	<x path="Float"/>
 	<c path="flump.library.FlumpLibrary"/>
 </f></create>
-		<sortLabel set="method" line="206" static="1"><f a="a:b">
+		<sortLabel set="method" line="211" static="1"><f a="a:b">
 	<c path="flump.library.Label"/>
 	<c path="flump.library.Label"/>
 	<x path="Int"/>
@@ -1344,36 +1425,39 @@
 		<ease public="1"><x path="Float"/></ease>
 		<label public="1"><c path="flump.library.Label"/></label>
 		<isEmpty public="1"><x path="Bool"/></isEmpty>
+		<alpha public="1"><x path="Float"/></alpha>
+		<data public="1"><d/></data>
+		<tint public="1"><x path="Int"/></tint>
 		<next public="1"><c path="flump.library.Keyframe"/></next>
 		<prev public="1"><c path="flump.library.Keyframe"/></prev>
 		<nextNonEmptyKeyframe public="1"><c path="flump.library.Keyframe"/></nextNonEmptyKeyframe>
 		<prevNonEmptyKeyframe public="1"><c path="flump.library.Keyframe"/></prevNonEmptyKeyframe>
 		<displayKey public="1"><c path="flump.DisplayObjectKey"/></displayKey>
-		<timeInside public="1" set="method" line="35"><f a="time">
+		<timeInside public="1" set="method" line="37"><f a="time">
 	<x path="Float"/>
 	<x path="Bool"/>
 </f></timeInside>
-		<rangeInside public="1" set="method" line="40"><f a="from:to">
+		<rangeInside public="1" set="method" line="42"><f a="from:to">
 	<x path="Float"/>
 	<x path="Float"/>
 	<x path="Bool"/>
 </f></rangeInside>
-		<rangeIntersect public="1" set="method" line="45"><f a="from:to">
+		<rangeIntersect public="1" set="method" line="47"><f a="from:to">
 	<x path="Float"/>
 	<x path="Float"/>
 	<x path="Bool"/>
 </f></rangeIntersect>
-		<insideRangeStart public="1" set="method" line="50"><f a="from:to">
+		<insideRangeStart public="1" set="method" line="52"><f a="from:to">
 	<x path="Float"/>
 	<x path="Float"/>
 	<x path="Bool"/>
 </f></insideRangeStart>
-		<insideRangeEnd public="1" set="method" line="58"><f a="from:to">
+		<insideRangeEnd public="1" set="method" line="60"><f a="from:to">
 	<x path="Float"/>
 	<x path="Float"/>
 	<x path="Bool"/>
 </f></insideRangeEnd>
-		<new public="1" set="method" line="32"><f a=""><x path="Void"/></f></new>
+		<new public="1" set="method" line="34"><f a=""><x path="Void"/></f></new>
 		<meta><m n=":directlyUsed"/></meta>
 	</class>
 	<class path="flump.library.Label" params="" file="./src/flump/library/Label.hx">
@@ -1405,17 +1489,18 @@
 		<name public="1"><c path="String"/></name>
 		<movie public="1"><c path="flump.library.MovieSymbol"/></movie>
 		<numFrames public="1"><x path="UInt"/></numFrames>
+		<mask public="1"><c path="String"/></mask>
 		<firstKeyframe public="1"><c path="flump.library.Keyframe"/></firstKeyframe>
 		<lastKeyframe public="1"><c path="flump.library.Keyframe"/></lastKeyframe>
-		<getKeyframeForFrame public="1" set="method" line="20"><f a="index">
+		<getKeyframeForFrame public="1" set="method" line="21"><f a="index">
 	<x path="UInt"/>
 	<c path="flump.library.Keyframe"/>
 </f></getKeyframeForFrame>
-		<getKeyframeForTime public="1" set="method" line="30"><f a="time">
+		<getKeyframeForTime public="1" set="method" line="31"><f a="time">
 	<x path="Float"/>
 	<c path="flump.library.Keyframe"/>
 </f></getKeyframeForTime>
-		<new public="1" set="method" line="15"><f a="name">
+		<new public="1" set="method" line="16"><f a="name">
 	<c path="String"/>
 	<x path="Void"/>
 </f></new>
@@ -1423,7 +1508,8 @@
 	</class>
 	<class path="flump.library.Symbol" params="" file="./src/flump/library/Symbol.hx">
 		<name public="1"><c path="String"/></name>
-		<new public="1" set="method" line="8"><f a=""><x path="Void"/></f></new>
+		<data public="1"><d/></data>
+		<new public="1" set="method" line="9"><f a=""><x path="Void"/></f></new>
 	</class>
 	<class path="flump.library.MovieSymbol" params="" file="./src/flump/library/MovieSymbol.hx">
 		<extends path="flump.library.Symbol"/>
@@ -2042,6 +2128,14 @@
 				<m n=":ifFeature"><e>"typed_catch"</e></m>
 			</meta>
 		</__instanceof>
+		<__cast set="method" line="224" static="1">
+			<f a="o:t">
+				<d/>
+				<d/>
+				<unknown/>
+			</f>
+			<meta><m n=":ifFeature"><e>"typed_cast"</e></m></meta>
+		</__cast>
 		<__toStr expr="&apos;???&apos;" line="229" static="1">
 			<a><call set="null"><f a="">
 	<d/>
@@ -12547,7 +12641,7 @@
 	</class>
 	<class path="js.html.webgl.Texture" params="" file="/usr/local/lib/haxe/std/js/html/webgl/Texture.hx" extern="1"><meta><m n=":native"><e>"WebGLTexture"</e></m></meta></class>
 	<class path="js.html.webgl.UniformLocation" params="" file="/usr/local/lib/haxe/std/js/html/webgl/UniformLocation.hx" extern="1"><meta><m n=":native"><e>"WebGLUniformLocation"</e></m></meta></class>
-	<class path="pixi.interaction.EventEmitter" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/interaction/EventEmitter.hx" extern="1">
+	<class path="pixi.interaction.EventEmitter" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/interaction/EventEmitter.hx" extern="1">
 		<listeners public="1" set="method">
 			<f a="event">
 				<c path="String"/>
@@ -12826,7 +12920,7 @@
 	 * @constructor</haxe_doc>
 		</new>
 	</class>
-	<class path="pixi.interaction.InteractionManager" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/interaction/InteractionManager.hx" extern="1">
+	<class path="pixi.interaction.InteractionManager" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/interaction/InteractionManager.hx" extern="1">
 		<extends path="pixi.interaction.EventEmitter"/>
 		<renderer public="1">
 			<c path="pixi.core.renderers.SystemRenderer"/>
@@ -13005,7 +13099,7 @@
 		</new>
 		<meta><m n=":native"><e>"PIXI.interaction.InteractionManager"</e></m></meta>
 	</class>
-	<class path="pixi.core.display.DisplayObject" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/display/DisplayObject.hx" extern="1">
+	<class path="pixi.core.display.DisplayObject" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/display/DisplayObject.hx" extern="1">
 		<extends path="pixi.interaction.InteractionManager"/>
 		<getGlobalPosition public="1" set="method">
 			<f a="point">
@@ -13334,7 +13428,7 @@
 		</new>
 		<meta><m n=":native"><e>"PIXI.DisplayObject"</e></m></meta>
 	</class>
-	<class path="pixi.core.display.Container" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/display/Container.hx" extern="1">
+	<class path="pixi.core.display.Container" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/display/Container.hx" extern="1">
 		<extends path="pixi.core.display.DisplayObject"/>
 		<children public="1">
 			<c path="Array"><c path="pixi.core.display.DisplayObject"/></c>
@@ -13476,7 +13570,7 @@
 			<m n=":native"><e>"PIXI.Container"</e></m>
 		</meta>
 	</class>
-	<class path="pixi.core.math.Matrix" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/math/Matrix.hx" extern="1">
+	<class path="pixi.core.math.Matrix" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/math/Matrix.hx" extern="1">
 		<a public="1">
 			<x path="Float"/>
 			<haxe_doc>* @member {Float}
@@ -13638,7 +13732,7 @@
 		</new>
 		<meta><m n=":native"><e>"PIXI.Matrix"</e></m></meta>
 	</class>
-	<class path="pixi.core.math.Point" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/math/Point.hx" extern="1">
+	<class path="pixi.core.math.Point" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/math/Point.hx" extern="1">
 		<clone public="1" set="method">
 			<f a=""><c path="pixi.core.math.Point"/></f>
 			<haxe_doc>* Creates a clone of this point
@@ -13710,7 +13804,7 @@
 			<m n=":native"><e>"PIXI.Point"</e></m>
 		</meta>
 	</class>
-	<class path="pixi.core.math.shapes.Rectangle" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/math/shapes/Rectangle.hx" extern="1">
+	<class path="pixi.core.math.shapes.Rectangle" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/math/shapes/Rectangle.hx" extern="1">
 		<clone public="1" set="method">
 			<f a=""><c path="pixi.core.math.shapes.Rectangle"/></f>
 			<haxe_doc>* Creates a clone of this Rectangle instance
@@ -13777,7 +13871,7 @@
 			<m n=":native"><e>"PIXI.Rectangle"</e></m>
 		</meta>
 	</class>
-	<class path="pixi.core.renderers.Detector" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/renderers/Detector.hx" extern="1">
+	<class path="pixi.core.renderers.Detector" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/renderers/Detector.hx" extern="1">
 		<autoDetectRenderer public="1" set="method" static="1">
 			<f a="width:height:?options:?noWebGL">
 				<x path="Float"/>
@@ -13796,7 +13890,7 @@
 		</autoDetectRenderer>
 		<meta><m n=":native"><e>"PIXI"</e></m></meta>
 	</class>
-	<typedef path="pixi.core.renderers.RenderingOptions" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/renderers/Detector.hx" module="pixi.core.renderers.Detector"><a>
+	<typedef path="pixi.core.renderers.RenderingOptions" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/renderers/Detector.hx" module="pixi.core.renderers.Detector"><a>
 	<view>
 		<t path="Null"><c path="js.html.CanvasElement"/></t>
 		<meta><m n=":optional"/></meta>
@@ -13838,7 +13932,7 @@
 		<meta><m n=":optional"/></meta>
 	</antialias>
 </a></typedef>
-	<class path="pixi.core.renderers.SystemRenderer" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/renderers/SystemRenderer.hx" extern="1">
+	<class path="pixi.core.renderers.SystemRenderer" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/renderers/SystemRenderer.hx" extern="1">
 		<extends path="pixi.interaction.EventEmitter"/>
 		<type public="1">
 			<x path="Int"/>
@@ -13983,7 +14077,7 @@
 		</new>
 		<meta><m n=":native"><e>"PIXI.SystemRenderer"</e></m></meta>
 	</class>
-	<class path="pixi.core.renderers.canvas.CanvasRenderer" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/renderers/canvas/CanvasRenderer.hx" extern="1">
+	<class path="pixi.core.renderers.canvas.CanvasRenderer" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/renderers/canvas/CanvasRenderer.hx" extern="1">
 		<extends path="pixi.core.renderers.SystemRenderer"/>
 		<context public="1">
 			<c path="js.html.CanvasRenderingContext2D"/>
@@ -14047,7 +14141,7 @@
 		</new>
 		<meta><m n=":native"><e>"PIXI.CanvasRenderer"</e></m></meta>
 	</class>
-	<class path="pixi.core.renderers.webgl.WebGLRenderer" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/renderers/webgl/WebGLRenderer.hx" extern="1">
+	<class path="pixi.core.renderers.webgl.WebGLRenderer" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/renderers/webgl/WebGLRenderer.hx" extern="1">
 		<extends path="pixi.core.renderers.SystemRenderer"/>
 		<drawCount public="1">
 			<x path="Int"/>
@@ -14122,7 +14216,7 @@
 		</new>
 		<meta><m n=":native"><e>"PIXI.WebGLRenderer"</e></m></meta>
 	</class>
-	<class path="pixi.core.renderers.webgl.filters.AbstractFilter" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/renderers/webgl/filters/AbstractFilter.hx" extern="1">
+	<class path="pixi.core.renderers.webgl.filters.AbstractFilter" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/renderers/webgl/filters/AbstractFilter.hx" extern="1">
 		<padding public="1">
 			<x path="Float"/>
 			<haxe_doc>* The extra padding that the filter might need
@@ -14181,7 +14275,7 @@
 		</new>
 		<meta><m n=":native"><e>"PIXI.AbstractFilter"</e></m></meta>
 	</class>
-	<class path="pixi.core.renderers.webgl.managers.WebGLManager" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/renderers/webgl/managers/WebGLManager.hx" extern="1">
+	<class path="pixi.core.renderers.webgl.managers.WebGLManager" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/renderers/webgl/managers/WebGLManager.hx" extern="1">
 		<onContextChange public="1" set="method">
 			<f a=""><x path="Void"/></f>
 			<haxe_doc>* Generic method called when there is a WebGL context change.
@@ -14202,7 +14296,7 @@
 	 * @param renderer {WebGLRenderer} The renderer this manager works for.</haxe_doc>
 		</new>
 	</class>
-	<class path="pixi.core.renderers.webgl.managers.BlendModeManager" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/renderers/webgl/managers/BlendModeManager.hx" extern="1">
+	<class path="pixi.core.renderers.webgl.managers.BlendModeManager" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/renderers/webgl/managers/BlendModeManager.hx" extern="1">
 		<extends path="pixi.core.renderers.webgl.managers.WebGLManager"/>
 		<setBlendMode public="1" set="method">
 			<f a="blendMode">
@@ -14224,7 +14318,7 @@
 	 * @param renderer {WebGLRenderer} The renderer this manager works for.</haxe_doc>
 		</new>
 	</class>
-	<class path="pixi.core.renderers.webgl.managers.FilterManager" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/renderers/webgl/managers/FilterManager.hx" extern="1">
+	<class path="pixi.core.renderers.webgl.managers.FilterManager" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/renderers/webgl/managers/FilterManager.hx" extern="1">
 		<extends path="pixi.core.renderers.webgl.managers.WebGLManager"/>
 		<filterStack public="1">
 			<c path="Array"><d/></c>
@@ -14298,7 +14392,7 @@
 	 * @param renderer {WebGLRenderer} The renderer this manager works for.</haxe_doc>
 		</new>
 	</class>
-	<class path="pixi.core.renderers.webgl.managers.MaskManager" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/renderers/webgl/managers/MaskManager.hx" extern="1">
+	<class path="pixi.core.renderers.webgl.managers.MaskManager" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/renderers/webgl/managers/MaskManager.hx" extern="1">
 		<extends path="pixi.core.renderers.webgl.managers.WebGLManager"/>
 		<pushMask public="1" set="method">
 			<f a="target:maskData">
@@ -14369,7 +14463,7 @@
 	 * @param renderer {WebGLRenderer} The renderer this manager works for.</haxe_doc>
 		</new>
 	</class>
-	<class path="pixi.core.sprites.Sprite" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/sprites/Sprite.hx" extern="1">
+	<class path="pixi.core.sprites.Sprite" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/sprites/Sprite.hx" extern="1">
 		<extends path="pixi.core.display.Container"/>
 		<fromFrame public="1" set="method" static="1">
 			<f a="frameId">
@@ -14465,7 +14559,7 @@
 			<m n=":native"><e>"PIXI.Sprite"</e></m>
 		</meta>
 	</class>
-	<class path="pixi.core.textures.BaseTexture" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/textures/BaseTexture.hx" extern="1">
+	<class path="pixi.core.textures.BaseTexture" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/textures/BaseTexture.hx" extern="1">
 		<extends path="pixi.interaction.EventEmitter"/>
 		<fromImage public="1" set="method" static="1">
 			<f a="imageUrl:?crossorigin:?scaleMode">
@@ -14674,7 +14768,7 @@
 			<m n=":native"><e>"PIXI.BaseTexture"</e></m>
 		</meta>
 	</class>
-	<class path="pixi.core.textures.Texture" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/textures/Texture.hx" extern="1">
+	<class path="pixi.core.textures.Texture" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/textures/Texture.hx" extern="1">
 		<extends path="pixi.interaction.EventEmitter"/>
 		<fromImage public="1" set="method" static="1">
 			<f a="imageId:?crossorigin:?scaleMode">
@@ -14917,7 +15011,7 @@
 			<m n=":native"><e>"PIXI.Texture"</e></m>
 		</meta>
 	</class>
-	<class path="pixi.core.textures.VideoBaseTexture" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/textures/VideoBaseTexture.hx" extern="1">
+	<class path="pixi.core.textures.VideoBaseTexture" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/textures/VideoBaseTexture.hx" extern="1">
 		<extends path="pixi.core.textures.BaseTexture"/>
 		<fromVideo public="1" set="method" static="1">
 			<f a="video:?scaleMode">
@@ -15004,7 +15098,7 @@
 		</new>
 		<meta><m n=":native"><e>"PIXI.VideoBaseTexture"</e></m></meta>
 	</class>
-	<class path="pixi.core.ticker.Ticker" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/core/ticker/Ticker.hx" extern="1">
+	<class path="pixi.core.ticker.Ticker" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/core/ticker/Ticker.hx" extern="1">
 		<extends path="pixi.interaction.EventEmitter"/>
 		<autoStart public="1">
 			<x path="Bool"/>
@@ -15177,7 +15271,7 @@
 		</new>
 		<meta><m n=":native"><e>"PIXI.ticker.Ticker"</e></m></meta>
 	</class>
-	<class path="pixi.extras.MovieClip" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/extras/MovieClip.hx" extern="1">
+	<class path="pixi.extras.MovieClip" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/extras/MovieClip.hx" extern="1">
 		<extends path="pixi.core.sprites.Sprite"/>
 		<fromFrames public="1" set="method" static="1">
 			<f a="frames">
@@ -15366,42 +15460,40 @@
 		<resolution><x path="Float"/></resolution>
 		<resource><c path="pixi.flump.Resource"/></resource>
 		<resourceId><c path="String"/></resourceId>
-		<disableAsMaster set="method" line="12"><f a=""><x path="Void"/></f></disableAsMaster>
+		<disableAsMaster set="method" line="56"><f a=""><x path="Void"/></f></disableAsMaster>
 		<animationSpeed public="1" expr="1.0">
 			<x path="Float"/>
 			<meta><m n=":value"><e>1.0</e></m></meta>
 		</animationSpeed>
-		<labels public="1" get="accessor" set="null"><t path="Iterator"><c path="flump.library.Label"/></t></labels>
-		<get_labels public="1" set="method" line="12"><f a=""><t path="Iterator"><c path="flump.library.Label"/></t></f></get_labels>
 		<resX public="1" get="accessor" set="accessor"><x path="Float"/></resX>
-		<get_resX public="1" set="method" line="12"><f a=""><x path="Float"/></f></get_resX>
-		<set_resX public="1" set="method" line="12"><f a="value">
+		<get_resX public="1" set="method" line="71"><f a=""><x path="Float"/></f></get_resX>
+		<set_resX public="1" set="method" line="74"><f a="value">
 	<x path="Float"/>
 	<x path="Float"/>
 </f></set_resX>
 		<resY public="1" get="accessor" set="accessor"><x path="Float"/></resY>
-		<get_resY public="1" set="method" line="12"><f a=""><x path="Float"/></f></get_resY>
-		<set_resY public="1" set="method" line="12"><f a="value">
+		<get_resY public="1" set="method" line="80"><f a=""><x path="Float"/></f></get_resY>
+		<set_resY public="1" set="method" line="83"><f a="value">
 	<x path="Float"/>
 	<x path="Float"/>
 </f></set_resY>
 		<resScaleX public="1" get="accessor" set="accessor"><x path="Float"/></resScaleX>
-		<get_resScaleX public="1" set="method" line="12"><f a=""><x path="Float"/></f></get_resScaleX>
-		<set_resScaleX public="1" set="method" line="12"><f a="value">
+		<get_resScaleX public="1" set="method" line="89"><f a=""><x path="Float"/></f></get_resScaleX>
+		<set_resScaleX public="1" set="method" line="92"><f a="value">
 	<x path="Float"/>
 	<x path="Float"/>
 </f></set_resScaleX>
 		<resScaleY public="1" get="accessor" set="accessor"><x path="Float"/></resScaleY>
-		<get_resScaleY public="1" set="method" line="12"><f a=""><x path="Float"/></f></get_resScaleY>
-		<set_resScaleY public="1" set="method" line="12"><f a="value">
+		<get_resScaleY public="1" set="method" line="98"><f a=""><x path="Float"/></f></get_resScaleY>
+		<set_resScaleY public="1" set="method" line="101"><f a="value">
 	<x path="Float"/>
 	<x path="Float"/>
 </f></set_resScaleY>
-		<getLayer public="1" set="method" line="12"><f a="layerId">
+		<getLayer public="1" set="method" line="107"><f a="layerId">
 	<c path="String"/>
 	<c path="pixi.core.display.Container"/>
 </f></getLayer>
-		<getChildDisplayObject public="1" set="method" line="12">
+		<getChildDisplayObject public="1" set="method" line="113">
 			<f a="layerId:?keyframeIndex" v=":0">
 				<c path="String"/>
 				<x path="UInt"/>
@@ -15409,7 +15501,7 @@
 			</f>
 			<meta><m n=":value"><e>{keyframeIndex:0}</e></m></meta>
 		</getChildDisplayObject>
-		<getChildMovie public="1" set="method" line="12">
+		<getChildMovie public="1" set="method" line="119">
 			<f a="layerId:?keyframeIndex" v=":0">
 				<c path="String"/>
 				<x path="UInt"/>
@@ -15418,106 +15510,91 @@
 			<meta><m n=":value"><e>{keyframeIndex:0}</e></m></meta>
 		</getChildMovie>
 		<symbolId public="1" get="accessor" set="null"><c path="String"/></symbolId>
-		<get_symbolId set="method" line="12"><f a=""><c path="String"/></f></get_symbolId>
+		<get_symbolId set="method" line="127"><f a=""><c path="String"/></f></get_symbolId>
 		<loop public="1" set="accessor"><x path="Bool"/></loop>
-		<set_loop set="method" line="12"><f a="value">
+		<set_loop set="method" line="132"><f a="value">
 	<x path="Bool"/>
 	<x path="Bool"/>
 </f></set_loop>
 		<onComplete public="1" set="accessor"><f a=""><x path="Void"/></f></onComplete>
-		<set_onComplete set="method" line="12"><f a="value">
+		<set_onComplete set="method" line="140"><f a="value">
 	<f a=""><x path="Void"/></f>
 	<f a=""><x path="Void"/></f>
 </f></set_onComplete>
 		<currentFrame public="1" get="accessor" set="accessor"><x path="Int"/></currentFrame>
-		<set_currentFrame set="method" line="12"><f a="value">
+		<set_currentFrame set="method" line="145"><f a="value">
 	<x path="Int"/>
 	<x path="Int"/>
 </f></set_currentFrame>
-		<get_currentFrame set="method" line="12"><f a=""><x path="Int"/></f></get_currentFrame>
+		<get_currentFrame set="method" line="149"><f a=""><x path="Int"/></f></get_currentFrame>
 		<playing public="1" get="accessor" set="null"><x path="Bool"/></playing>
-		<get_playing set="method" line="12"><f a=""><x path="Bool"/></f></get_playing>
+		<get_playing set="method" line="154"><f a=""><x path="Bool"/></f></get_playing>
 		<independantTimeline public="1" get="accessor" set="accessor"><x path="Bool"/></independantTimeline>
-		<get_independantTimeline set="method" line="12"><f a=""><x path="Bool"/></f></get_independantTimeline>
-		<set_independantTimeline set="method" line="12"><f a="value">
+		<get_independantTimeline set="method" line="160"><f a=""><x path="Bool"/></f></get_independantTimeline>
+		<set_independantTimeline set="method" line="163"><f a="value">
 	<x path="Bool"/>
 	<x path="Bool"/>
 </f></set_independantTimeline>
 		<independantControl public="1" get="accessor" set="accessor"><x path="Bool"/></independantControl>
-		<get_independantControl set="method" line="12"><f a=""><x path="Bool"/></f></get_independantControl>
-		<set_independantControl set="method" line="12"><f a="value">
+		<get_independantControl set="method" line="170"><f a=""><x path="Bool"/></f></get_independantControl>
+		<set_independantControl set="method" line="173"><f a="value">
 	<x path="Bool"/>
 	<x path="Bool"/>
 </f></set_independantControl>
 		<totalFrames public="1" get="accessor" set="null"><x path="Int"/></totalFrames>
-		<get_totalFrames set="method" line="12"><f a=""><x path="UInt"/></f></get_totalFrames>
-		<stop public="1" set="method" line="12"><f a=""><x path="Void"/></f></stop>
-		<play public="1" set="method" line="12"><f a=""><x path="Void"/></f></play>
-		<gotoAndStop public="1" set="method" line="12"><f a="frameNumber">
+		<tint public="1" set="accessor"><x path="Int"/></tint>
+		<get_totalFrames set="method" line="183"><f a=""><x path="UInt"/></f></get_totalFrames>
+		<set_tint set="method" line="187"><f a="pTint">
+	<x path="Int"/>
+	<x path="Int"/>
+</f></set_tint>
+		<stop public="1" set="method" line="200"><f a=""><x path="Void"/></f></stop>
+		<play public="1" set="method" line="205"><f a=""><x path="Void"/></f></play>
+		<gotoAndStop public="1" set="method" line="211"><f a="frameNumber">
 	<x path="Int"/>
 	<x path="Void"/>
 </f></gotoAndStop>
-		<gotoAndPlay public="1" set="method" line="12"><f a="frameNumber">
+		<gotoAndPlay public="1" set="method" line="220"><f a="frameNumber">
 	<x path="Int"/>
 	<x path="Void"/>
 </f></gotoAndPlay>
-		<goto public="1" set="method" line="12"><f a="frameNumber">
-	<x path="Int"/>
-	<x path="Void"/>
-</f></goto>
-		<gotoLabel public="1" set="method" line="12"><f a="frameLabel">
-	<c path="String"/>
-	<x path="Void"/>
-</f></gotoLabel>
-		<gotoAndStopAtLabel public="1" set="method" line="12"><f a="frameLabel">
-	<c path="String"/>
-	<x path="Void"/>
-</f></gotoAndStopAtLabel>
-		<gotoAndPlayAtLabel public="1" set="method" line="12"><f a="frameLabel">
-	<c path="String"/>
-	<x path="Void"/>
-</f></gotoAndPlayAtLabel>
-		<getLabelFrame public="1" set="method" line="12"><f a="label">
+		<getLabelFrame public="1" set="method" line="230"><f a="label">
 	<c path="String"/>
 	<x path="UInt"/>
 </f></getLabelFrame>
-		<hasLabel public="1" set="method" line="12"><f a="label">
-	<c path="String"/>
-	<x path="Bool"/>
-</f></hasLabel>
-		<tick set="method" line="12"><f a=""><x path="Void"/></f></tick>
-		<onAdded set="method" line="12"><f a="to">
+		<tick set="method" line="241"><f a=""><x path="Void"/></f></tick>
+		<onAdded set="method" line="246"><f a="to">
 	<t path="pixi.interaction.EventTarget"/>
 	<x path="Void"/>
 </f></onAdded>
-		<onRemoved set="method" line="12"><f a="from">
+		<onRemoved set="method" line="252"><f a="from">
 	<t path="pixi.interaction.EventTarget"/>
 	<x path="Void"/>
 </f></onRemoved>
-		<createLayer set="method" line="12"><f a="layer">
+		<createLayer set="method" line="267"><f a="layer">
 	<c path="flump.library.Layer"/>
 	<x path="Void"/>
 </f></createLayer>
-		<getChildPlayer set="method" line="12"><f a="keyframe">
+		<getChildPlayer set="method" line="275"><f a="keyframe">
 	<c path="flump.library.Keyframe"/>
 	<c path="flump.MoviePlayer"/>
 </f></getChildPlayer>
-		<createFlumpChild set="method" line="12"><f a="displayKey">
+		<createFlumpChild set="method" line="281"><f a="displayKey">
 	<c path="flump.DisplayObjectKey"/>
 	<x path="Void"/>
 </f></createFlumpChild>
-		<removeFlumpChild set="method" line="12"><f a="layer:displayKey">
+		<removeFlumpChild set="method" line="286"><f a="layer:displayKey">
 	<c path="flump.library.Layer"/>
 	<c path="flump.DisplayObjectKey"/>
 	<x path="Void"/>
 </f></removeFlumpChild>
-		<addFlumpChild set="method" line="12"><f a="layer:displayKey">
+		<addFlumpChild set="method" line="292"><f a="layer:displayKey">
 	<c path="flump.library.Layer"/>
 	<c path="flump.DisplayObjectKey"/>
 	<x path="Void"/>
 </f></addFlumpChild>
-		<onAnimationComplete set="method" line="12"><f a=""><x path="Void"/></f></onAnimationComplete>
-		<renderFrame set="method" line="12"><f a="keyframe:x:y:scaleX:scaleY:skewX:skewY">
+		<onAnimationComplete set="method" line="298"><f a=""><x path="Void"/></f></onAnimationComplete>
+		<renderFrame set="method" line="303"><f a="keyframe:x:y:scaleX:scaleY:skewX:skewY:alpha:tint">
 	<c path="flump.library.Keyframe"/>
 	<x path="Float"/>
 	<x path="Float"/>
@@ -15525,18 +15602,33 @@
 	<x path="Float"/>
 	<x path="Float"/>
 	<x path="Float"/>
+	<x path="Float"/>
+	<x path="Int"/>
 	<x path="Void"/>
 </f></renderFrame>
-		<labelPassed set="method" line="12"><f a="label">
+		<setMask set="method" line="339"><f a="layer">
+	<c path="flump.library.Layer"/>
+	<x path="Void"/>
+</f></setMask>
+		<labelPassed set="method" line="343"><f a="label">
 	<c path="flump.library.Label"/>
 	<x path="Void"/>
 </f></labelPassed>
-		<labelHit set="method" line="12"><f a="label">
+		<labelHit set="method" line="347"><f a="label">
 	<c path="flump.library.Label"/>
 	<x path="Void"/>
 </f></labelHit>
-		<destroy public="1" set="method" line="12" override="1"><f a=""><x path="Void"/></f></destroy>
-		<new public="1" set="method" line="12">
+		<destroy public="1" set="method" line="352" override="1"><f a=""><x path="Void"/></f></destroy>
+		<getCustomData public="1" set="method" line="367"><f a=""><d/></f></getCustomData>
+		<getLayerCustomData public="1" set="method" line="371">
+			<f a="layerId:?keyframeIndex" v=":0">
+				<c path="String"/>
+				<x path="UInt"/>
+				<d/>
+			</f>
+			<meta><m n=":value"><e>{keyframeIndex:0}</e></m></meta>
+		</getLayerCustomData>
+		<new public="1" set="method" line="32">
 			<f a="symbolId:?resourceId" v=":null">
 				<c path="String"/>
 				<c path="String"/>
@@ -15635,31 +15727,33 @@
 		<symbolId public="1"><c path="String"/></symbolId>
 		<resourceId public="1"><c path="String"/></resourceId>
 		<resolution><x path="Float"/></resolution>
+		<data><d/></data>
 		<resX public="1" get="accessor" set="accessor"><x path="Float"/></resX>
-		<get_resX public="1" set="method" line="40"><f a=""><x path="Float"/></f></get_resX>
-		<set_resX public="1" set="method" line="43"><f a="value">
+		<get_resX public="1" set="method" line="42"><f a=""><x path="Float"/></f></get_resX>
+		<set_resX public="1" set="method" line="45"><f a="value">
 	<x path="Float"/>
 	<x path="Float"/>
 </f></set_resX>
 		<resY public="1" get="accessor" set="accessor"><x path="Float"/></resY>
-		<get_resY public="1" set="method" line="49"><f a=""><x path="Float"/></f></get_resY>
-		<set_resY public="1" set="method" line="52"><f a="value">
+		<get_resY public="1" set="method" line="51"><f a=""><x path="Float"/></f></get_resY>
+		<set_resY public="1" set="method" line="54"><f a="value">
 	<x path="Float"/>
 	<x path="Float"/>
 </f></set_resY>
 		<resScaleX public="1" get="accessor" set="accessor"><x path="Float"/></resScaleX>
-		<get_resScaleX public="1" set="method" line="58"><f a=""><x path="Float"/></f></get_resScaleX>
-		<set_resScaleX public="1" set="method" line="61"><f a="value">
+		<get_resScaleX public="1" set="method" line="60"><f a=""><x path="Float"/></f></get_resScaleX>
+		<set_resScaleX public="1" set="method" line="63"><f a="value">
 	<x path="Float"/>
 	<x path="Float"/>
 </f></set_resScaleX>
 		<resScaleY public="1" get="accessor" set="accessor"><x path="Float"/></resScaleY>
-		<get_resScaleY public="1" set="method" line="67"><f a=""><x path="Float"/></f></get_resScaleY>
-		<set_resScaleY public="1" set="method" line="70"><f a="value">
+		<get_resScaleY public="1" set="method" line="69"><f a=""><x path="Float"/></f></get_resScaleY>
+		<set_resScaleY public="1" set="method" line="72"><f a="value">
 	<x path="Float"/>
 	<x path="Float"/>
 </f></set_resScaleY>
-		<new public="1" set="method" line="14">
+		<getCustomData public="1" set="method" line="83"><f a=""><d/></f></getCustomData>
+		<new public="1" set="method" line="15">
 			<f a="symbolId:?resourceId" v=":null">
 				<c path="String"/>
 				<c path="String"/>
@@ -15672,14 +15766,14 @@
 			<m n=":access"><e>pixi.flump.Resource</e></m>
 		</meta>
 	</class>
-	<typedef path="pixi.interaction.EventTarget" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/interaction/EventTarget.hx"><a>
+	<typedef path="pixi.interaction.EventTarget" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/interaction/EventTarget.hx"><a>
 	<type><c path="String"/></type>
 	<target><d/></target>
 	<stopped><x path="Bool"/></stopped>
 	<stopPropagation set="method"><f a=""><x path="Void"/></f></stopPropagation>
 	<data><c path="pixi.interaction.InteractionData"/></data>
 </a></typedef>
-	<class path="pixi.interaction.InteractionData" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/interaction/InteractionData.hx" extern="1">
+	<class path="pixi.interaction.InteractionData" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/interaction/InteractionData.hx" extern="1">
 		<global public="1">
 			<c path="pixi.core.math.Point"/>
 			<haxe_doc>* This point stores the global coords of where the touch/mouse event happened
@@ -15725,7 +15819,7 @@
 		</new>
 		<meta><m n=":native"><e>"PIXI.interaction.InteractionData"</e></m></meta>
 	</class>
-	<typedef path="pixi.interaction.InteractionManagerOptions" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/interaction/InteractionManager.hx" module="pixi.interaction.InteractionManager"><a>
+	<typedef path="pixi.interaction.InteractionManagerOptions" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/interaction/InteractionManager.hx" module="pixi.interaction.InteractionManager"><a>
 	<interactionFrequency>
 		<t path="Null"><x path="Int"/></t>
 		<meta><m n=":optional"/></meta>
@@ -15735,7 +15829,7 @@
 		<meta><m n=":optional"/></meta>
 	</autoPreventDefault>
 </a></typedef>
-	<class path="pixi.loaders.ResourceLoader" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/loaders/ResourceLoader.hx" extern="1">
+	<class path="pixi.loaders.ResourceLoader" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/loaders/ResourceLoader.hx" extern="1">
 		<extends path="pixi.interaction.EventEmitter"/>
 		<baseUrl public="1">
 			<c path="String"/>
@@ -16145,7 +16239,7 @@
 	 * @param [concurrency=10] {number} The number of resources to load concurrently.</haxe_doc>
 		</new>
 	</class>
-	<class path="pixi.loaders.Loader" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/loaders/Loader.hx" extern="1">
+	<class path="pixi.loaders.Loader" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/loaders/Loader.hx" extern="1">
 		<extends path="pixi.loaders.ResourceLoader"/>
 		<new public="1" set="method">
 			<f a=""><x path="Void"/></f>
@@ -16171,7 +16265,7 @@
 			<m n=":native"><e>"PIXI.loaders.Loader"</e></m>
 		</meta>
 	</class>
-	<typedef path="pixi.loaders.LoaderOptions" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/loaders/LoaderOptions.hx"><a>
+	<typedef path="pixi.loaders.LoaderOptions" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/loaders/LoaderOptions.hx"><a>
 	<xhrType>
 		<t path="Null"><c path="String"/></t>
 		<meta><m n=":optional"/></meta>
@@ -16185,7 +16279,7 @@
 		<meta><m n=":optional"/></meta>
 	</crossOrigin>
 </a></typedef>
-	<class path="pixi.loaders.Resource" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/loaders/Resource.hx" extern="1">
+	<class path="pixi.loaders.Resource" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/loaders/Resource.hx" extern="1">
 		<texture public="1"><c path="pixi.core.textures.Texture"/></texture>
 		<textures public="1"><d/></textures>
 		<name public="1">
@@ -16295,7 +16389,7 @@
 	 *      loaded be interpreted when using XHR?</haxe_doc>
 		</new>
 	</class>
-	<typedef path="pixi.loaders.LOAD_TYPE" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/loaders/Resource.hx" module="pixi.loaders.Resource">
+	<typedef path="pixi.loaders.LOAD_TYPE" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/loaders/Resource.hx" module="pixi.loaders.Resource">
 		<a>
 			<XHR><x path="Int"/></XHR>
 			<VIDEO><x path="Int"/></VIDEO>
@@ -16312,7 +16406,7 @@
  * @property {number} LOAD_TYPE.AUDIO - Uses an `Audio` object to load the resource.
  * @property {number} LOAD_TYPE.VIDEO - Uses a `Video` object to load the resource.</haxe_doc>
 	</typedef>
-	<typedef path="pixi.loaders.XHR_READY_STATE" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/loaders/Resource.hx" module="pixi.loaders.Resource">
+	<typedef path="pixi.loaders.XHR_READY_STATE" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/loaders/Resource.hx" module="pixi.loaders.Resource">
 		<a>
 			<UNSENT><x path="Int"/></UNSENT>
 			<OPENED><x path="Int"/></OPENED>
@@ -16331,7 +16425,7 @@
  * @property {number} XHR_READY_STATE.LOADING - Downloading; responseText holds partial data.
  * @property {number} XHR_READY_STATE.DONE - The operation is complete.</haxe_doc>
 	</typedef>
-	<typedef path="pixi.loaders.XHR_RESPONSE_TYPE" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/loaders/Resource.hx" module="pixi.loaders.Resource">
+	<typedef path="pixi.loaders.XHR_RESPONSE_TYPE" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/loaders/Resource.hx" module="pixi.loaders.Resource">
 		<a>
 			<TEXT><c path="String"/></TEXT>
 			<JSON><c path="String"/></JSON>
@@ -16352,7 +16446,7 @@
  * @property {string} XHR_RESPONSE_TYPE.JSON - Object
  * @property {string} XHR_RESPONSE_TYPE.TEXT - String</haxe_doc>
 	</typedef>
-	<typedef path="pixi.loaders.ResourceObject" params="" file="/Users/jack/~/haxelib/pixijs/3,1,0/src/pixi/loaders/ResourceLoader.hx" module="pixi.loaders.ResourceLoader"><a>
+	<typedef path="pixi.loaders.ResourceObject" params="" file="/usr/local/lib/haxe/lib/pixijs/3,1,2/src/pixi/loaders/ResourceLoader.hx" module="pixi.loaders.ResourceLoader"><a>
 	<xhrType>
 		<t path="Null"><c path="String"/></t>
 		<meta><m n=":optional"/></meta>
