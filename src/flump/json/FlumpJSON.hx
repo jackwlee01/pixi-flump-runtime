@@ -95,6 +95,7 @@ typedef AtlasSpec = {
 typedef LayerSpec = {
 	var name:String;
 	var keyframes:Array<KeyframeSpec>;
+	@:optional var mask:String;
 }
 
 

@@ -51,6 +51,7 @@ class MoviePlayer{
 
 		state = STATE_LOOPING;
 		advanceTime(0);
+		for (layer in symbol.layers) movie.setMask(layer);
 	}
 
 
