@@ -67,7 +67,7 @@ typedef KeyframeSpec = {
 	var tweened:Bool;
 	var label:String;
 	var alpha:Float;
-	var tint:Array<Dynamic>;
+	@:optional var tint:Array<Dynamic>;
 	@:optional var data:Dynamic;
 }
 
@@ -95,6 +95,7 @@ typedef AtlasSpec = {
 typedef LayerSpec = {
 	var name:String;
 	var keyframes:Array<KeyframeSpec>;
+	@:optional var mask:String;
 }
 
 

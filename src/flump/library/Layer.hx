@@ -1,4 +1,5 @@
 package flump.library;
+import flump.filters.AnimateTintFilter;
 
 class Layer{
 
@@ -7,10 +8,10 @@ class Layer{
 	public var name:String;
 	public var movie:MovieSymbol;
 	public var numFrames:UInt;
-
+	public var mask:String;
 	public var firstKeyframe:Keyframe;
 	public var lastKeyframe:Keyframe;
-
+	public var refAnimatedTint:AnimateTintFilter;
 
 	public function new(name:String){
 		this.name = name;
