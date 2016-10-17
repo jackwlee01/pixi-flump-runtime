@@ -298,6 +298,21 @@ class MoviePlayer{
 				var next = keyframe.next;
 				if(next.isEmpty) next = keyframe; // NASTY! FIX THIS!!
 
+				// tint
+				var lColor:Int;				
+				
+				if (keyframe.tint != next.tint) {					
+					var lPrevR:Int = (keyframe.tint >> 16) & 0xFF;
+					var lPrevG:Int = (keyframe.tint >> 8) & 0xFF;
+					var lPrevB:Int = keyframe.tint & 0xFF;
+					
+					var lNextR:Int = (next.tint >> 16) & 0xFF;
+					var lNextG:Int = (next.tint >> 8) & 0xFF;
+					var lNextB:Int = next.tint & 0xFF;
+					
+					lColor = Math.round(lPrevR + (lNextR - lPrevR) * interped) << 16 | Math.round(lPrevG + (lNextG - lPrevG) * interped) << 8 | Math.round(lPrevB + (lNextB - lPrevB) * interped);
+					
+				} else lColor = keyframe.tint;
 				movie.renderFrame(
 					keyframe,
 					(keyframe.location.x + (next.location.x - keyframe.location.x) * interped),
@@ -306,7 +321,8 @@ class MoviePlayer{
 					(keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped),
 					keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,
 					keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,
-					keyframe.alpha + (next.alpha - keyframe.alpha) * interped
+					keyframe.alpha + (next.alpha - keyframe.alpha) * interped,
+					lColor
 				);
 
 

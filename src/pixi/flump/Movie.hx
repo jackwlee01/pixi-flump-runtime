@@ -300,7 +300,7 @@ class Movie extends Container implements IFlumpMovie {
 	}
 
 
-	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float, alpha:Float):Void{
+	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float, alpha:Float,tint:Int):Void{
 		var layer = layers[keyframe.layer];
 		
 		layer.pivot.x = keyframe.pivot.x;
@@ -320,7 +320,12 @@ class Movie extends Container implements IFlumpMovie {
 		layer.skew.y = skewY;
 		layer.alpha  = alpha;
 
-
+		if (tint!=0xFFFFFF) {
+			for (child in layer.children) {
+				if (Std.is(child, Sprite)) cast(child, Sprite).tint = tint;
+				else if (Std.is(child, Movie)) cast(child, Movie).tint = tint;
+			}
+		}
 		if(master){
 			//layer.pivot.x /= resolution;
 			//layer.pivot.y /= resolution;
@@ -349,6 +354,22 @@ class Movie extends Container implements IFlumpMovie {
 		player = null;
 		super.destroy(true);
 	}
+	
+	/////////////////////////////////////////////////////
+	//
+	//   custom Data
+	//
+	/////////////////////////////////////////////////////
+	
+	public function getCustomData (): Dynamic {
+		return symbol.data;
+	}
 
-
+	public function getLayerCustomData (layerId:String, keyframeIndex:UInt = 0): Dynamic {
+		var layer = symbol.getLayer(layerId);
+		if(layer == null) throw("Layer " + layerId + " does not exist.");
+		var keyframe = symbol.getLayer(layerId).getKeyframeForFrame(keyframeIndex);
+		if (keyframe == null) throw("Keyframe does not exist at index " + keyframeIndex);
+		return keyframe.data;
+	}
 }
