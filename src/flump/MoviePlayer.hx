@@ -2,11 +2,10 @@ package flump;
 
 import flump.DisplayObjectKey;
 import flump.IFlumpMovie;
-import flump.library.MovieSymbol;
-import flump.library.Layer;
 import flump.library.Keyframe;
 import flump.library.Label;
-import haxe.ds.ObjectMap;
+import flump.library.Layer;
+import flump.library.MovieSymbol;
 using Std;
 
 
@@ -289,7 +288,7 @@ class MoviePlayer{
 
 		while(position < 0) position += symbol.duration;
 		
-		for(layer in symbol.layers){
+		for (layer in symbol.layers){
 			var keyframe = layer.getKeyframeForTime(position);
 
 			if(keyframe.isEmpty == true){
@@ -299,21 +298,26 @@ class MoviePlayer{
 				var next = keyframe.next;
 				if(next.isEmpty) next = keyframe; // NASTY! FIX THIS!!
 
-				// tint
+				// AnimateTint
 				var lColor:Int;				
 				
-				if (keyframe.tint != next.tint) {					
-					var lPrevR:Int = (keyframe.tint >> 16) & 0xFF;
-					var lPrevG:Int = (keyframe.tint >> 8) & 0xFF;
-					var lPrevB:Int = keyframe.tint & 0xFF;
+				if (keyframe.tintColor != next.tintColor) {
 					
-					var lNextR:Int = (next.tint >> 16) & 0xFF;
-					var lNextG:Int = (next.tint >> 8) & 0xFF;
-					var lNextB:Int = next.tint & 0xFF;
+					var lPrevColor:Int = keyframe.tintColor;
+					var lNextColor:Int = next.tintColor;
+					
+					var lPrevR:Int = (lPrevColor >> 16) & 0xFF;
+					var lPrevG:Int = (lPrevColor >> 8) & 0xFF;
+					var lPrevB:Int = lPrevColor & 0xFF;
+					
+					var lNextR:Int = (lNextColor >> 16) & 0xFF;
+					var lNextG:Int = (lNextColor >> 8) & 0xFF;
+					var lNextB:Int = lNextColor & 0xFF;
 					
 					lColor = Math.round(lPrevR + (lNextR - lPrevR) * interped) << 16 | Math.round(lPrevG + (lNextG - lPrevG) * interped) << 8 | Math.round(lPrevB + (lNextB - lPrevB) * interped);
 					
-				} else lColor = keyframe.tint;
+				} else lColor = keyframe.tintColor;
+				
 				movie.renderFrame(
 					keyframe,
 					(keyframe.location.x + (next.location.x - keyframe.location.x) * interped),
@@ -323,9 +327,9 @@ class MoviePlayer{
 					keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,
 					keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,
 					keyframe.alpha + (next.alpha - keyframe.alpha) * interped,
+					keyframe.tintMultiplier + (next.tintMultiplier - keyframe.tintMultiplier) * interped,
 					lColor
 				);
-
 
 				if(currentChildrenKey.get(layer) != keyframe.displayKey){
 					createChildIfNessessary(keyframe);

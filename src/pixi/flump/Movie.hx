@@ -2,15 +2,14 @@ package pixi.flump;
 
 import flump.*;
 import flump.DisplayObjectKey;
+import flump.filters.AnimateTintFilter;
 import flump.library.*;
 import flump.library.MovieSymbol;
-import pixi.core.sprites.Sprite;
-import pixi.flump.Resource;
-import pixi.extras.MovieClip;
 import pixi.core.display.Container;
 import pixi.core.display.DisplayObject;
-import pixi.core.math.Point;
+import pixi.core.sprites.Sprite;
 import pixi.core.ticker.Ticker;
+import pixi.flump.Resource;
 
 
 @:access(pixi.flump.Resource)
@@ -300,7 +299,7 @@ class Movie extends Container implements IFlumpMovie {
 	}
 
 
-	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float, alpha:Float,tint:Int):Void{
+	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float, alpha:Float,tintMultiplier:Float,tintColor:UInt):Void{
 		var layer = layers[keyframe.layer];
 		
 		layer.pivot.x = keyframe.pivot.x;
@@ -319,13 +318,18 @@ class Movie extends Container implements IFlumpMovie {
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
 		layer.alpha  = alpha;
-
-		if (tint!=0xFFFFFF) {
-			for (child in layer.children) {
-				if (Std.is(child, Sprite)) cast(child, Sprite).tint = tint;
-				else if (Std.is(child, Movie)) cast(child, Movie).tint = tint;
+		
+		if (keyframe.layer.refAnimatedTint == null) {
+			if (tintMultiplier != 0) {
+				keyframe.layer.refAnimatedTint = new AnimateTintFilter(tintColor, tintMultiplier);
+				if (layer.filters == null) layer.filters = [keyframe.layer.refAnimatedTint];
 			}
+		} else if (tintMultiplier == 0) {
+				layer.filters.remove(keyframe.layer.refAnimatedTint);
+				keyframe.layer.refAnimatedTint = null;
 		}
+		else keyframe.layer.refAnimatedTint.update(tintColor, tintMultiplier);
+		
 		if(master){
 			//layer.pivot.x /= resolution;
 			//layer.pivot.y /= resolution;
