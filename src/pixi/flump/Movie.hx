@@ -1,12 +1,12 @@
 package pixi.flump;
 
 import flump.*;
-import flump.DisplayObjectKey;
 import flump.filters.AnimateTintFilter;
 import flump.library.*;
-import flump.library.MovieSymbol;
 import pixi.core.display.Container;
 import pixi.core.display.DisplayObject;
+import pixi.core.graphics.Graphics;
+import pixi.core.math.shapes.Rectangle;
 import pixi.core.sprites.Sprite;
 import pixi.core.ticker.Ticker;
 import pixi.flump.Resource;
@@ -348,10 +348,14 @@ class Movie extends Container implements IFlumpMovie {
 			// Is the mask movie not available at this stage of the Movie build ?
 			// Where can we call setMask to avoid this inelegant patch ?
 			
-			var lSprite:pixi.flump.Sprite = new pixi.flump.Sprite (layer.mask);
-			getLayer(layer.mask).addChild(lSprite);
-			layers[layer].mask = lSprite;
-			getLayer(layer.mask).removeChild(getLayer(layer.mask).getChildAt(1));
+			var lRect:Rectangle=getLayer(layer.mask).getChildAt(0).getBounds();	
+			getLayer(layer.mask).removeChildAt(0);
+			var lGraph:Graphics = new Graphics();
+			lGraph.beginFill(0);
+			lGraph.drawRect(lRect.x, lRect.y, lRect.width, lRect.height);
+			lGraph.endFill();
+			getLayer(layer.mask).addChild(lGraph);
+			layers[layer].mask = lGraph;
 			
 		}		
 	}
