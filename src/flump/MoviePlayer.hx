@@ -53,7 +53,6 @@ class MoviePlayer{
 		for (layer in symbol.layers) movie.setMask(layer);
 	}
 
-
 	public var labels(get, null):Iterator<Label>;
 	public function get_labels():Iterator<Label>{
 		return symbol.labels.iterator();

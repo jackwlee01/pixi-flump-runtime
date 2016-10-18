@@ -29,6 +29,7 @@ class Movie extends Container implements IFlumpMovie {
 	private var resourceId:String;
 
 	public function new(symbolId:String, resourceId:String = null){
+		
 		super();
 		this.resourceId = resourceId;
 
@@ -325,8 +326,8 @@ class Movie extends Container implements IFlumpMovie {
 				if (layer.filters == null) layer.filters = [keyframe.layer.refAnimatedTint];
 			}
 		} else if (tintMultiplier == 0) {
-				layer.filters.remove(keyframe.layer.refAnimatedTint);
-				keyframe.layer.refAnimatedTint = null;
+			layer.filters.remove(keyframe.layer.refAnimatedTint);
+			keyframe.layer.refAnimatedTint = null;
 		}
 		else keyframe.layer.refAnimatedTint.update(tintColor, tintMultiplier);
 		
@@ -341,7 +342,18 @@ class Movie extends Container implements IFlumpMovie {
 	}
 
 	private function setMask(layer:Layer):Void{
-		if (layer.mask != null) layers[layer].mask = getLayer(layer.mask).getChildAt(0);		
+		if (layer.mask != null) {
+			
+			//TODO: Need to create again the mask movie to make it work
+			// Is the mask movie not available at this stage of the Movie build ?
+			// Where can we call setMask to avoid this inelegant patch ?
+			
+			var lSprite:pixi.flump.Sprite = new pixi.flump.Sprite (layer.mask);
+			getLayer(layer.mask).addChild(lSprite);
+			layers[layer].mask = lSprite;
+			getLayer(layer.mask).removeChild(getLayer(layer.mask).getChildAt(1));
+			
+		}		
 	}
 
 	private function labelPassed(label:Label){
