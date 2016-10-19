@@ -314,7 +314,7 @@ class MoviePlayer{
 					lColor = Math.round(lPrevR + (lNextR - lPrevR) * interped) << 16 | Math.round(lPrevG + (lNextG - lPrevG) * interped) << 8 | Math.round(lPrevB + (lNextB - lPrevB) * interped);
 					
 				} else lColor = keyframe.tint;
-				movie.renderFrame(
+				/*movie.renderFrame(
 					keyframe,
 					(keyframe.location.x + (next.location.x - keyframe.location.x) * interped),
 					(keyframe.location.y + (next.location.y - keyframe.location.y) * interped),
@@ -324,7 +324,7 @@ class MoviePlayer{
 					keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,
 					keyframe.alpha + (next.alpha - keyframe.alpha) * interped,
 					lColor
-				);
+				);*/
 
 
 				if(currentChildrenKey.get(layer) != keyframe.displayKey){
@@ -344,6 +344,18 @@ class MoviePlayer{
 						childMovie.render();
 					}
 				}
+				
+				movie.renderFrame(
+					keyframe,
+					(keyframe.location.x + (next.location.x - keyframe.location.x) * interped),
+					(keyframe.location.y + (next.location.y - keyframe.location.y) * interped),
+					(keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped),
+					(keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped),
+					keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,
+					keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,
+					keyframe.alpha + (next.alpha - keyframe.alpha) * interped,
+					lColor
+				);
 			}
 		}
 		advanced = 0;
