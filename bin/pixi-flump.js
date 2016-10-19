@@ -354,7 +354,6 @@ flump_MoviePlayer.prototype = {
 					var lNextB = next.tint & 255;
 					lColor = Math.round(lPrevR + (lNextR - lPrevR) * interped) << 16 | Math.round(lPrevG + (lNextG - lPrevG) * interped) << 8 | Math.round(lPrevB + (lNextB - lPrevB) * interped);
 				} else lColor = keyframe.tint;
-				this.movie.renderFrame(keyframe,keyframe.location.x + (next.location.x - keyframe.location.x) * interped,keyframe.location.y + (next.location.y - keyframe.location.y) * interped,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,keyframe.alpha + (next.alpha - keyframe.alpha) * interped,lColor);
 				if(this.currentChildrenKey.h[layer.__id__] != keyframe.displayKey) {
 					this.createChildIfNessessary(keyframe);
 					this.removeChildIfNessessary(keyframe);
@@ -370,6 +369,7 @@ flump_MoviePlayer.prototype = {
 						childMovie.render();
 					}
 				}
+				this.movie.renderFrame(keyframe,keyframe.location.x + (next.location.x - keyframe.location.x) * interped,keyframe.location.y + (next.location.y - keyframe.location.y) * interped,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,keyframe.alpha + (next.alpha - keyframe.alpha) * interped,lColor);
 			}
 		}
 		this.advanced = 0;
@@ -1409,6 +1409,7 @@ pixi_flump_Movie.prototype = $extend(PIXI.Container.prototype,{
 	}
 	,renderFrame: function(keyframe,x,y,scaleX,scaleY,skewX,skewY,alpha,tint) {
 		var layer = this.layers.h[keyframe.layer.__id__];
+		var lChild;
 		layer.pivot.x = keyframe.pivot.x;
 		layer.pivot.y = keyframe.pivot.y;
 		if(js_Boot.__instanceof(keyframe.symbol,flump_library_SpriteSymbol)) {
@@ -1418,17 +1419,25 @@ pixi_flump_Movie.prototype = $extend(PIXI.Container.prototype,{
 		}
 		layer.x = x;
 		layer.y = y;
-		layer.scale.x = scaleX;
-		layer.scale.y = scaleY;
+		if(layer.children.length > 0) {
+			var _g = 0;
+			var _g1 = layer.children;
+			while(_g < _g1.length) {
+				var lChild1 = _g1[_g];
+				++_g;
+				lChild1.scale.x = scaleX;
+				lChild1.scale.y = scaleY;
+			}
+		}
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
 		layer.alpha = alpha;
 		if(tint != 16777215) {
-			var _g = 0;
-			var _g1 = layer.children;
-			while(_g < _g1.length) {
-				var child = _g1[_g];
-				++_g;
+			var _g2 = 0;
+			var _g11 = layer.children;
+			while(_g2 < _g11.length) {
+				var child = _g11[_g2];
+				++_g2;
 				if(js_Boot.__instanceof(child,PIXI.Sprite)) (js_Boot.__cast(child , PIXI.Sprite)).tint = tint; else if(js_Boot.__instanceof(child,pixi_flump_Movie)) (js_Boot.__cast(child , pixi_flump_Movie)).set_tint(tint);
 			}
 		}

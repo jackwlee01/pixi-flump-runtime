@@ -302,6 +302,7 @@ class Movie extends Container implements IFlumpMovie {
 
 	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float, alpha:Float,tint:Int):Void{
 		var layer = layers[keyframe.layer];
+		var lChild : DisplayObject;
 		
 		layer.pivot.x = keyframe.pivot.x;
 		layer.pivot.y = keyframe.pivot.y;
@@ -314,8 +315,17 @@ class Movie extends Container implements IFlumpMovie {
 
 		layer.x = x;
 		layer.y = y;
-		layer.scale.x = scaleX;
-		layer.scale.y = scaleY;
+		
+		// scale applied on child, else the transform may be wrong
+		//layer.scale.x = scaleX;
+		//layer.scale.y = scaleY;
+		if ( layer.children.length > 0){
+			for ( lChild in layer.children){
+				lChild.scale.x = scaleX;
+				lChild.scale.y = scaleY;
+			}
+		}//else trace( "WARNING : Movie::renderFrame : " + symbol.name + " : " + layer.name + " : empty");
+		
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
 		layer.alpha  = alpha;
