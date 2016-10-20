@@ -30,6 +30,8 @@ class Sprite extends pixi.core.sprites.Sprite{
 		var texture = resource.textures[symbol.texture];
 		super(texture);
 
+		data = symbol.data;
+		baseClass = symbol.baseClass;
 
 		anchor.x = symbol.origin.x / texture.width;
 		anchor.y = symbol.origin.y / texture.height;
