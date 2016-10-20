@@ -317,14 +317,16 @@ class Movie extends Container implements IFlumpMovie {
 		layer.y = y;
 		
 		// scale applied on child, else the transform may be wrong
-		//layer.scale.x = scaleX;
-		//layer.scale.y = scaleY;
+		layer.scale.x = scaleX;
+		layer.scale.y = scaleY;
+		/*
 		if ( layer.children.length > 0){
 			for ( lChild in layer.children){
 				lChild.scale.x = scaleX;
 				lChild.scale.y = scaleY;
 			}
 		}//else trace( "WARNING : Movie::renderFrame : " + symbol.name + " : " + layer.name + " : empty");
+		*/
 		
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
