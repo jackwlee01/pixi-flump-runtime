@@ -394,6 +394,10 @@ class Movie extends Container implements IFlumpMovie {
 	//
 	/////////////////////////////////////////////////////
 	
+	public function getBaseClass (): String {
+		return symbol.baseClass;
+	}
+	
 	public function getCustomData (): Dynamic {
 		return symbol.data;
 	}

@@ -50,6 +50,7 @@ abstract FlumpRectSpec(Array<Float>){
 typedef MovieSpec = {
 	var layers:Array<LayerSpec>;
 	var id:ReferenceSpec;
+	@:optional var baseClass:String;
 	@:optional var data:Dynamic;
 }
 
@@ -76,6 +77,7 @@ typedef TextureSpec = {
 	var symbol:ReferenceSpec;
 	var rect:FlumpRectSpec;
 	var origin:FlumpPointSpec;
+	@:optional var baseClass:String;
 	@:optional var data:Dynamic;
 }
 

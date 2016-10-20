@@ -59,6 +59,7 @@ class FlumpLibrary{
 				var symbol = new SpriteSymbol();
 				symbol.name = textureSpec.symbol;
 				symbol.data = textureSpec.data;
+				symbol.baseClass = textureSpec.baseClass;				
 				symbol.origin = origin;
 				symbol.texture = textureSpec.symbol;
 				spriteSymbols[symbol.name] = symbol;
@@ -70,6 +71,7 @@ class FlumpLibrary{
 			var symbol = new MovieSymbol();
 			symbol.name = movieSpec.id;
 			symbol.data = movieSpec.data;
+			symbol.baseClass = movieSpec.baseClass;
 			symbol.library = flumpLibrary;
 			for(layerSpec in movieSpec.layers){
 				var layer = new Layer(layerSpec.name);
@@ -106,6 +108,7 @@ class FlumpLibrary{
 						keyframe.alpha = keyframeSpec.alpha == null ? 1 : keyframeSpec.alpha;
 						keyframe.tintMultiplier = keyframeSpec.tint == null ? 0 : keyframeSpec.tint[0];
 						keyframe.tintColor = keyframeSpec.tint == null ? 0 : Std.parseInt(StringTools.replace(cast(keyframeSpec.tint[1], String), "#", "0x"));
+						keyframe.data = keyframeSpec.data;
 						
 						keyframe.ease = keyframeSpec.ease == null ? 0 : keyframeSpec.ease;	
 					}
