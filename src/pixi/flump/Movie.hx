@@ -1,16 +1,15 @@
 package pixi.flump;
 
 import flump.*;
-import flump.DisplayObjectKey;
+import flump.filters.AnimateTintFilter;
 import flump.library.*;
-import flump.library.MovieSymbol;
-import pixi.core.sprites.Sprite;
-import pixi.flump.Resource;
-import pixi.extras.MovieClip;
 import pixi.core.display.Container;
 import pixi.core.display.DisplayObject;
-import pixi.core.math.Point;
+import pixi.core.graphics.Graphics;
+import pixi.core.math.shapes.Rectangle;
+import pixi.core.sprites.Sprite;
 import pixi.core.ticker.Ticker;
+import pixi.flump.Resource;
 
 
 @:access(pixi.flump.Resource)
@@ -30,6 +29,7 @@ class Movie extends Container implements IFlumpMovie {
 	private var resourceId:String;
 
 	public function new(symbolId:String, resourceId:String = null){
+		
 		super();
 		this.resourceId = resourceId;
 
@@ -300,7 +300,7 @@ class Movie extends Container implements IFlumpMovie {
 	}
 
 
-	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float, alpha:Float,tint:Int):Void{
+	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float, alpha:Float,tintMultiplier:Float,tintColor:UInt):Void{
 		var layer = layers[keyframe.layer];
 		var lChild : DisplayObject;
 		
@@ -329,13 +329,18 @@ class Movie extends Container implements IFlumpMovie {
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
 		layer.alpha  = alpha;
-
-		if (tint!=0xFFFFFF) {
-			for (child in layer.children) {
-				if (Std.is(child, Sprite)) cast(child, Sprite).tint = tint;
-				else if (Std.is(child, Movie)) cast(child, Movie).tint = tint;
+		
+		if (keyframe.layer.refAnimatedTint == null) {
+			if (tintMultiplier != 0) {
+				keyframe.layer.refAnimatedTint = new AnimateTintFilter(tintColor, tintMultiplier);
+				if (layer.filters == null) layer.filters = [keyframe.layer.refAnimatedTint];
 			}
+		} else if (tintMultiplier == 0) {
+			layer.filters.remove(keyframe.layer.refAnimatedTint);
+			keyframe.layer.refAnimatedTint = null;
 		}
+		else keyframe.layer.refAnimatedTint.update(tintColor, tintMultiplier);
+		
 		if(master){
 			//layer.pivot.x /= resolution;
 			//layer.pivot.y /= resolution;
@@ -347,7 +352,22 @@ class Movie extends Container implements IFlumpMovie {
 	}
 
 	private function setMask(layer:Layer):Void{
-		if (layer.mask != null) layers[layer].mask = getLayer(layer.mask).getChildAt(0);		
+		if (layer.mask != null) {
+			
+			//TODO: Need to create again the mask movie to make it work
+			// Is the mask movie not available at this stage of the Movie build ?
+			// Where can we call setMask to avoid this inelegant patch ?
+			
+			var lRect:Rectangle=getLayer(layer.mask).getChildAt(0).getBounds();	
+			getLayer(layer.mask).removeChildAt(0);
+			var lGraph:Graphics = new Graphics();
+			lGraph.beginFill(0);
+			lGraph.drawRect(lRect.x, lRect.y, lRect.width, lRect.height);
+			lGraph.endFill();
+			getLayer(layer.mask).addChild(lGraph);
+			layers[layer].mask = lGraph;
+			
+		}		
 	}
 
 	private function labelPassed(label:Label){
@@ -373,6 +393,10 @@ class Movie extends Container implements IFlumpMovie {
 	//   custom Data
 	//
 	/////////////////////////////////////////////////////
+	
+	public function getBaseClass (): String {
+		return symbol.baseClass;
+	}
 	
 	public function getCustomData (): Dynamic {
 		return symbol.data;

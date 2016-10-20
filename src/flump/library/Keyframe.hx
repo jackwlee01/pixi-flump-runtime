@@ -24,7 +24,8 @@ class Keyframe{
 	public var isEmpty:Bool;
 	public var alpha:Float;
 	public var data:Dynamic;
-	public var tint:Int;
+	public var tintMultiplier:Float;
+	public var tintColor:UInt;
 	public var next:Keyframe;
 	public var prev:Keyframe;
 	public var nextNonEmptyKeyframe:Keyframe;

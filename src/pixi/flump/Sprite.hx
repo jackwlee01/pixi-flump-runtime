@@ -10,6 +10,7 @@ class Sprite extends pixi.core.sprites.Sprite{
 	public var resourceId:String;
 	private var resolution:Float;
 	private var data:Dynamic;
+	private var baseClass:String;
 	
 
 	public function new(symbolId:String, resourceId:String = null){
@@ -79,6 +80,10 @@ class Sprite extends pixi.core.sprites.Sprite{
 	//   custom Data
 	//
 	/////////////////////////////////////////////////////
+	
+	public function getBaseClass (): String {
+		return baseClass;
+	}
 	
 	public function getCustomData (): Dynamic {
 		return data;
