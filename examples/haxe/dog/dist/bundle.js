@@ -23,6 +23,24 @@ HxOverrides.cca = function(s,index) {
 	if(x != x) return undefined;
 	return x;
 };
+HxOverrides.indexOf = function(a,obj,i) {
+	var len = a.length;
+	if(i < 0) {
+		i += len;
+		if(i < 0) i = 0;
+	}
+	while(i < len) {
+		if(a[i] === obj) return i;
+		i++;
+	}
+	return -1;
+};
+HxOverrides.remove = function(a,obj) {
+	var i = HxOverrides.indexOf(a,obj,0);
+	if(i == -1) return false;
+	a.splice(i,1);
+	return true;
+};
 HxOverrides.iter = function(a) {
 	return { cur : 0, arr : a, hasNext : function() {
 		return this.cur < this.arr.length;
@@ -676,16 +694,17 @@ flump_MoviePlayer.prototype = {
 				var next = keyframe.next;
 				if(next.isEmpty) next = keyframe;
 				var lColor;
-				if(keyframe.tint != next.tint) {
-					var lPrevR = keyframe.tint >> 16 & 255;
-					var lPrevG = keyframe.tint >> 8 & 255;
-					var lPrevB = keyframe.tint & 255;
-					var lNextR = next.tint >> 16 & 255;
-					var lNextG = next.tint >> 8 & 255;
-					var lNextB = next.tint & 255;
+				if(keyframe.tintColor != next.tintColor) {
+					var lPrevColor = keyframe.tintColor;
+					var lNextColor = next.tintColor;
+					var lPrevR = lPrevColor >> 16 & 255;
+					var lPrevG = lPrevColor >> 8 & 255;
+					var lPrevB = lPrevColor & 255;
+					var lNextR = lNextColor >> 16 & 255;
+					var lNextG = lNextColor >> 8 & 255;
+					var lNextB = lNextColor & 255;
 					lColor = Math.round(lPrevR + (lNextR - lPrevR) * interped) << 16 | Math.round(lPrevG + (lNextG - lPrevG) * interped) << 8 | Math.round(lPrevB + (lNextB - lPrevB) * interped);
-				} else lColor = keyframe.tint;
-				this.movie.renderFrame(keyframe,keyframe.location.x + (next.location.x - keyframe.location.x) * interped,keyframe.location.y + (next.location.y - keyframe.location.y) * interped,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,keyframe.alpha + (next.alpha - keyframe.alpha) * interped,lColor);
+				} else lColor = keyframe.tintColor;
 				if(this.currentChildrenKey.h[layer.__id__] != keyframe.displayKey) {
 					this.createChildIfNessessary(keyframe);
 					this.removeChildIfNessessary(keyframe);
@@ -701,6 +720,7 @@ flump_MoviePlayer.prototype = {
 						childMovie.render();
 					}
 				}
+				this.movie.renderFrame(keyframe,keyframe.location.x + (next.location.x - keyframe.location.x) * interped,keyframe.location.y + (next.location.y - keyframe.location.y) * interped,keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped,keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped,keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,keyframe.alpha + (next.alpha - keyframe.alpha) * interped,keyframe.tintMultiplier + (next.tintMultiplier - keyframe.tintMultiplier) * interped,lColor);
 			}
 		}
 		this.advanced = 0;
@@ -765,6 +785,36 @@ flump_MoviePlayer.prototype = {
 	}
 	,__class__: flump_MoviePlayer
 };
+var flump_filters_AnimateTintFilter = function(pColor,pMultiplier) {
+	if(pMultiplier == null) pMultiplier = 1;
+	this.color = pColor;
+	this.multiplier = pMultiplier;
+	this.uniforms = { color : { type : "v3", value : this.hex2v3(this.color)}, multiplier : { type : "1f", value : this.multiplier}};
+	PIXI.AbstractFilter.call(this,null,this.getFragmentSrc(),this.uniforms);
+};
+flump_filters_AnimateTintFilter.__name__ = true;
+flump_filters_AnimateTintFilter.__super__ = PIXI.AbstractFilter;
+flump_filters_AnimateTintFilter.prototype = $extend(PIXI.AbstractFilter.prototype,{
+	getFragmentSrc: function() {
+		var lSrc = "";
+		lSrc += "precision mediump float;varying vec2 vTextureCoord;uniform sampler2D uSampler;uniform vec3 color;uniform float multiplier;";
+		lSrc += "void main () { gl_FragColor = texture2D(uSampler, vTextureCoord);";
+		lSrc += "gl_FragColor.r = (color.r*multiplier+gl_FragColor.r*(1.0-multiplier)) * gl_FragColor.a;";
+		lSrc += "gl_FragColor.g = (color.g*multiplier+gl_FragColor.g*(1.0-multiplier)) * gl_FragColor.a;";
+		lSrc += "gl_FragColor.b = (color.b*multiplier+gl_FragColor.b*(1.0-multiplier)) * gl_FragColor.a;";
+		lSrc += "}";
+		return lSrc;
+	}
+	,hex2v3: function(pColor) {
+		return { x : _$UInt_UInt_$Impl_$.toFloat(pColor >> 16 & 255) / _$UInt_UInt_$Impl_$.toFloat(255), y : _$UInt_UInt_$Impl_$.toFloat(pColor >> 8 & 255) / _$UInt_UInt_$Impl_$.toFloat(255), z : _$UInt_UInt_$Impl_$.toFloat(pColor & 255) / _$UInt_UInt_$Impl_$.toFloat(255)};
+	}
+	,update: function(pColor,pMultiplier) {
+		if(pMultiplier == null) pMultiplier = 1;
+		this.uniforms.color.value = this.hex2v3(this.color = pColor);
+		this.uniforms.multiplier.value = this.multiplier = pMultiplier;
+	}
+	,__class__: flump_filters_AnimateTintFilter
+});
 var flump_json__$FlumpJSON_FlumpPointSpec_$Impl_$ = {};
 flump_json__$FlumpJSON_FlumpPointSpec_$Impl_$.__name__ = true;
 flump_json__$FlumpJSON_FlumpPointSpec_$Impl_$.get_x = function(this1) {
@@ -891,7 +941,8 @@ flump_library_FlumpLibrary.create = function(flumpData,resolution) {
 					if(keyframeSpec.scale == null) keyframe1.scale = new flump_library_Point(1,1); else keyframe1.scale = new flump_library_Point(keyframeSpec.scale[0],keyframeSpec.scale[1]);
 					if(keyframeSpec.skew == null) keyframe1.skew = new flump_library_Point(0,0); else keyframe1.skew = new flump_library_Point(keyframeSpec.skew[0],keyframeSpec.skew[1]);
 					if(keyframeSpec.alpha == null) keyframe1.alpha = 1; else keyframe1.alpha = keyframeSpec.alpha;
-					if(keyframeSpec.tint == null) keyframe1.tint = 16777215; else keyframe1.tint = Std.parseInt(StringTools.replace(js_Boot.__cast(keyframeSpec.tint[1] , String),"#","0x"));
+					if(keyframeSpec.tint == null) keyframe1.tintMultiplier = 0; else keyframe1.tintMultiplier = keyframeSpec.tint[0];
+					if(keyframeSpec.tint == null) keyframe1.tintColor = 0; else keyframe1.tintColor = Std.parseInt(StringTools.replace(js_Boot.__cast(keyframeSpec.tint[1] , String),"#","0x"));
 					if(keyframeSpec.ease == null) keyframe1.ease = 0; else keyframe1.ease = keyframeSpec.ease;
 				}
 				if(layer1.keyframes.length == 0) layer1.firstKeyframe = keyframe1;
@@ -1738,8 +1789,9 @@ pixi_flump_Movie.prototype = $extend(PIXI.Container.prototype,{
 	,onAnimationComplete: function() {
 		if(this.onComplete != null) this.onComplete();
 	}
-	,renderFrame: function(keyframe,x,y,scaleX,scaleY,skewX,skewY,alpha,tint) {
+	,renderFrame: function(keyframe,x,y,scaleX,scaleY,skewX,skewY,alpha,tintMultiplier,tintColor) {
 		var layer = this.layers.h[keyframe.layer.__id__];
+		var lChild;
 		layer.pivot.x = keyframe.pivot.x;
 		layer.pivot.y = keyframe.pivot.y;
 		if(js_Boot.__instanceof(keyframe.symbol,flump_library_SpriteSymbol)) {
@@ -1749,20 +1801,28 @@ pixi_flump_Movie.prototype = $extend(PIXI.Container.prototype,{
 		}
 		layer.x = x;
 		layer.y = y;
-		layer.scale.x = scaleX;
-		layer.scale.y = scaleY;
-		layer.skew.x = skewX;
-		layer.skew.y = skewY;
-		layer.alpha = alpha;
-		if(tint != 16777215) {
+		if(layer.children.length > 0) {
 			var _g = 0;
 			var _g1 = layer.children;
 			while(_g < _g1.length) {
-				var child = _g1[_g];
+				var lChild1 = _g1[_g];
 				++_g;
-				if(js_Boot.__instanceof(child,PIXI.Sprite)) (js_Boot.__cast(child , PIXI.Sprite)).tint = tint; else if(js_Boot.__instanceof(child,pixi_flump_Movie)) (js_Boot.__cast(child , pixi_flump_Movie)).set_tint(tint);
+				lChild1.scale.x = scaleX;
+				lChild1.scale.y = scaleY;
 			}
 		}
+		layer.skew.x = skewX;
+		layer.skew.y = skewY;
+		layer.alpha = alpha;
+		if(keyframe.layer.refAnimatedTint == null) {
+			if(tintMultiplier != 0) {
+				keyframe.layer.refAnimatedTint = new flump_filters_AnimateTintFilter(tintColor,tintMultiplier);
+				if(layer.filters == null) layer.filters = [keyframe.layer.refAnimatedTint];
+			}
+		} else if(tintMultiplier == 0) {
+			HxOverrides.remove(layer.filters,keyframe.layer.refAnimatedTint);
+			keyframe.layer.refAnimatedTint = null;
+		} else keyframe.layer.refAnimatedTint.update(tintColor,tintMultiplier);
 		if(this.master) {
 			layer.x /= this.resolution;
 			layer.y /= this.resolution;
@@ -1771,7 +1831,16 @@ pixi_flump_Movie.prototype = $extend(PIXI.Container.prototype,{
 		}
 	}
 	,setMask: function(layer) {
-		if(layer.mask != null) this.layers.h[layer.__id__].mask = this.getLayer(layer.mask).getChildAt(0);
+		if(layer.mask != null) {
+			var lRect = this.getLayer(layer.mask).getChildAt(0).getBounds();
+			this.getLayer(layer.mask).removeChildAt(0);
+			var lGraph = new PIXI.Graphics();
+			lGraph.beginFill(0);
+			lGraph.drawRect(lRect.x,lRect.y,lRect.width,lRect.height);
+			lGraph.endFill();
+			this.getLayer(layer.mask).addChild(lGraph);
+			this.layers.h[layer.__id__].mask = lGraph;
+		}
 	}
 	,labelPassed: function(label) {
 		this.emit("labelPassed",label.name);
@@ -1966,6 +2035,9 @@ pixi_flump_Sprite.prototype = $extend(PIXI.Sprite.prototype,{
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
+if(Array.prototype.indexOf) HxOverrides.indexOf = function(a,o,i) {
+	return Array.prototype.indexOf.call(a,o,i);
+};
 String.prototype.__class__ = String;
 String.__name__ = true;
 Array.__name__ = true;

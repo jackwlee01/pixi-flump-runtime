@@ -317,18 +317,6 @@ class MoviePlayer{
 					
 				} else lColor = keyframe.tintColor;
 				
-				movie.renderFrame(
-					keyframe,
-					(keyframe.location.x + (next.location.x - keyframe.location.x) * interped),
-					(keyframe.location.y + (next.location.y - keyframe.location.y) * interped),
-					(keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped),
-					(keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped),
-					keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,
-					keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,
-					keyframe.alpha + (next.alpha - keyframe.alpha) * interped,
-					keyframe.tintMultiplier + (next.tintMultiplier - keyframe.tintMultiplier) * interped,
-					lColor
-				);
 
 				if(currentChildrenKey.get(layer) != keyframe.displayKey){
 					createChildIfNessessary(keyframe);
@@ -347,6 +335,19 @@ class MoviePlayer{
 						childMovie.render();
 					}
 				}
+
+				movie.renderFrame(
+					keyframe,
+					(keyframe.location.x + (next.location.x - keyframe.location.x) * interped),
+					(keyframe.location.y + (next.location.y - keyframe.location.y) * interped),
+					(keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped),
+					(keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped),
+					keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,
+					keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,
+					keyframe.alpha + (next.alpha - keyframe.alpha) * interped,
+					keyframe.tintMultiplier + (next.tintMultiplier - keyframe.tintMultiplier) * interped,
+					lColor
+				);
 			}
 		}
 		advanced = 0;
