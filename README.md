@@ -6,7 +6,6 @@
 
 Pixi Flump Runtime is a library built for Pixi.js to support animation exported from Flump. It is built with Haxe and works for both Haxe and Javascript projects.
 
-
 ## Features
 - Sprites
 - MovieClips (nested timelines!)
@@ -16,16 +15,18 @@ Pixi Flump Runtime is a library built for Pixi.js to support animation exported 
 - Familiar and easy API
 - Documentation (better documentation coming soon)
 
+[Download Flump](<https://github.com/tconkling/flump/releases/tag/v1.5.1>)
+
 ## New Features
-pixi-flump-runtime support additional features from the flump fork https://github.com/mathieuanthoine/flump :
-- mask (one layer masked by a static layer)
+pixi-flump-runtime supports additional features from [Flump+](https://github.com/mathieuanthoine/flump) :
+- mask
 - tint
-- base class (Movie/Sprite getBaseClass method)
-- custom data (Movie/Sprite getCustomData and Movie getLayerCustomData methods)
+- base class
+- custom data
 
-In Flash/Animate, custom data are stored as persistent data.
-Use persistent data panel in Flash/Animate (https://github.com/mathieuanthoine/AnimateCCPersistentDataTools) to easily manage persistent data
+More info on these new features: https://github.com/mathieuanthoine/flump/blob/master/README.md
 
+[Download Flump+](<https://github.com/mathieuanthoine/flump/tree/master/release/>)
 
 ## Examples
 
