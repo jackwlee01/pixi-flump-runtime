@@ -555,6 +555,7 @@ flump_library_FlumpLibrary.create = function(flumpData,resolution) {
 			var symbol = new flump_library_SpriteSymbol();
 			symbol.name = textureSpec.symbol;
 			symbol.data = textureSpec.data;
+			symbol.baseClass = textureSpec.baseClass;
 			symbol.origin = origin;
 			symbol.texture = textureSpec.symbol;
 			{
@@ -572,6 +573,7 @@ flump_library_FlumpLibrary.create = function(flumpData,resolution) {
 		var symbol1 = new flump_library_MovieSymbol();
 		symbol1.name = movieSpec.id;
 		symbol1.data = movieSpec.data;
+		symbol1.baseClass = movieSpec.baseClass;
 		symbol1.library = flumpLibrary;
 		var _g22 = 0;
 		var _g31 = movieSpec.layers;
@@ -612,6 +614,7 @@ flump_library_FlumpLibrary.create = function(flumpData,resolution) {
 					if(keyframeSpec.alpha == null) keyframe1.alpha = 1; else keyframe1.alpha = keyframeSpec.alpha;
 					if(keyframeSpec.tint == null) keyframe1.tintMultiplier = 0; else keyframe1.tintMultiplier = keyframeSpec.tint[0];
 					if(keyframeSpec.tint == null) keyframe1.tintColor = 0; else keyframe1.tintColor = Std.parseInt(StringTools.replace(js_Boot.__cast(keyframeSpec.tint[1] , String),"#","0x"));
+					keyframe1.data = keyframeSpec.data;
 					if(keyframeSpec.ease == null) keyframe1.ease = 0; else keyframe1.ease = keyframeSpec.ease;
 				}
 				if(layer1.keyframes.length == 0) layer1.firstKeyframe = keyframe1;
@@ -1471,14 +1474,11 @@ pixi_flump_Movie.prototype = $extend(PIXI.Container.prototype,{
 		layer.x = x;
 		layer.y = y;
 		if(layer.children.length > 0) {
-			var _g = 0;
-			var _g1 = layer.children;
-			while(_g < _g1.length) {
-				var lChild1 = _g1[_g];
-				++_g;
-				lChild1.scale.x = scaleX;
-				lChild1.scale.y = scaleY;
-			}
+			lChild = layer.getChildAt(0);
+			lChild.scale.x = scaleX;
+			lChild.scale.y = scaleY;
+			lChild.x = -2 * scaleX * layer.pivot.x;
+			lChild.y = -2 * scaleY * layer.pivot.y;
 		}
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
@@ -1528,6 +1528,9 @@ pixi_flump_Movie.prototype = $extend(PIXI.Container.prototype,{
 		this.symbol = null;
 		this.player = null;
 		PIXI.Container.prototype.destroy.call(this,true);
+	}
+	,getBaseClass: function() {
+		return this.symbol.baseClass;
 	}
 	,getCustomData: function() {
 		return this.symbol.data;
@@ -1662,6 +1665,8 @@ var pixi_flump_Sprite = function(symbolId,resourceId) {
 	var symbol = resource.library.sprites.get(symbolId);
 	var texture = resource.textures.get(symbol.texture);
 	PIXI.Sprite.call(this,texture);
+	this.data = symbol.data;
+	this.baseClass = symbol.baseClass;
 	this.anchor.x = symbol.origin.x / texture.width;
 	this.anchor.y = symbol.origin.y / texture.height;
 };
@@ -1695,6 +1700,9 @@ pixi_flump_Sprite.prototype = $extend(PIXI.Sprite.prototype,{
 	,set_resScaleY: function(value) {
 		this.scale.y = value * this.resolution;
 		return value;
+	}
+	,getBaseClass: function() {
+		return this.baseClass;
 	}
 	,getCustomData: function() {
 		return this.data;
