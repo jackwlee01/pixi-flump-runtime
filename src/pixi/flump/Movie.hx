@@ -300,7 +300,8 @@ class Movie extends Container implements IFlumpMovie {
 	}
 
 
-	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float, alpha:Float,tintMultiplier:Float,tintColor:UInt):Void{
+	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float, alpha:Float, tintMultiplier:Float, tintColor:UInt):Void{
+		/*
 		var layer = layers[keyframe.layer];
 		var lChild : DisplayObject;
 		
@@ -315,17 +316,50 @@ class Movie extends Container implements IFlumpMovie {
 
 		layer.x = x;
 		layer.y = y;
+		layer.scale.x = scaleX;
+		layer.scale.y = scaleY;
+		*/
+		///////
+		///*
+		var layer			: Container			= layers[ keyframe.layer];
+		var lChild 			: DisplayObject		= null;
+		var spriteSymbol	: SpriteSymbol		= null;
 		
-		// scale applied on child, else the transform may be wrong ; also need to offset child's x & y
-		//layer.scale.x = scaleX;
-		//layer.scale.y = scaleY;
+		layer.x	= x;
+		layer.y	= y;
+		
 		if ( layer.children.length > 0){
 			lChild			= layer.getChildAt( 0);
 			lChild.scale.x	= scaleX;
 			lChild.scale.y	= scaleY;
-			lChild.x		= -2 * scaleX * layer.pivot.x;
-			lChild.y		= -2 * scaleY * layer.pivot.y;
 		}
+		
+		if ( layer.name != "flipbook"){
+			if ( Std.is( keyframe.symbol, SpriteSymbol)){
+				spriteSymbol	= cast keyframe.symbol;
+				
+				layer.pivot.x	= 0;
+				layer.pivot.y	= 0;
+				
+				if ( lChild != null){
+					lChild.pivot.x	= keyframe.pivot.x - spriteSymbol.origin.x;
+					lChild.pivot.y	= keyframe.pivot.y - spriteSymbol.origin.y;
+				}
+			}else if ( lChild != null && Std.is( lChild, Container) && cast( lChild, Container).children.length > 0 && cast( lChild, Container).getChildAt( 0).name == "flipbook"){
+				lChild.pivot.x	= keyframe.pivot.x;
+				lChild.pivot.y	= keyframe.pivot.y;
+			}else{
+				layer.pivot.x	= keyframe.pivot.x;
+				layer.pivot.y	= keyframe.pivot.y;
+				
+				if ( lChild != null){
+					lChild.x	= ( 1 - scaleX) * layer.pivot.x;
+					lChild.y	= ( 1 - scaleY) * layer.pivot.y;
+				}
+			}
+		}
+		//*/
+		///////
 		
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
