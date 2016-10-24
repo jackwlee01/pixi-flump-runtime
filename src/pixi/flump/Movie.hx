@@ -338,9 +338,6 @@ class Movie extends Container implements IFlumpMovie {
 			if ( Std.is( keyframe.symbol, SpriteSymbol)){
 				spriteSymbol	= cast keyframe.symbol;
 				
-				layer.pivot.x	= 0;
-				layer.pivot.y	= 0;
-				
 				if ( lChild != null){
 					lChild.pivot.x	= keyframe.pivot.x - spriteSymbol.origin.x;
 					lChild.pivot.y	= keyframe.pivot.y - spriteSymbol.origin.y;
@@ -349,12 +346,9 @@ class Movie extends Container implements IFlumpMovie {
 				lChild.pivot.x	= keyframe.pivot.x;
 				lChild.pivot.y	= keyframe.pivot.y;
 			}else{
-				layer.pivot.x	= keyframe.pivot.x;
-				layer.pivot.y	= keyframe.pivot.y;
-				
 				if ( lChild != null){
-					lChild.x	= ( 1 - scaleX) * layer.pivot.x;
-					lChild.y	= ( 1 - scaleY) * layer.pivot.y;
+					lChild.x	= -scaleX * keyframe.pivot.x;
+					lChild.y	= -scaleY * keyframe.pivot.y;
 				}
 			}
 		}
