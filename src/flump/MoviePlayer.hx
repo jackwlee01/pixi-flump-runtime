@@ -17,7 +17,10 @@ class MoviePlayer{
 	private var elapsed:Float = 0.0; // Total time that has elapsed
 	private var previousElapsed:Float = 0.0;
 	private var advanced:Float = 0.0; // Time advanced since the last frame
-
+	
+	/** previous render "position" value ; -1 means no previous render */
+	var prevPosition							: Float									= -1;
+	
 	public var independantTimeline:Bool = true;
 	public var independantControl:Bool = true;
 
@@ -72,9 +75,9 @@ class MoviePlayer{
 	private function reset(){
 		elapsed = 0;
 		previousElapsed = 0;
+		prevPosition = -1;
 	}
-
-
+	
 	private var position(get, null):Float = 0.0;
 	public function get_position():Float{
 		return (elapsed % symbol.duration + symbol.duration) % symbol.duration;
@@ -273,6 +276,11 @@ class MoviePlayer{
 
 
 	private function render():Void{
+		var lIsUpdate	: Bool		= true;
+		var next		: Keyframe	= null;
+		var interped	: Float		= -1;
+		var lColor		:Int		= -1;// AnimateTint
+		
 		if(state == STATE_PLAYING){
 			if(position < 0){
 				elapsed = 0;
@@ -284,44 +292,48 @@ class MoviePlayer{
 				movie.onAnimationComplete();
 			}
 		}
-
-		while(position < 0) position += symbol.duration;
+		
+		// there's no setter for "position", is there ? also, "position" calculation provides only positive values, from "elapsed" modulo
+		//while(position < 0) position += symbol.duration;
+		
+		if ( position != prevPosition && ( prevPosition < 0 || totalFrames > 1)) prevPosition = position;
+		else lIsUpdate = false;
 		
 		for (layer in symbol.layers){
-			var keyframe = layer.getKeyframeForTime(position);
+			var keyframe	: Keyframe	= layer.getKeyframeForTime(position);
 
 			if(keyframe.isEmpty == true){
 				removeChildIfNessessary(keyframe);
 			}else if(keyframe.isEmpty == false){
-				var interped = getInterpolation(keyframe, position);
-				var next = keyframe.next;
-				if(next.isEmpty) next = keyframe; // NASTY! FIX THIS!!
+				if ( lIsUpdate){
+					interped	= getInterpolation( keyframe, position);
+					next		= keyframe.next;
+					
+					if( next.isEmpty) next = keyframe;// NASTY! FIX THIS!!
+					
+					if (keyframe.tintColor != next.tintColor) {
+						
+						var lPrevColor:Int = keyframe.tintColor;
+						var lNextColor:Int = next.tintColor;
+						
+						var lPrevR:Int = (lPrevColor >> 16) & 0xFF;
+						var lPrevG:Int = (lPrevColor >> 8) & 0xFF;
+						var lPrevB:Int = lPrevColor & 0xFF;
+						
+						var lNextR:Int = (lNextColor >> 16) & 0xFF;
+						var lNextG:Int = (lNextColor >> 8) & 0xFF;
+						var lNextB:Int = lNextColor & 0xFF;
+						
+						lColor = Math.round(lPrevR + (lNextR - lPrevR) * interped) << 16 | Math.round(lPrevG + (lNextG - lPrevG) * interped) << 8 | Math.round(lPrevB + (lNextB - lPrevB) * interped);
+						
+					} else lColor = keyframe.tintColor;
+					
 
-				// AnimateTint
-				var lColor:Int;				
-				
-				if (keyframe.tintColor != next.tintColor) {
-					
-					var lPrevColor:Int = keyframe.tintColor;
-					var lNextColor:Int = next.tintColor;
-					
-					var lPrevR:Int = (lPrevColor >> 16) & 0xFF;
-					var lPrevG:Int = (lPrevColor >> 8) & 0xFF;
-					var lPrevB:Int = lPrevColor & 0xFF;
-					
-					var lNextR:Int = (lNextColor >> 16) & 0xFF;
-					var lNextG:Int = (lNextColor >> 8) & 0xFF;
-					var lNextB:Int = lNextColor & 0xFF;
-					
-					lColor = Math.round(lPrevR + (lNextR - lPrevR) * interped) << 16 | Math.round(lPrevG + (lNextG - lPrevG) * interped) << 8 | Math.round(lPrevB + (lNextB - lPrevB) * interped);
-					
-				} else lColor = keyframe.tintColor;
-				
-
-				if(currentChildrenKey.get(layer) != keyframe.displayKey){
-					createChildIfNessessary(keyframe);
-					removeChildIfNessessary(keyframe);
-					addChildIfNessessary(keyframe);
+					if(currentChildrenKey.get(layer) != keyframe.displayKey){
+						createChildIfNessessary(keyframe);
+						removeChildIfNessessary(keyframe);
+						addChildIfNessessary(keyframe);
+					}
 				}
 
 				if(keyframe.symbol.is(MovieSymbol)){
@@ -335,19 +347,21 @@ class MoviePlayer{
 						childMovie.render();
 					}
 				}
-
-				movie.renderFrame(
-					keyframe,
-					(keyframe.location.x + (next.location.x - keyframe.location.x) * interped),
-					(keyframe.location.y + (next.location.y - keyframe.location.y) * interped),
-					(keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped),
-					(keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped),
-					keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,
-					keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,
-					keyframe.alpha + (next.alpha - keyframe.alpha) * interped,
-					keyframe.tintMultiplier + (next.tintMultiplier - keyframe.tintMultiplier) * interped,
-					lColor
-				);
+				
+				if ( lIsUpdate){
+					movie.renderFrame(
+						keyframe,
+						(keyframe.location.x + (next.location.x - keyframe.location.x) * interped),
+						(keyframe.location.y + (next.location.y - keyframe.location.y) * interped),
+						(keyframe.scale.x + (next.scale.x - keyframe.scale.x) * interped),
+						(keyframe.scale.y + (next.scale.y - keyframe.scale.y) * interped),
+						keyframe.skew.x + (next.skew.x - keyframe.skew.x) * interped,
+						keyframe.skew.y + (next.skew.y - keyframe.skew.y) * interped,
+						keyframe.alpha + (next.alpha - keyframe.alpha) * interped,
+						keyframe.tintMultiplier + (next.tintMultiplier - keyframe.tintMultiplier) * interped,
+						lColor
+					);
+				}
 			}
 		}
 		advanced = 0;
