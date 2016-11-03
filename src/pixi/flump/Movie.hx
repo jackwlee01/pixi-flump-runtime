@@ -300,33 +300,63 @@ class Movie extends Container implements IFlumpMovie {
 	}
 
 
-	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float, alpha:Float,tintMultiplier:Float,tintColor:UInt):Void{
-		var layer = layers[keyframe.layer];
-		var lChild : DisplayObject;
+	private function renderFrame(keyframe:Keyframe, x:Float, y:Float, scaleX:Float, scaleY:Float, skewX:Float, skewY:Float, alpha:Float, tintMultiplier:Float, tintColor:UInt):Void{
+		var layer			: Container			= layers[ keyframe.layer];
+		var lChild 			: DisplayObject		= null;
+		var spriteSymbol	: SpriteSymbol		= null;
 		
-		layer.pivot.x = keyframe.pivot.x;
-		layer.pivot.y = keyframe.pivot.y;
-
-		if(Std.is(keyframe.symbol, SpriteSymbol)){
-			var spriteSymbol:SpriteSymbol = cast keyframe.symbol;
-			layer.pivot.x -= spriteSymbol.origin.x;
-			layer.pivot.y -= spriteSymbol.origin.y;
+		layer.x	= x;
+		layer.y	= y;
+		
+		if ( master){
+			layer.x /= resolution;
+			layer.y /= resolution;
 		}
-
-		layer.x = x;
-		layer.y = y;
 		
-		// scale applied on child, else the transform may be wrong
-		layer.scale.x = scaleX;
-		layer.scale.y = scaleY;
-		/*
 		if ( layer.children.length > 0){
-			for ( lChild in layer.children){
-				lChild.scale.x = scaleX;
-				lChild.scale.y = scaleY;
+			lChild			= layer.getChildAt( 0);
+			lChild.scale.x	= scaleX;
+			lChild.scale.y	= scaleY;
+			
+			if ( master){
+				lChild.scale.x /= resolution;
+				lChild.scale.y /= resolution;
 			}
-		}//else trace( "WARNING : Movie::renderFrame : " + symbol.name + " : " + layer.name + " : empty");
-		*/
+		}
+		
+		if ( layer.name != "flipbook"){
+			if ( Std.is( keyframe.symbol, SpriteSymbol)){
+				if ( lChild != null){
+					spriteSymbol	= cast keyframe.symbol;
+					
+					lChild.pivot.x	= keyframe.pivot.x - spriteSymbol.origin.x;
+					lChild.pivot.y	= keyframe.pivot.y - spriteSymbol.origin.y;
+					
+					if ( master){
+						lChild.pivot.x /= resolution;
+						lChild.pivot.y /= resolution;
+					}
+				}
+			}else if ( lChild != null && Std.is( lChild, Container) && cast( lChild, Container).children.length > 0 && cast( lChild, Container).getChildAt( 0).name == "flipbook"){
+				lChild.pivot.x	= keyframe.pivot.x;
+				lChild.pivot.y	= keyframe.pivot.y;
+				
+				if ( master){
+					lChild.pivot.x /= resolution;
+					lChild.pivot.y /= resolution;
+				}
+			}else{
+				if ( lChild != null){
+					lChild.x	= -scaleX * keyframe.pivot.x;
+					lChild.y	= -scaleY * keyframe.pivot.y;
+					
+					if ( master){
+						lChild.x /= resolution;
+						lChild.y /= resolution;
+					}
+				}
+			}
+		}
 		
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
@@ -342,15 +372,6 @@ class Movie extends Container implements IFlumpMovie {
 			keyframe.layer.refAnimatedTint = null;
 		}
 		else keyframe.layer.refAnimatedTint.update(tintColor, tintMultiplier);
-		
-		if(master){
-			//layer.pivot.x /= resolution;
-			//layer.pivot.y /= resolution;
-			layer.x /= resolution;
-			layer.y /= resolution;
-			layer.scale.x /= resolution;
-			layer.scale.y /= resolution;
-		}
 	}
 
 	private function setMask(layer:Layer):Void{
