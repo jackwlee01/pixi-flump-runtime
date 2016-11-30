@@ -308,6 +308,9 @@ class Movie extends Container implements IFlumpMovie {
 		layer.x	= x;
 		layer.y	= y;
 		
+		// pixi 4 hack :)
+		//skewX = -skewX;
+		
 		if ( master){
 			layer.x /= resolution;
 			layer.y /= resolution;
