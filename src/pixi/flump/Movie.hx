@@ -362,16 +362,12 @@ class Movie extends Container implements IFlumpMovie {
 		layer.skew.y = skewY;
 		layer.alpha  = alpha;
 		
-		if (keyframe.layer.refAnimatedTint == null) {
-			if (tintMultiplier != 0) {
-				keyframe.layer.refAnimatedTint = new AnimateTintFilter(tintColor, tintMultiplier);
-				if (layer.filters == null) layer.filters = [keyframe.layer.refAnimatedTint];
-			}
-		} else if (tintMultiplier == 0) {
-			layer.filters.remove(keyframe.layer.refAnimatedTint);
-			keyframe.layer.refAnimatedTint = null;
-		}
+		if (keyframe.layer.refAnimatedTint == null) keyframe.layer.refAnimatedTint = new AnimateTintFilter(tintColor, tintMultiplier);
 		else keyframe.layer.refAnimatedTint.update(tintColor, tintMultiplier);
+		
+		if (tintMultiplier != 0) layer.filters=[keyframe.layer.refAnimatedTint];
+		else if (layer.filters != null) layer.filters = null;
+
 	}
 
 	private function setMask(layer:Layer):Void{
