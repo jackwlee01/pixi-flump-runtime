@@ -225,7 +225,12 @@ flump_MoviePlayer.prototype = {
 		this.prevPosition = -1;
 	}
 	,get_position: function() {
-		return (this.elapsed % this.symbol.duration + this.symbol.duration) % this.symbol.duration;
+		var lModPos = (this.elapsed % this.symbol.duration + this.symbol.duration) % this.symbol.duration;
+		var lEndPos;
+		if(this.state == this.STATE_PLAYING) {
+			lEndPos = this.symbol.duration - this.symbol.library.frameTime;
+			if(this.elapsed >= lEndPos) return lEndPos; else return lModPos;
+		} else return lModPos;
 	}
 	,get_totalFrames: function() {
 		return this.symbol.totalFrames;
@@ -347,11 +352,7 @@ flump_MoviePlayer.prototype = {
 		var interped = -1;
 		var lColor = -1;
 		if(this.state == this.STATE_PLAYING) {
-			if(this.get_position() < 0) {
-				this.elapsed = 0;
-				this.stop();
-				this.movie.onAnimationComplete();
-			} else if(this.get_position() >= this.symbol.duration - this.symbol.library.frameTime) {
+			if(this.get_position() >= this.symbol.duration - this.symbol.library.frameTime) {
 				this.elapsed = this.symbol.duration - this.symbol.library.frameTime;
 				this.stop();
 				this.movie.onAnimationComplete();
@@ -388,10 +389,7 @@ flump_MoviePlayer.prototype = {
 				}
 				if(js_Boot.__instanceof(keyframe.symbol,flump_library_MovieSymbol)) {
 					var childMovie = this.movie.getChildPlayer(keyframe);
-					if(childMovie.independantTimeline) {
-						childMovie.advanceTime(this.advanced);
-						childMovie.render();
-					} else {
+					if(childMovie.independantTimeline) childMovie.advanceTime(this.advanced); else {
 						childMovie.elapsed = this.get_position();
 						childMovie.render();
 					}

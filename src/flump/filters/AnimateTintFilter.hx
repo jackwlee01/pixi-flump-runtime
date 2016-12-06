@@ -1,5 +1,7 @@
 package flump.filters;
 import pixi.core.renderers.webgl.filters.AbstractFilter;
+// pixi 4 class
+//import pixi.core.renderers.webgl.filters.Filter;
 
 private typedef Uniform = {
 	var type:String;
@@ -22,6 +24,8 @@ private typedef V3 = {
  * @author Mathieu Anthoine
  */
 class AnimateTintFilter extends AbstractFilter
+// pixi 4 class
+//class AnimateTintFilter extends Filter
 {
 
 	public var multiplier (default,null):Float;

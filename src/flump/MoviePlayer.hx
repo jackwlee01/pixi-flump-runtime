@@ -80,7 +80,15 @@ class MoviePlayer{
 	
 	private var position(get, null):Float = 0.0;
 	public function get_position():Float{
-		return (elapsed % symbol.duration + symbol.duration) % symbol.duration;
+		var lModPos	: Float	= ( elapsed % symbol.duration + symbol.duration) % symbol.duration;
+		var lEndPos	: Float;
+		
+		if ( state == STATE_PLAYING){
+			lEndPos = symbol.duration - symbol.library.frameTime;
+			
+			if ( elapsed >= lEndPos) return lEndPos;
+			else return lModPos;
+		}else return lModPos;
 	}
 
 
@@ -281,12 +289,13 @@ class MoviePlayer{
 		var interped	: Float		= -1;
 		var lColor		:Int		= -1;// AnimateTint
 		
-		if(state == STATE_PLAYING){
-			if(position < 0){
+		if (state == STATE_PLAYING){
+			// "position" could not be negative, this shouldn't occures
+			/*if(position < 0){
 				elapsed = 0;
 				stop();
 				movie.onAnimationComplete();
-			}else if(position >= symbol.duration - symbol.library.frameTime){
+			}else */if(position >= symbol.duration - symbol.library.frameTime){
 				elapsed = symbol.duration - symbol.library.frameTime;
 				stop();
 				movie.onAnimationComplete();
@@ -341,7 +350,7 @@ class MoviePlayer{
 
 					if(childMovie.independantTimeline){
 						childMovie.advanceTime(advanced);
-						childMovie.render();
+						// no need ? "render" call already included at the end of "advanceTime" : childMovie.render();
 					}else{
 						childMovie.elapsed = position;
 						childMovie.render();
