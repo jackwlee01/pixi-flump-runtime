@@ -7,7 +7,9 @@ using Lambda;
 
 
 class FlumpLibrary{
-
+	/** accuracy coefficient applied on keyframes' ::time property */
+	static inline var TIME_ACCURACY_COEF						: Float								= 10;
+	
 	public var movies = new Map<String, MovieSymbol>();
 	public var sprites = new Map<String, SpriteSymbol>();
 	public var atlases = new Array<AtlasSpec>();
@@ -88,11 +90,12 @@ class FlumpLibrary{
 					keyframe.duration = keyframeSpec.duration * flumpLibrary.frameTime;
 					keyframe.index = keyframeSpec.index;
 
-					var time = keyframe.index * flumpLibrary.frameTime;
+					/*var time = keyframe.index * flumpLibrary.frameTime;
 					time *= 10;
 					time = Math.floor(time);
 					time /= 10;
-					keyframe.time = time;
+					keyframe.time = time;*/
+					keyframe.time = getTimeAtFrame( keyframe.index, flumpLibrary.frameTime);
 					
 					if(keyframeSpec.ref == null){
 						keyframe.isEmpty = true;
@@ -211,6 +214,13 @@ class FlumpLibrary{
 		return flumpLibrary;
 	}
 
+	/**
+	 * calculate the time at a specified frame index
+	 * @param	pI			frame index ; [ 0 .. totalFrames-1 [
+	 * @param	pFrameTime	duration of a frame, as defined into the considered FlumpLibray instance (FlumpLibray::frameTime)
+	 * @return	time at the specified frame index ; ms
+	 */
+	public static function getTimeAtFrame( pI : Int, pFrameTime : Float) : Float { return Math.floor( pI * pFrameTime * TIME_ACCURACY_COEF) / TIME_ACCURACY_COEF; }
 
 	private static function sortLabel(a:Label, b:Label):Int{
 		if(a.keyframe.index < b.keyframe.index) return -1;

@@ -23,24 +23,6 @@ HxOverrides.cca = function(s,index) {
 	if(x != x) return undefined;
 	return x;
 };
-HxOverrides.indexOf = function(a,obj,i) {
-	var len = a.length;
-	if(i < 0) {
-		i += len;
-		if(i < 0) i = 0;
-	}
-	while(i < len) {
-		if(a[i] === obj) return i;
-		i++;
-	}
-	return -1;
-};
-HxOverrides.remove = function(a,obj) {
-	var i = HxOverrides.indexOf(a,obj,0);
-	if(i == -1) return false;
-	a.splice(i,1);
-	return true;
-};
 HxOverrides.iter = function(a) {
 	return { cur : 0, arr : a, hasNext : function() {
 		return this.cur < this.arr.length;
@@ -96,9 +78,6 @@ var Std = function() { };
 Std.__name__ = true;
 Std.string = function(s) {
 	return js_Boot.__string_rec(s,"");
-};
-Std["int"] = function(x) {
-	return x | 0;
 };
 Std.parseInt = function(x) {
 	var v = parseInt(x,10);
@@ -224,12 +203,22 @@ flump_MoviePlayer.prototype = {
 		this.previousElapsed = 0;
 		this.prevPosition = -1;
 	}
+	,getElapsedModDuration: function() {
+		var lRes = this.elapsed;
+		var lDur = this.symbol.duration;
+		if(lRes < 0) lRes = lRes % lDur + lDur;
+		if(lRes >= lDur) lRes %= lDur;
+		return lRes;
+	}
+	,getPositionEnd: function() {
+		return flump_library_FlumpLibrary.getTimeAtFrame(this.symbol.totalFrames - 1,this.symbol.library.frameTime);
+	}
 	,get_position: function() {
-		var lModPos = (this.elapsed % this.symbol.duration + this.symbol.duration) % this.symbol.duration;
+		var lModPos = this.getElapsedModDuration();
 		var lEndPos;
-		if(this.state == this.STATE_PLAYING) {
-			lEndPos = this.symbol.duration - this.symbol.library.frameTime;
-			if(this.elapsed >= lEndPos) return lEndPos; else return lModPos;
+		if(this.state == this.STATE_PLAYING || js_Boot.__instanceof(this.movie,pixi_flump_Movie) && !(js_Boot.__cast(this.movie , pixi_flump_Movie)).loop) {
+			lEndPos = this.getPositionEnd();
+			if(this.elapsed >= lEndPos || lModPos > lEndPos) return lEndPos; else return lModPos;
 		} else return lModPos;
 	}
 	,get_totalFrames: function() {
@@ -261,7 +250,7 @@ flump_MoviePlayer.prototype = {
 	,fireHitFrames: function(frame) {
 		this.changed++;
 		var current = this.changed;
-		var time = frame * this.symbol.library.frameTime;
+		var time = flump_library_FlumpLibrary.getTimeAtFrame(frame,this.symbol.library.frameTime);
 		var _g = 0;
 		var _g1 = this.symbol.layers;
 		while(_g < _g1.length) {
@@ -299,10 +288,14 @@ flump_MoviePlayer.prototype = {
 		return this.symbol.labels.get(label).keyframe.index;
 	}
 	,get_currentFrame: function() {
-		return Std["int"](this.get_position() / this.symbol.library.frameTime);
+		var lPos = this.get_position();
+		var lFr = Math.round(lPos / this.symbol.library.frameTime);
+		if(_$UInt_UInt_$Impl_$.gte(lFr,this.symbol.totalFrames)) lFr = this.symbol.totalFrames - 1;
+		while(lPos < flump_library_FlumpLibrary.getTimeAtFrame(lFr,this.symbol.library.frameTime)) lFr--;
+		return lFr;
 	}
 	,set_currentFrame: function(value) {
-		this.goToPosition(this.symbol.library.frameTime * value);
+		this.goToPosition(flump_library_FlumpLibrary.getTimeAtFrame(value,this.symbol.library.frameTime));
 		return value;
 	}
 	,labelExists: function(label) {
@@ -351,14 +344,16 @@ flump_MoviePlayer.prototype = {
 		var next = null;
 		var interped = -1;
 		var lColor = -1;
+		var lEndPos;
 		if(this.state == this.STATE_PLAYING) {
-			if(this.get_position() >= this.symbol.duration - this.symbol.library.frameTime) {
-				this.elapsed = this.symbol.duration - this.symbol.library.frameTime;
+			lEndPos = this.getPositionEnd();
+			if(this.get_position() == lEndPos) {
+				this.elapsed = lEndPos;
 				this.stop();
 				this.movie.onAnimationComplete();
 			}
 		}
-		if(this.get_position() != this.prevPosition && (this.prevPosition < 0 || _$UInt_UInt_$Impl_$.gt(this.get_totalFrames(),1))) this.prevPosition = this.get_position(); else lIsUpdate = false;
+		if(this.get_position() != this.prevPosition && (this.prevPosition < 0 || _$UInt_UInt_$Impl_$.gt(this.symbol.totalFrames,1))) this.prevPosition = this.get_position(); else lIsUpdate = false;
 		var _g = 0;
 		var _g1 = this.symbol.layers;
 		while(_g < _g1.length) {
@@ -602,11 +597,7 @@ flump_library_FlumpLibrary.create = function(flumpData,resolution) {
 				keyframe1.numFrames = keyframeSpec.duration;
 				keyframe1.duration = _$UInt_UInt_$Impl_$.toFloat(keyframeSpec.duration) * flumpLibrary.frameTime;
 				keyframe1.index = keyframeSpec.index;
-				var time = _$UInt_UInt_$Impl_$.toFloat(keyframe1.index) * flumpLibrary.frameTime;
-				time *= 10;
-				time = Math.floor(time);
-				time /= 10;
-				keyframe1.time = time;
+				keyframe1.time = flump_library_FlumpLibrary.getTimeAtFrame(keyframe1.index,flumpLibrary.frameTime);
 				if(keyframeSpec.ref == null) keyframe1.isEmpty = true; else {
 					keyframe1.isEmpty = false;
 					keyframe1.symbolId = keyframeSpec.ref;
@@ -731,6 +722,9 @@ flump_library_FlumpLibrary.create = function(flumpData,resolution) {
 	}
 	return flumpLibrary;
 };
+flump_library_FlumpLibrary.getTimeAtFrame = function(pI,pFrameTime) {
+	return Math.floor(pI * pFrameTime * 10) / 10;
+};
 flump_library_FlumpLibrary.sortLabel = function(a,b) {
 	if(_$UInt_UInt_$Impl_$.gt(b.keyframe.index,a.keyframe.index)) return -1; else if(_$UInt_UInt_$Impl_$.gt(a.keyframe.index,b.keyframe.index)) return 1;
 	return 0;
@@ -784,7 +778,7 @@ flump_library_Layer.prototype = {
 	}
 	,getKeyframeForTime: function(time) {
 		var keyframe = this.lastKeyframe;
-		while(keyframe.time > time % this.movie.duration) keyframe = keyframe.prev;
+		while(keyframe.time > time) keyframe = keyframe.prev;
 		return keyframe;
 	}
 	,__class__: flump_library_Layer
@@ -1515,15 +1509,8 @@ pixi_flump_Movie.prototype = $extend(PIXI.Container.prototype,{
 		layer.skew.x = skewX;
 		layer.skew.y = skewY;
 		layer.alpha = alpha;
-		if(keyframe.layer.refAnimatedTint == null) {
-			if(tintMultiplier != 0) {
-				keyframe.layer.refAnimatedTint = new flump_filters_AnimateTintFilter(tintColor,tintMultiplier);
-				if(layer.filters == null) layer.filters = [keyframe.layer.refAnimatedTint];
-			}
-		} else if(tintMultiplier == 0) {
-			HxOverrides.remove(layer.filters,keyframe.layer.refAnimatedTint);
-			keyframe.layer.refAnimatedTint = null;
-		} else keyframe.layer.refAnimatedTint.update(tintColor,tintMultiplier);
+		if(keyframe.layer.refAnimatedTint == null) keyframe.layer.refAnimatedTint = new flump_filters_AnimateTintFilter(tintColor,tintMultiplier); else keyframe.layer.refAnimatedTint.update(tintColor,tintMultiplier);
+		if(tintMultiplier != 0) layer.filters = [keyframe.layer.refAnimatedTint]; else if(layer.filters != null) layer.filters = null;
 	}
 	,setMask: function(layer) {
 		if(layer.mask != null) {
@@ -1738,9 +1725,6 @@ pixi_flump_Sprite.prototype = $extend(PIXI.Sprite.prototype,{
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
-if(Array.prototype.indexOf) HxOverrides.indexOf = function(a,o,i) {
-	return Array.prototype.indexOf.call(a,o,i);
-};
 String.prototype.__class__ = String;
 String.__name__ = true;
 Array.__name__ = true;
@@ -1755,6 +1739,7 @@ Bool.__ename__ = ["Bool"];
 var Class = { __name__ : ["Class"]};
 var Enum = { };
 var __map_reserved = {}
+flump_library_FlumpLibrary.TIME_ACCURACY_COEF = 10;
 flump_library_Label.LABEL_ENTER = "labelEnter";
 flump_library_Label.LABEL_EXIT = "labelExit";
 flump_library_Label.LABEL_UPDATE = "labelUpdate";

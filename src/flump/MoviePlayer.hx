@@ -2,10 +2,12 @@ package flump;
 
 import flump.DisplayObjectKey;
 import flump.IFlumpMovie;
+import flump.library.FlumpLibrary;
 import flump.library.Keyframe;
 import flump.library.Label;
 import flump.library.Layer;
 import flump.library.MovieSymbol;
+import pixi.flump.Movie;
 using Std;
 
 
@@ -18,7 +20,7 @@ class MoviePlayer{
 	private var previousElapsed:Float = 0.0;
 	private var advanced:Float = 0.0; // Time advanced since the last frame
 	
-	/** previous render "position" value ; -1 means no previous render */
+	/** previous render "position" value ; -1 means no previous render ; ms */
 	var prevPosition							: Float									= -1;
 	
 	public var independantTimeline:Bool = true;
@@ -78,15 +80,35 @@ class MoviePlayer{
 		prevPosition = -1;
 	}
 	
+	/**
+	 * calculate the value of the elapsed time modulo the symbol's duration, in ms
+	 * @return	elapsed time modulo duration : [ 0 .. symbol.duration [ ; ms
+	 */
+	function getElapsedModDuration() : Float {
+		var lRes	: Float	= elapsed;
+		var lDur	: Float	= symbol.duration;
+		
+		if ( lRes < 0) lRes = ( lRes % lDur) + lDur;
+		if ( lRes >= lDur) lRes %= lDur;
+		
+		return lRes;
+	}
+	
+	/**
+	 * calculate the ::position value which represents the elapsed time of the symbol's end of time line ; the calculation is done the same manner as the keyframe's ::time property
+	 * @return	arbitrary value for the time of the end of the time line ; ms
+	 */
+	function getPositionEnd() : Float { return FlumpLibrary.getTimeAtFrame( symbol.totalFrames - 1, symbol.library.frameTime); }
+	
 	private var position(get, null):Float = 0.0;
 	public function get_position():Float{
-		var lModPos	: Float	= ( elapsed % symbol.duration + symbol.duration) % symbol.duration;
+		var lModPos	: Float	= getElapsedModDuration();
 		var lEndPos	: Float;
 		
-		if ( state == STATE_PLAYING){
-			lEndPos = symbol.duration - symbol.library.frameTime;
+		if( ( state == STATE_PLAYING) || ( Std.is( movie, Movie) && ! cast( movie, Movie).loop)){
+			lEndPos = getPositionEnd();
 			
-			if ( elapsed >= lEndPos) return lEndPos;
+			if ( elapsed >= lEndPos || lModPos > lEndPos) return lEndPos;
 			else return lModPos;
 		}else return lModPos;
 	}
@@ -135,7 +157,8 @@ class MoviePlayer{
 	private function fireHitFrames(frame:Int){
 		changed++;
 		var current = changed;
-		var time = frame * symbol.library.frameTime;
+		//var time = frame * symbol.library.frameTime;
+		var time = FlumpLibrary.getTimeAtFrame( frame, symbol.library.frameTime);
 
 		for(layer in symbol.layers){
 			for(kf in layer.keyframes){
@@ -197,10 +220,20 @@ class MoviePlayer{
 
 	public var currentFrame(get, set):Int;
 	private function get_currentFrame():Int{
-		return Std.int(position / symbol.library.frameTime);
+		//return Std.int(position / symbol.library.frameTime);
+		// the calculation is done to reflect the search algorithm of the current displayed keyframe @see Layer::getKeyframeForTime
+		var lPos	: Float	= position;
+		var lFr		: Int	= Math.round( lPos / symbol.library.frameTime);
+		
+		if ( lFr >= symbol.totalFrames) lFr = symbol.totalFrames - 1;
+		
+		while ( lPos < FlumpLibrary.getTimeAtFrame( lFr, symbol.library.frameTime)) lFr--;
+		
+		return lFr;
 	}
 	private function set_currentFrame(value:Int):Int{
-		goToPosition( symbol.library.frameTime * value);
+		//goToPosition( symbol.library.frameTime * value);
+		goToPosition( FlumpLibrary.getTimeAtFrame( value, symbol.library.frameTime));
 		return value;
 	}
 
@@ -287,7 +320,8 @@ class MoviePlayer{
 		var lIsUpdate	: Bool		= true;
 		var next		: Keyframe	= null;
 		var interped	: Float		= -1;
-		var lColor		:Int		= -1;// AnimateTint
+		var lColor		: Int		= -1;// AnimateTint
+		var lEndPos		: Float;
 		
 		if (state == STATE_PLAYING){
 			// "position" could not be negative, this shouldn't occures
@@ -295,8 +329,15 @@ class MoviePlayer{
 				elapsed = 0;
 				stop();
 				movie.onAnimationComplete();
-			}else */if(position >= symbol.duration - symbol.library.frameTime){
+			}else *//*if(position >= symbol.duration - symbol.library.frameTime){
 				elapsed = symbol.duration - symbol.library.frameTime;
+				stop();
+				movie.onAnimationComplete();
+			}*/
+			lEndPos = getPositionEnd();
+			
+			if ( position == lEndPos){
+				elapsed = lEndPos;
 				stop();
 				movie.onAnimationComplete();
 			}
@@ -305,7 +346,7 @@ class MoviePlayer{
 		// there's no setter for "position", is there ? also, "position" calculation provides only positive values, from "elapsed" modulo
 		//while(position < 0) position += symbol.duration;
 		
-		if ( position != prevPosition && ( prevPosition < 0 || totalFrames > 1)) prevPosition = position;
+		if ( position != prevPosition && ( prevPosition < 0 || symbol.totalFrames > 1)) prevPosition = position;
 		else lIsUpdate = false;
 		
 		for (layer in symbol.layers){
