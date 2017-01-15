@@ -26,11 +26,15 @@ class Layer{
 		}
 		return null;
 	}
-
-
-	public function getKeyframeForTime(time:Float){
+	
+	/**
+	 * find the keyframe at a time line position
+	 * @param	time	position of the time line ; ms ; [ 0 .. movie.duration [
+	 * @return	keyframe at this position
+	 */
+	public function getKeyframeForTime( time : Float) : Keyframe {
 		var keyframe = lastKeyframe;
-		while(keyframe.time > time % movie.duration) keyframe = keyframe.prev;
+		while(keyframe.time > time/* % movie.duration*/) keyframe = keyframe.prev;
 		return keyframe;
 	}
 
