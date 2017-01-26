@@ -480,7 +480,7 @@ flump_filters_AnimateTintFilter.prototype = $extend(PIXI.AbstractFilter.prototyp
 	,update: function(pColor,pMultiplier) {
 		if(pMultiplier == null) pMultiplier = 1;
 		this.uniforms.color.value = this.hex2v3(this.color = pColor);
-		this.uniforms.multiplier.value = this.multiplier = pMultiplier;
+		if(!(typeof(this.uniforms.multiplier) == "number")) this.uniforms.multiplier.value = this.multiplier = pMultiplier;
 	}
 	,__class__: flump_filters_AnimateTintFilter
 });
