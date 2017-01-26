@@ -59,7 +59,10 @@ class AnimateTintFilter extends AbstractFilter
 	
 	public function update(pColor:UInt, pMultiplier:Float = 1) : Void {
 		uniforms.color.value = hex2v3(color=pColor);
-		uniforms.multiplier.value = multiplier= pMultiplier;
+		//uniforms.multiplier.value = multiplier= pMultiplier;
+		// this might be a related to different implement of Filter/AbtractFIlter between pixi v4 & v3 ? ; if you don't make this test, you might get a runtime type error with v4
+		// this is just a patch, I 'm not used to the Tint extra feature ; this feature is not tested in v4 yet, so this patch doesn't solve this feature for v4, it just guarantees to run without code crash
+		if ( ! Std.is( uniforms.multiplier, Float)) uniforms.multiplier.value = multiplier= pMultiplier;
 	}
 	
 }
