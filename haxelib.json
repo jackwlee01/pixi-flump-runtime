@@ -5,7 +5,7 @@
   "tags": ["flump", "animation", "flash", "timeline", "pixi"],
   "description": "A Flump runtime for Pixi.js. See examples for usage.",
   "version": "0.3.0",
-  "releasenote": "Requires pixi.js v3.0.10",
+  "releasenote": "Requires pixi.js v4.0.0",
   "classPath":"src",
   "contributors": ["jackwlee","mathieuanthoine"],
   "dependencies": {

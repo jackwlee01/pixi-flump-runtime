@@ -10,6 +10,8 @@ import pixi.core.math.shapes.Rectangle;
 import pixi.core.sprites.Sprite;
 import pixi.core.ticker.Ticker;
 import pixi.flump.Resource;
+import haxe.extern.EitherType;
+
 
 
 @:access(pixi.flump.Resource)
@@ -309,7 +311,7 @@ class Movie extends Container implements IFlumpMovie {
 		layer.y	= y;
 		
 		// pixi 4 hack :)
-		//skewX = -skewX;
+		skewX = -skewX;
 		
 		if ( master){
 			layer.x /= resolution;
@@ -401,7 +403,7 @@ class Movie extends Container implements IFlumpMovie {
 	}
 	
 
-	override public function destroy(): Void {
+	override public function destroy(?options:EitherType<Bool, DestroyOptions>): Void {
 		stop();
 		onComplete = null;
 		for (layer in layers) layer.removeChildren();
