@@ -26,7 +26,7 @@ class FlumpLibrary{
 
 	public static function create(flumpData:Dynamic, resolution:Float):FlumpLibrary{
 		var lib:FlumpJSON = cast flumpData;
-		
+
 		var spriteSymbols = new Map<String, SpriteSymbol>();
 		var movieSymbols = new Map<String, MovieSymbol>();
 
@@ -45,14 +45,12 @@ class FlumpLibrary{
 			if(tg.scaleFactor >= resolution && textureGroup == null) textureGroup = tg;
 		}
 		if(textureGroup == null) textureGroup =  lib.textureGroups[lib.textureGroups.length-1];
-
-
+		
 		for(atlas in textureGroup.atlases){
 			flumpLibrary.atlases.push(atlas);
 			atlasSpecs.push(atlas);
 		}
-
-
+		
 		for(spec in atlasSpecs){			
 			for(textureSpec in spec.textures){
 				var frame = new Rectangle(textureSpec.rect.x, textureSpec.rect.y, textureSpec.rect.width, textureSpec.rect.height);

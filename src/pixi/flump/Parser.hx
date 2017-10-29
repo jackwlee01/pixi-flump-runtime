@@ -1,6 +1,7 @@
 package pixi.flump;
 
 import flump.library.FlumpLibrary;
+import js.Browser;
 import pixi.core.math.Point;
 import pixi.core.math.shapes.Rectangle;
 import pixi.core.textures.Texture;
@@ -19,7 +20,14 @@ class Parser{
 			if(resource.data == null || resource.isJson == false) return;
 			if(!resource.data.hasField("md5") || !resource.data.hasField("movies") || !resource.data.hasField("textureGroups") || !resource.data.hasField("frameRate")) return;
 			
+			if (resource.data.textureGroups.length == 0) {
+				Browser.console.warn("Flump: No atlases found in " + resource.name + ".");
+				next();
+				return;
+			}
+			
 			var lib:FlumpLibrary = FlumpLibrary.create(resource.data, resolution);
+			
 			var textures = new Map<String, Texture>();
 			
 			var atlasLoader = new Loader();
