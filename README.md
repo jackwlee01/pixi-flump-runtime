@@ -1,3 +1,7 @@
+## Status
+
+Currently unmaintained. Requires Haxe 3.
+
 ## What is Flump?
 
 [Flump](https://github.com/tconkling/flump) is a Flash animation exporter that converts Sprites and nested MovieClip animations. It converts your graphics to sprite atlases along with an xml file that describes library and keyframe information.

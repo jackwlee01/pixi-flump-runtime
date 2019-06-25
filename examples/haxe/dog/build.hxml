@@ -1,5 +1,5 @@
 -cp ../../../src
 -cp ./src
--js ../../../pages/demo/dog/bundle.js
+-js ../../../../demos/dog/bundle.js
 -main Main
 -lib pixijs
