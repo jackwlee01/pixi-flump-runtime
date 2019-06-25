@@ -37,11 +37,11 @@ More info on these new features: https://github.com/mathieuanthoine/flump/blob/m
 The examples demonstrate the usage. In order to view the examples locally, ensure that you run your HTTP Server on the project root (pixi-flump-runtime).
 
 
-<a href="../demo/dog"><img src="http://i.imgur.com/k3mjwgR.png"></a>
-<br><sub><a href="../demo/dog">View the dog example</a></sub>
+<a href="http://jackwlee01.github.io/pixi-flump-runtime/dog/"><img src="http://i.imgur.com/k3mjwgR.png"></a>
+<br><sub><a href="http://jackwlee01.github.io/pixi-flump-runtime/dog/">View the dog example</a></sub>
 
-<a href="../demo/monster"><img src="http://i.imgur.com/MAzJOL6.png"></a>
-<br><sub><a href="../demo/monster">View the monster example</a></sub>
+<a href="http://jackwlee01.github.io/pixi-flump-runtime/monster/"><img src="http://i.imgur.com/MAzJOL6.png"></a>
+<br><sub><a href="http://jackwlee01.github.io/pixi-flump-runtime/monster/">View the monster example</a></sub>
 
 ## Documentation
 

@@ -42,7 +42,7 @@ class Main extends Application{
 
 	public function begin(){
 		var movie = new Movie("TestScene");
-		movie.tint = 0xFFEA00;
+		//movie.tint = 0xFFEA00;
 		movie.loop = true;
 		movie.animationSpeed = 1;
 		movie.gotoAndPlay(0);
