@@ -1,0 +1,18 @@
+#automatically generated do not edit
+#@date Tue Jun 25 2019 20:34:21 GMT+1000 (AEST)
+-cp /Users/jack/Git/pixi-flump-runtime/src/
+-cp /Users/jack/Git/pixi-flump-runtime/examples/haxe/monster/src/
+-js ../../../pages/demo/monster/bundle.js
+-main Main
+#@begin-cache -lib pixijs
+#@begin-cache -lib perf.js
+-cp /usr/local/lib/haxe/lib/perf,js/1,1,8/src/
+-D perf.js=1.1.8
+#@end-cache
+-cp /usr/local/lib/haxe/lib/pixijs/4,7,1/src/
+-D pixijs=4.7.1
+-cp /usr/local/lib/haxe/lib/perf,js/1,1,8/src/
+-D perf.js=1.1.8
+#@end-cache
+-debug
+-cp /var/folders/7p/wvt2tt7n3jx9lj8xwsf5g1tc0000gn/T/df931f006b8e81ffab03e9bbfc5a8469741e59d7

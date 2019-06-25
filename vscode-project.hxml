@@ -1,0 +1,25 @@
+#automatically generated do not edit
+#@date Tue Jun 25 2019 20:30:17 GMT+1000 (AEST)
+
+
+-cp /Users/jack/Git/pixi-flump-runtime/src/
+-js bin/pixi-flump.js
+-main PixiFlumpMain
+#@begin-cache -lib pixijs
+#@begin-cache -lib perf.js
+-cp /usr/local/lib/haxe/lib/perf,js/1,1,8/src/
+-D perf.js=1.1.8
+#@end-cache
+-cp /usr/local/lib/haxe/lib/pixijs/4,7,1/src/
+-D pixijs=4.7.1
+-cp /usr/local/lib/haxe/lib/perf,js/1,1,8/src/
+-D perf.js=1.1.8
+#@end-cache
+
+
+--macro include('pixi.flump')
+
+
+-D doc-gen
+-xml docs.xml
+-cp /var/folders/7p/wvt2tt7n3jx9lj8xwsf5g1tc0000gn/T/39ce66f8f1a8c1e64c4b4f35c2a1a37b77c74db9
