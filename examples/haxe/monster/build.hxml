@@ -1,6 +1,6 @@
 -cp ../../../src
 -cp ./src
--js ../../../../demos/monster/bundle.js
+-js ../../../../docs/monster/bundle.js
 -main Main
 -lib pixijs
 -debug

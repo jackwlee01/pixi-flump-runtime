@@ -1,8 +1,8 @@
 #automatically generated do not edit
-#@date Tue Jun 25 2019 20:51:07 GMT+1000 (AEST)
+#@date Tue Jun 25 2019 20:55:32 GMT+1000 (AEST)
 -cp /Users/jack/Git/pixi-flump-runtime/src/
 -cp /Users/jack/Git/pixi-flump-runtime/examples/haxe/dog/src/
--js ../../../../demos/dog/bundle.js
+-js ../../../../docs/dog/bundle.js
 -main Main
 #@begin-cache -lib pixijs
 #@begin-cache -lib perf.js
