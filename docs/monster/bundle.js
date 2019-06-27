@@ -1330,7 +1330,7 @@ flump_library_Layer.prototype = {
 	}
 	,getKeyframeForTime: function(time) {
 		var keyframe = this.lastKeyframe;
-		while(keyframe.time > time) keyframe = keyframe.prev;
+		while(keyframe.time > time % this.movie.duration) keyframe = keyframe.prev;
 		return keyframe;
 	}
 	,__class__: flump_library_Layer

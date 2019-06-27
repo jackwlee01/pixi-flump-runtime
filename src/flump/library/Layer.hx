@@ -34,7 +34,7 @@ class Layer{
 	 */
 	public function getKeyframeForTime( time : Float) : Keyframe {
 		var keyframe = lastKeyframe;
-		while(keyframe.time > time/* % movie.duration*/) keyframe = keyframe.prev;
+		while(keyframe.time > time % movie.duration) keyframe = keyframe.prev;
 		return keyframe;
 	}
 

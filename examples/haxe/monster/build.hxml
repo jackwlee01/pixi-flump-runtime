@@ -1,6 +1,0 @@
--cp ../../../src
--cp ./src
--js ../../../docs/monster/bundle.js
--main Main
--lib pixijs
--debug
