@@ -19,21 +19,9 @@ Pixi Flump Runtime is a library built for Pixi.js to support animation exported 
 
 [Download Flump](<https://github.com/tconkling/flump/releases/tag/v1.5.1>)
 
-## New Features
-pixi-flump-runtime supports additional features from [Flump+](https://github.com/mathieuanthoine/flump) :
-- mask
-- tint
-- base class
-- custom data
-
-More info on these new features: https://github.com/mathieuanthoine/flump/blob/master/README.md
-
-[Download Flump+](<https://github.com/mathieuanthoine/flump/tree/master/release/>)
-
 ## Examples
 
 The examples demonstrate the usage. In order to view the examples locally, ensure that you run your HTTP Server on the project root (pixi-flump-runtime).
-
 
 <a href="http://jackwlee01.github.io/pixi-flump-runtime/dog/"><img src="http://i.imgur.com/k3mjwgR.png"></a>
 <br><sub><a href="http://jackwlee01.github.io/pixi-flump-runtime/dog/">View the dog example</a></sub>
@@ -44,4 +32,3 @@ The examples demonstrate the usage. In order to view the examples locally, ensur
 ## Documentation
 
 See the [wiki](https://github.com/jackwlee01/pixi-flump-runtime/wiki) for the complete api.
-
