@@ -1,6 +1,4 @@
-## Status
-
-Currently unmaintained. Requires Haxe 3.
+Requires Haxe 3.
 
 ## What is Flump?
 
