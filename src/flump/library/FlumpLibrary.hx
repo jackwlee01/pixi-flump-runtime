@@ -7,8 +7,8 @@ using Lambda;
 
 
 class FlumpLibrary{
-	/** accuracy coefficient applied on keyframes' ::time property */
-	static inline var TIME_ACCURACY_COEF						: Float								= 10;
+	// Accuracy coefficient applied on keyframes' ::time property
+	static inline var TIME_ACCURACY_COEF:Float = 10;
 	
 	public var movies = new Map<String, MovieSymbol>();
 	public var sprites = new Map<String, SpriteSymbol>();
@@ -88,11 +88,6 @@ class FlumpLibrary{
 					keyframe.duration = keyframeSpec.duration * flumpLibrary.frameTime;
 					keyframe.index = keyframeSpec.index;
 
-					/*var time = keyframe.index * flumpLibrary.frameTime;
-					time *= 10;
-					time = Math.floor(time);
-					time /= 10;
-					keyframe.time = time;*/
 					keyframe.time = getTimeAtFrame( keyframe.index, flumpLibrary.frameTime);
 					
 					if(keyframeSpec.ref == null){

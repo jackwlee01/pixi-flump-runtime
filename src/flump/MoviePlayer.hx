@@ -20,8 +20,7 @@ class MoviePlayer{
 	private var previousElapsed:Float = 0.0;
 	private var advanced:Float = 0.0; // Time advanced since the last frame
 	
-	/** previous render "position" value ; -1 means no previous render ; ms */
-	var prevPosition							: Float									= -1;
+	private var prevPosition:Float = -1;
 	
 	public var independantTimeline:Bool = true;
 	public var independantControl:Bool = true;
@@ -37,7 +36,6 @@ class MoviePlayer{
 
 	private var labelsToFire = new Array<Label>();
 	private var changed:Int = 0;
-	//private var labelsToIgnore = new ObjectMap<Label, Label>();
 	private var dirty:Bool = false;
 	private var fullyGenerated:Bool = false;
 
@@ -142,7 +140,6 @@ class MoviePlayer{
 		if(!labelExists(label)) throw("Symbol " + symbol.name + " does not have label " + label + "." );
 		currentFrame = getLabelFrame(label);
 		fireHitFrames(getLabelFrame(label));
-		//ignoreCurrentLabels();
 		return this;
 	}
 
